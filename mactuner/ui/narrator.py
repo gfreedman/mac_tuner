@@ -15,8 +15,6 @@ Usage:
             narrator.finish_check(result)
 """
 
-from typing import Optional
-
 from rich.console import Console, Group
 from rich.live import Live
 from rich.padding import Padding

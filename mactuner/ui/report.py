@@ -17,7 +17,6 @@ Skipped checks: 1 line (very dim)
 """
 
 from collections import defaultdict
-from typing import Optional
 
 from rich.console import Console, Group
 from rich.padding import Padding

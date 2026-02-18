@@ -13,7 +13,7 @@ from rich.theme import Theme
 
 APP_NAME = "mactuner"
 APP_TAGLINE = "Mac System Health Inspector"
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.2.0"
 
 
 # ── Color palette ─────────────────────────────────────────────────────────────

@@ -167,7 +167,7 @@ def _execute_fixes(
     for idx, result in enumerate(selected, 1):
         _print_fix_header(console, result, idx, len(selected))
 
-        if confirm_each:
+        if confirm_each and result.fix_level in ("guided", "instructions"):
             try:
                 confirmed = click.confirm(
                     "  Apply?", default=False, prompt_suffix=" › "
