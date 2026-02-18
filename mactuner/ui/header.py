@@ -1,91 +1,116 @@
 """
 MacTuner header banner.
 
-Renders a rich Panel with system identity:
-  - Tool name + tagline + version
-  - Mac model + macOS version + architecture
-  - Scan start timestamp
+Two-column Claude Code-style panel:
+  Left  — welcome greeting, beagle character art, system identity
+  Right — tips for getting started, last scan info
 """
 
-from datetime import datetime
+import getpass
 
-from rich.align import Align
 from rich.console import Console
 from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 
 from mactuner.system_info import get_system_info
-from mactuner.ui.theme import (
-    APP_NAME,
-    APP_TAGLINE,
-    APP_VERSION,
-    COLOR_BRAND,
-    COLOR_DIM,
-    COLOR_INFO,
-    MACTUNER_THEME,
-)
+from mactuner.ui.theme import COLOR_BRAND, MACTUNER_THEME
 
 
 def build_header() -> Panel:
     """
-    Return a rich Panel for the top of the scan.
+    Return a two-column Rich Panel (Claude Code style).
 
-    Example output:
-    ╭──────────────────────────────────────────────────────────────╮
-    │         mactuner  ·  Mac System Health Inspector  ·  v1.0   │
-    │         MacBook Pro (M3 Max)  ·  macOS Sequoia 15.3.1       │
-    │         Scan started: Monday 17 Feb 2026  ·  10:41 AM       │
-    ╰──────────────────────────────────────────────────────────────╯
+    Left column : greeting + beagle art + system identity
+    Right column: tips for getting started + last scan info
     """
     info = get_system_info()
-    now = datetime.now()
-    timestamp = now.strftime("%A %d %b %Y  ·  %I:%M %p").lstrip("0")
 
-    # Line 1 — tool identity
-    title_text = Text()
-    title_text.append(f"  {APP_NAME}  ", style=f"bold {COLOR_BRAND}")
-    title_text.append("·", style=COLOR_DIM)
-    title_text.append(f"  {APP_TAGLINE}  ", style="bold white")
-    title_text.append("·", style=COLOR_DIM)
-    title_text.append(f"  v{APP_VERSION}", style=COLOR_DIM)
+    table = Table(box=None, show_header=False, padding=(0, 2), expand=True)
+    table.add_column(width=28, justify="center")
+    table.add_column(justify="left")
 
-    # Line 2 — hardware identity
-    macos_line = Text()
-    model = info["model_name"]
-    arch = info["architecture"]
-    macos_ver = info["macos_version"]
-    macos_name = info["macos_name"]
-    ram = info["ram_gb"]
+    table.add_row(_build_left(info), _build_right())
 
-    # Build "macOS Sequoia 15.3" or just "macOS 26.3" for unknown names
+    return Panel(table, border_style=COLOR_BRAND)
+
+
+def _build_left(info: dict) -> Text:
+    """Left column: greeting + beagle art + macOS/hardware identity."""
+    username_raw = getpass.getuser()
+    display_name = username_raw.replace("_", " ").replace(".", " ").split()[0].capitalize()
+
+    macos_name = info.get("macos_name", "")
+    macos_ver  = info.get("macos_version", "")
     if macos_name and not macos_name.isdigit():
         macos_display = f"macOS {macos_name} {macos_ver}"
     else:
         macos_display = f"macOS {macos_ver}"
 
-    macos_line.append(f"  {model}", style="bold white")
-    macos_line.append("  ·  ", style=COLOR_DIM)
-    macos_line.append(macos_display, style=f"bold {COLOR_INFO}")
-    macos_line.append("  ·  ", style=COLOR_DIM)
-    macos_line.append(f"{arch}", style=COLOR_DIM)
-    if ram:
-        macos_line.append(f"  ·  {ram} GB RAM", style=COLOR_DIM)
+    model = info.get("model_name", "Mac")
 
-    # Line 3 — timestamp
-    time_text = Text()
-    time_text.append(f"  Scan started: {timestamp}  ", style=COLOR_DIM)
+    t = Text(justify="center")
+    t.append("\n")
+    t.append(f"Welcome back, {display_name}!", style="bold white")
+    t.append("\n\n")
+    _append_beagle(t)
+    t.append("\n")
+    t.append(macos_display, style="dim")
+    t.append("\n")
+    t.append(model, style="dim")
+    t.append("\n")
+    return t
 
-    body = Text.assemble(
-        title_text, "\n",
-        macos_line, "\n",
-        time_text,
-    )
 
-    return Panel(
-        Align.center(body),
-        border_style=COLOR_BRAND,
-        padding=(0, 2),
-    )
+def _append_beagle(t: Text) -> None:
+    """Append beagle block-character art with Rich color spans."""
+    E = "#4A2800"   # ears  — dark brown
+    H = "#9B6B3A"   # head  — medium brown
+    I = "#F0F0F0"   # eyes  — near-white
+    N = "#2C1500"   # nose  — near-black
+    B = "#C48B4A"   # body  — golden tan
+    L = "#9B6B3A"   # legs  — same as head
+
+    def row(*spans: tuple[str, str]) -> None:
+        for color, chars in spans:
+            t.append(chars, style=color)
+        t.append("\n")
+
+    row((E, "  ▖         ▗"))
+    row((E, "  ▐         ▌"))
+    row((E, "  ▐"), (H, "  ▄▄▄▄▄"), (E, "  ▌"))
+    row((H, "  ▀██████████▀"))
+    row((H, "     "), (I, "◉"), (H, "   "), (I, "◉"))
+    row((H, "      "), (N, "▾▾▾"))
+    row((B, "     ▄████▄"))
+    row((L, "   ▗▌      ▌▖"))
+    row((L, "   ▀▘      ▝▀"))
+
+
+def _build_right() -> Text:
+    """Right column: tips for getting started + last scan info."""
+    t = Text(justify="left")
+    t.append("\n")
+    t.append("Tips for getting started", style="bold white")
+    t.append("\n\n")
+
+    tips = [
+        ("--fix",             " after the scan to repair issues interactively"),
+        ("--only",            " security,disk  for a targeted category scan"),
+        ("--explain",         "  adds deeper context to every finding"),
+        ("--show-completion", "  to enable tab completion"),
+    ]
+    for flag, desc in tips:
+        t.append("  • mactuner ", style="dim white")
+        t.append(flag, style="bold white")
+        t.append(desc + "\n", style="dim white")
+
+    t.append("\n")
+    t.append("  " + "─" * 32 + "\n", style="dim white")
+    t.append("\n")
+    t.append("  Last scan\n", style="bold white")
+    t.append("  No recent scans\n", style="dim white")
+    return t
 
 
 def print_header(console: Console | None = None) -> None:

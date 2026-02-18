@@ -72,6 +72,13 @@ console = Console(theme=MACTUNER_THEME)
     default=False,
     help="Scan shell config files for accidentally committed credentials.",
 )
+# Shell completion
+@click.option(
+    "--show-completion",
+    is_flag=True,
+    default=False,
+    help="Print shell completion setup instructions and exit.",
+)
 def cli(
     profile: Optional[str],
     only: Optional[str],
@@ -84,6 +91,7 @@ def cli(
     auto: bool,
     fail_on_critical: bool,
     check_shell_secrets: bool,
+    show_completion: bool,
 ) -> None:
     """Mac System Health Inspector & Tuner.
 
@@ -95,6 +103,11 @@ def cli(
       NO_COLOR=1   Disable all colour output (ANSI-stripped plain text).
       TERM=dumb    Alternative way to suppress colour in some terminals.
     """
+    # ── Shell completion ──────────────────────────────────────────────────────
+    if show_completion:
+        _print_completion_help(console)
+        return
+
     # ── Header ────────────────────────────────────────────────────────────────
     if not quiet and not as_json:
         print_header(console)
@@ -160,6 +173,46 @@ def cli(
         criticals = sum(1 for r in results if r.status == "critical")
         if criticals:
             raise SystemExit(2)
+
+
+# ── Shell completion help ─────────────────────────────────────────────────────
+
+def _print_completion_help(console: Console) -> None:
+    """Print shell completion setup instructions and exit."""
+    import os
+    from rich.panel import Panel
+    from rich.text import Text
+    from mactuner.ui.theme import COLOR_BRAND
+
+    shell = os.environ.get("SHELL", "").split("/")[-1]
+
+    t = Text()
+    t.append("\n  Shell completion for mactuner\n\n", style="bold white")
+
+    # Primary shell (detected)
+    if shell in ("zsh", ""):
+        primary, primary_rc   = "zsh",  "~/.zshrc"
+        secondary, secondary_rc = "bash", "~/.bash_profile"
+    elif shell == "bash":
+        primary, primary_rc   = "bash", "~/.bash_profile"
+        secondary, secondary_rc = "zsh",  "~/.zshrc"
+    else:
+        primary, primary_rc   = shell, f"~/.{shell}rc"
+        secondary, secondary_rc = "zsh", "~/.zshrc"
+
+    t.append(f"  Add this to your {primary_rc}:\n", style="white")
+    t.append(
+        f'    eval "$(_MACTUNER_COMPLETE={primary}_source mactuner)"\n\n',
+        style="dim white",
+    )
+    t.append(f"  For {secondary}, add to {secondary_rc}:\n", style="dim white")
+    t.append(
+        f'    eval "$(_MACTUNER_COMPLETE={secondary}_source mactuner)"\n\n',
+        style="dim white",
+    )
+    t.append(f"  Then restart your terminal or run: source {primary_rc}\n", style="dim white")
+
+    console.print(Panel(t, border_style=COLOR_BRAND))
 
 
 # ── MDM enrollment advisory ───────────────────────────────────────────────────
