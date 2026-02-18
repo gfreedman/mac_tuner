@@ -1,0 +1,271 @@
+"""
+MacTuner — entry point and orchestrator.
+
+CLI flags, scan loop, result collection, report dispatch.
+"""
+
+from typing import Optional
+
+import click
+from rich.console import Console
+
+from mactuner import __version__
+from mactuner.checks.base import BaseCheck, CheckResult, calculate_health_score
+from mactuner.ui.header import print_header
+from mactuner.ui.theme import MACTUNER_THEME
+
+
+# ── Console (shared across the tool) ─────────────────────────────────────────
+
+console = Console(theme=MACTUNER_THEME)
+
+
+# ── CLI ───────────────────────────────────────────────────────────────────────
+
+@click.command(name="mactuner", context_settings={"help_option_names": ["-h", "--help"]})
+@click.version_option(__version__, "-V", "--version", prog_name="mactuner")
+# Profiles
+@click.option(
+    "--profile",
+    type=click.Choice(["developer", "creative", "standard"], case_sensitive=False),
+    default=None,
+    help="Force a profile (auto-detected by default).",
+)
+# Category filters
+@click.option(
+    "--only",
+    metavar="CATS",
+    default=None,
+    help="Comma-separated categories to run, e.g. homebrew,disk,security",
+)
+@click.option(
+    "--skip",
+    metavar="CATS",
+    default=None,
+    help="Comma-separated categories to skip.",
+)
+# Output modes
+@click.option("--issues-only", is_flag=True, default=False, help="Show only warnings and criticals.")
+@click.option("--explain", is_flag=True, default=False, help="Extra educational context for every finding.")
+@click.option("--json", "as_json", is_flag=True, default=False, help="Output results as JSON.")
+@click.option("--quiet", is_flag=True, default=False, help="Print only health score and critical count.")
+# Fix modes
+@click.option("--fix", is_flag=True, default=False, help="Enter interactive fix mode after scan.")
+@click.option("--auto", is_flag=True, default=False, help="With --fix: apply safe AUTO fixes without prompting.")
+# Opt-in checks
+@click.option(
+    "--check-shell-secrets",
+    is_flag=True,
+    default=False,
+    help="Scan shell config files for accidentally committed credentials.",
+)
+def cli(
+    profile: Optional[str],
+    only: Optional[str],
+    skip: Optional[str],
+    issues_only: bool,
+    explain: bool,
+    as_json: bool,
+    quiet: bool,
+    fix: bool,
+    auto: bool,
+    check_shell_secrets: bool,
+) -> None:
+    """Mac System Health Inspector & Tuner.
+
+    Run a full narrated audit of your Mac. Explains every finding.
+    Safe, read-only by default — use --fix to apply changes.
+    """
+    # ── Header ────────────────────────────────────────────────────────────────
+    if not quiet and not as_json:
+        print_header(console)
+        console.print()
+
+    # ── Resolve profile ───────────────────────────────────────────────────────
+    resolved_profile = _resolve_profile(profile)
+
+    # ── Resolve category filters ──────────────────────────────────────────────
+    only_cats = {c.strip().lower() for c in only.split(",")} if only else None
+    skip_cats = {c.strip().lower() for c in skip.split(",")} if skip else set()
+
+    # ── Collect checks ────────────────────────────────────────────────────────
+    all_checks = _collect_checks(
+        profile=resolved_profile,
+        only_cats=only_cats,
+        skip_cats=skip_cats,
+        check_shell_secrets=check_shell_secrets,
+    )
+
+    if not all_checks:
+        console.print("[dim]No checks match the specified filters.[/dim]")
+        console.print()
+        return
+
+    # ── Run checks (narrated) ─────────────────────────────────────────────────
+    results = _run_checks(all_checks, quiet=quiet, as_json=as_json)
+
+    # ── Output ────────────────────────────────────────────────────────────────
+    if as_json:
+        _output_json(results)
+        return
+
+    score = calculate_health_score(results)
+
+    if quiet:
+        criticals = sum(1 for r in results if r.status == "critical")
+        console.print(f"Health score: {score}/100  |  Critical: {criticals}")
+        return
+
+    from mactuner.ui.report import print_report
+    print_report(results, console, issues_only=issues_only, explain=explain)
+
+    # ── Fix mode ──────────────────────────────────────────────────────────────
+    if fix:
+        from mactuner.fixer.runner import run_fix_session
+        run_fix_session(results, console, auto=auto)
+
+
+# ── Profile resolution ────────────────────────────────────────────────────────
+
+def _resolve_profile(requested: Optional[str]) -> str:
+    """
+    Auto-detect profile if not specified.
+
+    developer  — Homebrew is installed
+    standard   — no Homebrew / MacPorts
+    creative   — force with --profile creative
+    """
+    if requested:
+        return requested.lower()
+
+    import shutil
+    if shutil.which("brew"):
+        return "developer"
+    return "standard"
+
+
+# ── Check registry ────────────────────────────────────────────────────────────
+
+def _collect_checks(
+    profile: str,
+    only_cats: Optional[set],
+    skip_cats: set,
+    check_shell_secrets: bool,
+) -> list[BaseCheck]:
+    """
+    Return instantiated check objects to run, in display order.
+
+    Category order matches the report sections:
+      system → security → homebrew → disk
+    """
+    from mactuner.checks.apps import ALL_CHECKS as APPS
+    from mactuner.checks.dev_env import ALL_CHECKS as DEV_ENV
+    from mactuner.checks.disk import ALL_CHECKS as DISK
+    from mactuner.checks.hardware import ALL_CHECKS as HARDWARE
+    from mactuner.checks.homebrew import ALL_CHECKS as HOMEBREW
+    from mactuner.checks.memory import ALL_CHECKS as MEMORY
+    from mactuner.checks.network import ALL_CHECKS as NETWORK
+    from mactuner.checks.privacy import ALL_CHECKS as PRIVACY
+    from mactuner.checks.security import ALL_CHECKS as SECURITY
+    from mactuner.checks.system import ALL_CHECKS as SYSTEM
+
+    # Ordered for logical report flow (matches category panel order in report.py)
+    all_classes = (
+        SYSTEM + SECURITY + PRIVACY
+        + HOMEBREW + DISK + HARDWARE
+        + MEMORY + NETWORK + DEV_ENV + APPS
+    )
+
+    # Opt-in checks appended after standard suite
+    if check_shell_secrets:
+        from mactuner.checks.secrets import ALL_CHECKS as SECRETS
+        all_classes = all_classes + SECRETS
+
+    checks = [cls() for cls in all_classes]
+
+    # Category filters
+    if only_cats:
+        checks = [c for c in checks if c.category in only_cats]
+    if skip_cats:
+        checks = [c for c in checks if c.category not in skip_cats]
+
+    # Profile filter
+    checks = [
+        c for c in checks
+        if profile in getattr(c, "profile_tags", [profile])
+    ]
+
+    return checks
+
+
+# ── Scan loop ─────────────────────────────────────────────────────────────────
+
+def _run_checks(checks: list, quiet: bool, as_json: bool) -> list[CheckResult]:
+    """
+    Execute every check with live narration and progress bar.
+
+    In quiet/JSON mode the narrator is bypassed and checks run silently.
+    """
+    from mactuner.ui.narrator import ScanNarrator
+
+    results: list[CheckResult] = []
+
+    if quiet or as_json:
+        for check in checks:
+            results.append(check.execute())
+        return results
+
+    with ScanNarrator(console, total=len(checks)) as narrator:
+        narrator.print_scan_header()
+        for check in checks:
+            narrator.start_check(check)
+            result = check.execute()
+            narrator.finish_check(result)
+            results.append(result)
+
+    return results
+
+
+
+
+# ── JSON output ───────────────────────────────────────────────────────────────
+
+def _output_json(results: list[CheckResult]) -> None:
+    import dataclasses
+    import json
+    from datetime import datetime, timezone
+
+    from mactuner.system_info import get_system_info
+
+    info = get_system_info()
+
+    counts: dict[str, int] = {}
+    for r in results:
+        counts[r.status] = counts.get(r.status, 0) + 1
+
+    serialised = []
+    for r in results:
+        d = dataclasses.asdict(r)
+        d["min_macos"] = list(d["min_macos"])  # tuple → list for JSON
+        serialised.append(d)
+
+    payload = {
+        "mactuner_version": __version__,
+        "scan_time": datetime.now(timezone.utc).isoformat(),
+        "system": {
+            "macos_version": info["macos_version"],
+            "architecture": info["architecture"],
+            "model": info["model_name"],
+        },
+        "score": calculate_health_score(results),
+        "summary": counts,
+        "results": serialised,
+    }
+
+    click.echo(json.dumps(payload, indent=2))
+
+
+# ── Entry ─────────────────────────────────────────────────────────────────────
+
+if __name__ == "__main__":
+    cli()

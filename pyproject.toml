@@ -1,0 +1,36 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mactuner"
+version = "1.0.0"
+description = "Mac System Health Inspector & Tuner — narrated, educational, beautiful"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "MacTuner" }]
+keywords = ["macos", "system", "health", "audit", "terminal"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: MacOS",
+    "Environment :: Console",
+]
+dependencies = [
+    "rich>=13.7.0",
+    "click>=8.1.7",
+    "questionary>=2.0.1",
+]
+
+[project.scripts]
+mactuner = "mactuner.main:cli"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-mock>=3.12"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v"
+
+[tool.hatch.build.targets.wheel]
+packages = ["mactuner"]
