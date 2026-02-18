@@ -48,7 +48,7 @@ pip3 install --user mactuner
 **From source:**
 
 ```bash
-git clone https://github.com/your-org/mactuner
+git clone https://github.com/gfreedman/mac_tuner
 cd mactuner
 bash install.sh
 ```
@@ -174,7 +174,7 @@ Override with `--profile developer/creative/standard`.
 
 ## Requirements
 
-- macOS 13 Ventura, 14 Sonoma, or 15 Sequoia
+- macOS 13 Ventura or later (including pre-release versions)
 - Intel or Apple Silicon
 - Python 3.10+
 - Homebrew optional (checks skip gracefully if absent)

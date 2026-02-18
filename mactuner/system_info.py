@@ -7,6 +7,7 @@ import platform
 import subprocess
 import shutil
 from functools import lru_cache
+from typing import Any
 
 
 # Module-level constants — imported by every check
@@ -35,7 +36,7 @@ def _run(cmd: list[str], timeout: int = 5) -> str:
 
 
 @lru_cache(maxsize=1)
-def get_system_info() -> dict:
+def get_system_info() -> dict[str, Any]:
     """
     Return a dict describing this Mac.
 

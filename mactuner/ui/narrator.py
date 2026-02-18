@@ -101,7 +101,7 @@ class ScanNarrator:
 
     # ── Internal rendering ────────────────────────────────────────────────────
 
-    def _render_running(self):
+    def _render_running(self) -> Group:
         """
         Live panel shown while a check is in progress:
 
@@ -142,7 +142,7 @@ class ScanNarrator:
 # ── Module-level helpers ──────────────────────────────────────────────────────
 
 
-def _idle_bar(completed: int, total: int):
+def _idle_bar(completed: int, total: int) -> Padding:
     """Progress bar with blank line above (shown between checks)."""
     return Padding(render_progress(completed, total), pad=(1, 0, 0, 0))
 

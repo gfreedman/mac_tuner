@@ -15,6 +15,8 @@ Fix level behaviour in the menu:
 
 from __future__ import annotations
 
+import types
+
 from rich.console import Console
 from rich.padding import Padding
 from rich.text import Text
@@ -211,7 +213,7 @@ def _get_fixable(results: list[CheckResult]) -> list[CheckResult]:
     return sorted(fixable, key=lambda r: _SEVERITY_ORDER.get(r.status, 9))
 
 
-def _build_choices(fixable: list[CheckResult], questionary) -> list:
+def _build_choices(fixable: list[CheckResult], questionary: types.ModuleType) -> list:
     """Build questionary Choice objects, pre-selecting safe AUTO fixes."""
     choices = []
     for r in fixable:
@@ -231,7 +233,7 @@ def _build_choices(fixable: list[CheckResult], questionary) -> list:
     return choices
 
 
-def _questionary_style(questionary):
+def _questionary_style(questionary: types.ModuleType):
     """Consistent colour style for the questionary prompt."""
     return questionary.Style([
         ("qmark",       "fg:#61afef bold"),
