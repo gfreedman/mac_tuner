@@ -16,7 +16,6 @@ Fix levels:
 
 from __future__ import annotations
 
-import shlex
 import subprocess
 
 from rich.console import Console
@@ -30,8 +29,9 @@ def run_auto_fix(result: CheckResult, console: Console) -> bool:
     """
     Run result.fix_command in a shell with live output streaming.
 
-    fix_command is always set by us in check definitions (not user input),
-    so shell=True is acceptable here.
+    fix_command is always set by us in check definitions (not user input).
+    shell=True is used so that ~ expands and glob patterns (e.g. rm -rf ~/Logs/*)
+    are resolved by the shell before the command runs.
     """
     if not result.fix_command:
         console.print("  [red]No fix command defined.[/red]\n")
@@ -41,11 +41,9 @@ def run_auto_fix(result: CheckResult, console: Console) -> bool:
     console.print()
 
     try:
-        # shlex.split converts the stored string command into a proper argument
-        # list so we can use shell=False (avoids shell injection).
         proc = subprocess.Popen(
-            shlex.split(result.fix_command),
-            shell=False,
+            result.fix_command,
+            shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,

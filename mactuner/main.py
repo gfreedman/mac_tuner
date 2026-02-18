@@ -80,6 +80,7 @@ def cli(
     if not quiet and not as_json:
         print_header(console)
         console.print()
+        _warn_if_mdm_enrolled(console)
 
     # ── Resolve profile ───────────────────────────────────────────────────────
     resolved_profile = _resolve_profile(profile)
@@ -123,6 +124,44 @@ def cli(
     if fix:
         from mactuner.fixer.runner import run_fix_session
         run_fix_session(results, console, auto=auto)
+
+
+# ── MDM enrollment advisory ───────────────────────────────────────────────────
+
+def _warn_if_mdm_enrolled(console: Console) -> None:
+    """
+    Detect MDM enrollment and print a brief advisory if the Mac is managed.
+
+    On MDM-enrolled Macs, IT policy enforces many settings that mactuner
+    may flag (FileVault, profiles, auto-updates, sharing). Alerting the user
+    prevents false-alarm panic over findings they cannot and should not change.
+    """
+    import subprocess
+    try:
+        r = subprocess.run(
+            ["profiles", "status", "-type", "enrollment"],
+            capture_output=True, text=True, timeout=5, check=False,
+        )
+        output = (r.stdout + r.stderr).lower()
+        enrolled = "enrolled via dep" in output or "mdm enrollment: yes" in output
+    except Exception:
+        return
+
+    if enrolled:
+        from rich.panel import Panel
+        from rich.text import Text
+        note = Text()
+        note.append("  This Mac appears to be MDM-enrolled.\n", style="bold yellow")
+        note.append(
+            "  Some settings (FileVault, auto-updates, profiles, sharing) may be\n"
+            "  enforced by your organization. Warnings about these may reflect IT\n"
+            "  policy rather than security issues — check with your administrator.",
+            style="dim white",
+        )
+        console.print(
+            Panel(note, title="[yellow]Managed Device[/yellow]", border_style="yellow")
+        )
+        console.print()
 
 
 # ── Profile resolution ────────────────────────────────────────────────────────

@@ -453,14 +453,14 @@ class ActivationLockCheck(BaseCheck):
     category_icon = "🛡️ "
 
     scan_description = (
-        "Checking Activation Lock status — on a used/secondhand Mac, if a "
-        "previous owner's Activation Lock is still on, they can remotely "
-        "wipe or lock your device."
+        "Checking if Find My / Activation Lock is configured — on a secondhand Mac, "
+        "a previous owner's lock still active means they can remotely wipe or lock it."
     )
     finding_explanation = (
-        "Activation Lock ties a Mac to an Apple ID. If a previous owner's "
-        "lock is still active and you don't have their credentials, you could "
-        "lose access to the machine remotely."
+        "Activation Lock ties a Mac to an Apple ID via Find My. If a previous owner's "
+        "lock is still active and you don't have their credentials, you could lose access "
+        "to the machine remotely. Note: on MDM-enrolled devices this NVRAM token may not "
+        "accurately reflect Activation Lock status — check with your IT administrator."
     )
     recommendation = (
         "If this is a secondhand Mac, confirm the previous owner signed out of "
@@ -490,15 +490,16 @@ class ActivationLockCheck(BaseCheck):
             )
 
         token = stdout.strip()
-        # A very long token means Find My is set up
+        # A long token indicates Find My is configured, which implies Activation Lock
+        # is likely active. We can't confirm definitively from NVRAM alone.
         if len(token) > 40:
             return self._pass(
-                "Activation Lock is active (Find My is configured)",
+                "Find My is configured — Activation Lock is likely active",
                 data={"find_my_configured": True},
             )
 
         return self._info(
-            "Activation Lock token present but minimal — verify in System Settings → Apple ID",
+            "Find My token present but minimal — verify in System Settings → Apple ID",
             data={"token_length": len(token)},
         )
 
@@ -558,6 +559,103 @@ class MDMProfilesCheck(BaseCheck):
         )
 
 
+class SystemRootCACheck(BaseCheck):
+    id = "system_root_cas"
+    name = "System Root Certificates"
+    category = "security"
+    category_icon = "🛡️ "
+
+    scan_description = (
+        "Checking the System keychain for unexpected root certificates — "
+        "a rogue root CA lets an attacker silently decrypt all HTTPS traffic."
+    )
+    finding_explanation = (
+        "Root certificates in the System keychain are trusted to verify any website's "
+        "HTTPS certificate. Enterprise tools (Zscaler, Cisco Umbrella, Palo Alto) and "
+        "some malware install root CAs here to inspect or forge encrypted traffic. "
+        "On a personal Mac, any unexpected root CA is a serious concern."
+    )
+    recommendation = (
+        "Review certificates in Keychain Access → System keychain → Certificates. "
+        "Remove any you don't recognize or didn't intentionally install. "
+        "Or run: security find-certificate -a /Library/Keychains/System.keychain"
+    )
+    fix_level = "instructions"
+    fix_description = "Audit system root certificates via Keychain Access"
+    fix_steps = [
+        "Open Keychain Access (search Spotlight)",
+        "Select 'System' in the left sidebar, then click 'Certificates'",
+        "Look for certificates with unknown issuers or blue trust overrides",
+        "Delete certificates you don't recognize (requires admin password)",
+    ]
+    fix_reversible = True
+    fix_time_estimate = "~10 minutes"
+
+    # Known enterprise MITM / traffic inspection tool indicators
+    _MITM_INDICATORS = [
+        "zscaler", "cisco umbrella", "palo alto", "forcepoint",
+        "charles proxy", "burp suite", "fiddler", "mitmproxy",
+        "netskope", "iboss", "lightspeed", "smoothwall", "squid",
+    ]
+
+    def run(self) -> CheckResult:
+        rc, out, _ = self.shell(
+            ["security", "find-certificate", "-a", "/Library/Keychains/System.keychain"]
+        )
+
+        if rc != 0 or not out.strip():
+            return self._info(
+                "Could not read System keychain certificates "
+                "(may require Full Disk Access)"
+            )
+
+        # Extract certificate common names from "alis" attribute lines
+        # Format: "alis"<blob>="Certificate Name"
+        names: list[str] = []
+        for line in out.splitlines():
+            line = line.strip()
+            if '"alis"<blob>=' in line:
+                try:
+                    name = line.split('="', 1)[1].rstrip('"')
+                    names.append(name)
+                except IndexError:
+                    continue
+
+        if not names:
+            return self._info("System keychain present (could not parse certificate names)")
+
+        # Check for known traffic inspection / MITM tool certificates
+        mitm_found: list[str] = []
+        for name in names:
+            name_lower = name.lower()
+            for indicator in self._MITM_INDICATORS:
+                if indicator in name_lower:
+                    mitm_found.append(name)
+                    break
+
+        count = len(names)
+
+        if mitm_found:
+            return self._warning(
+                f"Traffic inspection certificate detected: "
+                f"{', '.join(mitm_found[:2])} — HTTPS traffic may be monitored",
+                data={"cert_count": count, "mitm_certs": mitm_found},
+            )
+
+        # macOS ships with ~170 root CAs; flag notably higher counts for awareness
+        if count > 200:
+            return self._info(
+                f"{count} root certificates in System keychain "
+                f"(~{count - 170} beyond typical Apple defaults — review if unexpected)",
+                data={"cert_count": count},
+            )
+
+        return self._pass(
+            f"{count} root certificate{'s' if count != 1 else ''} in System keychain (appears normal)",
+            data={"cert_count": count},
+        )
+
+
 # ── Public list for main.py ───────────────────────────────────────────────────
 
 ALL_CHECKS: list[type[BaseCheck]] = [
@@ -569,4 +667,5 @@ ALL_CHECKS: list[type[BaseCheck]] = [
     SharingServicesCheck,
     ActivationLockCheck,
     MDMProfilesCheck,
+    SystemRootCACheck,
 ]

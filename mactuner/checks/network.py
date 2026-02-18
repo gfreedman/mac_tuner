@@ -383,8 +383,24 @@ class SavedWifiCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
-        # Try en0 first, then en1
-        for iface in ("en0", "en1"):
+        # Find the actual Wi-Fi interface name rather than assuming en0/en1.
+        # 'networksetup -listallhardwareports' reliably maps human names to BSDs.
+        wifi_iface: str | None = None
+        rc_list, list_out, _ = self.shell(["networksetup", "-listallhardwareports"])
+        if rc_list == 0 and list_out:
+            lines = list_out.splitlines()
+            for i, line in enumerate(lines):
+                if "wi-fi" in line.lower() or "airport" in line.lower():
+                    for j in range(i + 1, min(i + 4, len(lines))):
+                        if "Device:" in lines[j]:
+                            wifi_iface = lines[j].split(":", 1)[-1].strip()
+                            break
+                    if wifi_iface:
+                        break
+
+        # Fall back to en0/en1 if discovery fails
+        candidates = [wifi_iface] if wifi_iface else ["en0", "en1"]
+        for iface in candidates:
             rc, out, _ = self.shell(
                 ["networksetup", "-listpreferredwirelessnetworks", iface]
             )
@@ -417,6 +433,174 @@ class SavedWifiCheck(BaseCheck):
         )
 
 
+# ── Bluetooth ─────────────────────────────────────────────────────────────────
+
+class BluetoothCheck(BaseCheck):
+    id = "bluetooth"
+    name = "Bluetooth"
+    category = "network"
+    category_icon = "📡"
+
+    scan_description = (
+        "Checking Bluetooth status — Bluetooth left on in public spaces "
+        "can expose your device to proximity-based attacks and passive tracking."
+    )
+    finding_explanation = (
+        "Bluetooth on its own is low risk, but 'Always Discoverable' mode lets "
+        "any nearby device see your Mac by name, enabling tracking across locations "
+        "and exposure to Bluetooth-based exploits. Turn it off when not in use."
+    )
+    recommendation = (
+        "Disable 'Always Discoverable' in System Settings → Bluetooth → Advanced. "
+        "Turn Bluetooth off entirely when in public spaces where it isn't needed."
+    )
+    fix_level = "guided"
+    fix_description = "Review Bluetooth settings"
+    fix_url = "x-apple.systempreferences:com.apple.BluetoothSettings"
+    fix_reversible = True
+    fix_time_estimate = "~30 seconds"
+
+    def run(self) -> CheckResult:
+        # ControllerPowerState: 1 = on, 0 = off
+        rc, out, _ = self.shell(
+            ["defaults", "read", "/Library/Preferences/com.apple.Bluetooth",
+             "ControllerPowerState"]
+        )
+        if rc == 0 and out.strip() == "0":
+            return self._pass("Bluetooth is off")
+
+        # Bluetooth is on — check if 'Always Discoverable' is set
+        rc2, out2, _ = self.shell(["system_profiler", "SPBluetoothDataType"], timeout=8)
+        if rc2 == 0 and out2:
+            for line in out2.splitlines():
+                if "discoverable:" in line.lower():
+                    if "on" in line.lower().split("discoverable:")[-1]:
+                        return self._warning(
+                            "Bluetooth is on and set to Always Discoverable",
+                            data={"discoverable": True},
+                        )
+                    break  # found the line, not 'on'
+
+        return self._info(
+            "Bluetooth is on — turn off when not needed in public spaces",
+            data={"bluetooth_on": True},
+        )
+
+
+# ── Listening ports ───────────────────────────────────────────────────────────
+
+class ListeningPortsCheck(BaseCheck):
+    id = "listening_ports"
+    name = "Listening Network Ports"
+    category = "network"
+    category_icon = "🔌"
+
+    scan_description = (
+        "Checking for services listening on network ports — "
+        "each open port is a potential entry point for network-based attacks."
+    )
+    finding_explanation = (
+        "Services that bind to network ports accept incoming connections. "
+        "Beyond expected system services, unexpected listeners could indicate "
+        "software you forgot about, development servers left running, or malicious processes."
+    )
+    recommendation = (
+        "Run 'lsof -i TCP -sTCP:LISTEN -n -P' to see all listeners. "
+        "Identify each process and disable or uninstall anything unexpected."
+    )
+    fix_level = "instructions"
+    fix_description = "Identify and disable unexpected listening services"
+    fix_steps = [
+        "Run: lsof -i TCP -sTCP:LISTEN -n -P",
+        "Identify each process by name and port number",
+        "Disable unexpected services in System Settings → General → Sharing",
+        "Quit or uninstall software you don't recognize",
+    ]
+    fix_reversible = True
+    fix_time_estimate = "10–30 minutes"
+
+    # Well-known system ports that don't warrant a flag
+    _EXPECTED_PORTS = {
+        22,    # SSH (Remote Login)
+        88,    # Kerberos
+        443,   # HTTPS system services
+        445,   # SMB (File Sharing)
+        548,   # AFP (File Sharing)
+        631,   # CUPS printing
+        3283,  # Apple Remote Desktop
+        5900,  # VNC (Screen Sharing)
+        7000,  # AirPlay receiver
+        7100,  # Font server
+        8009,  # AirPlay
+    }
+
+    def run(self) -> CheckResult:
+        rc, out, _ = self.shell(
+            ["lsof", "-i", "TCP", "-sTCP:LISTEN", "-n", "-P"], timeout=12
+        )
+
+        if rc != 0 or not out:
+            return self._info("Could not enumerate listening ports")
+
+        # Parse: COMMAND  PID  USER  FD  TYPE  DEVICE  SIZE  NODE  NAME
+        listeners: dict[int, list[str]] = {}
+        for line in out.splitlines()[1:]:  # skip header
+            parts = line.split()
+            if len(parts) < 9:
+                continue
+            command = parts[0]
+            name_field = parts[-1]  # e.g. "*:5900" or "127.0.0.1:631"
+            if ":" not in name_field:
+                continue
+            port_str = name_field.rsplit(":", 1)[-1]
+            try:
+                port = int(port_str)
+            except ValueError:
+                continue
+            # Ignore ephemeral/high ports (≥49152)
+            if port >= 49152:
+                continue
+            if port not in listeners:
+                listeners[port] = []
+            if command not in listeners[port]:
+                listeners[port].append(command)
+
+        if not listeners:
+            return self._pass("No services listening on network ports")
+
+        unexpected = {
+            port: procs
+            for port, procs in listeners.items()
+            if port not in self._EXPECTED_PORTS
+        }
+        total = len(listeners)
+
+        if not unexpected:
+            return self._pass(
+                f"{total} system port{'s' if total != 1 else ''} listening (all expected)",
+                data={"port_count": total},
+            )
+
+        examples = [
+            f":{port} ({', '.join(procs[:2])})"
+            for port, procs in sorted(unexpected.items())[:5]
+        ]
+        n = len(unexpected)
+
+        if n > 5:
+            return self._warning(
+                f"{n} unexpected listening port{'s' if n != 1 else ''}: "
+                f"{', '.join(examples)}{'…' if n > 5 else ''}",
+                data={"unexpected_ports": {str(k): v for k, v in unexpected.items()},
+                      "total": total},
+            )
+        return self._info(
+            f"{n} non-system port{'s' if n != 1 else ''} listening: {', '.join(examples)}",
+            data={"unexpected_ports": {str(k): v for k, v in unexpected.items()},
+                  "total": total},
+        )
+
+
 # ── Export ────────────────────────────────────────────────────────────────────
 
 ALL_CHECKS = [
@@ -427,4 +611,6 @@ ALL_CHECKS = [
     DNSCheck,
     ProxyCheck,
     SavedWifiCheck,
+    BluetoothCheck,
+    ListeningPortsCheck,
 ]

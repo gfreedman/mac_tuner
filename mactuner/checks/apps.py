@@ -4,7 +4,7 @@ App-level checks.
 Checks:
   - AppStoreUpdatesCheck — outdated App Store apps (requires mas CLI)
   - iCloudStatusCheck    — iCloud account sign-in and Drive availability
-  - LoginItemsCheck      — startup items count via launchctl
+  - LoginItemsCheck      — startup items count via System Events (osascript)
 """
 
 from __future__ import annotations
@@ -138,10 +138,10 @@ class LoginItemsCheck(BaseCheck):
         "each one adds to boot time and silently consumes RAM in the background."
     )
     finding_explanation = (
-        "Login items are apps and agents that launch automatically when you log in. "
+        "Login items are apps that launch automatically when you log in. "
         "Many apps add themselves without obvious disclosure — Dropbox, Google Drive, "
-        "Zoom, browser helpers, update daemons, and vendor software are common culprits. "
-        "A Mac with 20+ login items can add 30–60 seconds to startup time."
+        "Zoom, browser helpers, and update daemons are common culprits. "
+        "Too many login items slow startup and consume background RAM."
     )
     recommendation = (
         "Review System Settings → General → Login Items & Extensions. "
@@ -155,47 +155,46 @@ class LoginItemsCheck(BaseCheck):
     fix_reversible = True
     fix_time_estimate = "~5 minutes"
 
-    # Labels to exclude from the "third-party agent" count.
-    # Only genuinely system/Apple-managed identifiers belong here.
-    # "0x…" labels are anonymous numeric PIDs — not meaningful agent names.
-    _SYSTEM_LABEL_PREFIXES = (
-        "com.apple.",    # Apple system and app agents
-        "com.openssh.",  # SSH daemon (part of the OS)
-        "0x",            # Numeric/hex PIDs — not real agent labels
-    )
-
     def run(self) -> CheckResult:
-        rc, out, _ = self.shell(["launchctl", "list"])
-        if rc != 0 or not out:
-            return self._info("Could not enumerate background launch agents")
+        # Query actual Login Items via System Events — the same list shown in
+        # System Settings → General → Login Items. This is far more accurate
+        # than launchctl list, which over-counts by including all launchd session
+        # services (XPC helpers, framework daemons, etc.).
+        rc, out, _ = self.shell(
+            [
+                "osascript", "-e",
+                'tell application "System Events" to get the name of every login item',
+            ],
+            timeout=10,
+        )
 
-        third_party = []
-        for line in out.splitlines():
-            stripped = line.strip()
-            if not stripped or stripped.startswith("PID"):
-                continue
-            # launchctl list format: PID  Status  Label
-            parts = stripped.split(None, 2)
-            if len(parts) < 3:
-                continue
-            label = parts[2]
-            if not any(label.startswith(p) for p in self._SYSTEM_LABEL_PREFIXES):
-                third_party.append(label)
-
-        count = len(third_party)
-
-        if count > 20:
-            return self._warning(
-                f"{count} third-party background agents at startup — review login items",
-                data={"count": count},
-            )
-        if count > 12:
+        if rc != 0:
             return self._info(
-                f"{count} third-party background agents",
-                data={"count": count},
+                "Could not enumerate login items — grant Automation access in "
+                "System Settings → Privacy & Security → Automation if this persists"
+            )
+
+        # osascript returns comma-separated names, or empty string if none
+        names_raw = out.strip()
+        if not names_raw:
+            return self._pass("No login items configured")
+
+        names = [n.strip() for n in names_raw.split(",") if n.strip()]
+        count = len(names)
+        preview = ", ".join(names[:5]) + ("…" if count > 5 else "")
+
+        if count > 15:
+            return self._warning(
+                f"{count} login items at startup — review and disable unneeded ones",
+                data={"count": count, "items": names},
+            )
+        if count > 8:
+            return self._info(
+                f"{count} login items: {preview}",
+                data={"count": count, "items": names},
             )
         return self._pass(
-            f"{count} background login agent{'s' if count != 1 else ''}",
+            f"{count} login item{'s' if count != 1 else ''}",
             data={"count": count},
         )
 

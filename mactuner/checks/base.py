@@ -53,7 +53,6 @@ class CheckResult:
 
     # Metadata
     data: dict[str, Any] = field(default_factory=dict)
-    score_impact: int = 0
     profile_tags: list[str] = field(
         default_factory=lambda: ["developer", "creative", "standard"]
     )
@@ -102,7 +101,6 @@ class BaseCheck(ABC):
     requires_tool: str | None = None
     apple_silicon_compatible: bool = True
 
-    score_impact: int = 0
     # Immutable tuple prevents accidental mutation of the shared class attribute.
     # Subclasses that target specific profiles override this with a smaller tuple,
     # e.g. `profile_tags = ("developer",)` for developer-only checks.
@@ -192,7 +190,6 @@ class BaseCheck(ABC):
         status: Literal["pass", "warning", "critical", "info", "skip", "error"],
         message: str,
         data: dict[str, Any] | None = None,
-        score_impact: int | None = None,
     ) -> CheckResult:
         """Convenience builder — fills class-level defaults into a CheckResult."""
         return CheckResult(
@@ -217,7 +214,6 @@ class BaseCheck(ABC):
             requires_tool=self.requires_tool,
             apple_silicon_compatible=self.apple_silicon_compatible,
             data=data or {},
-            score_impact=score_impact if score_impact is not None else self.score_impact,
             # Convert to list so the resulting CheckResult is mutable/serialisable,
             # and so that subclass tuple overrides are correctly propagated.
             profile_tags=list(self.profile_tags),
@@ -236,17 +232,15 @@ class BaseCheck(ABC):
         self,
         message: str,
         data: dict[str, Any] | None = None,
-        score_impact: int | None = None,
     ) -> CheckResult:
-        return self._result("warning", message, data=data, score_impact=score_impact)
+        return self._result("warning", message, data=data)
 
     def _critical(
         self,
         message: str,
         data: dict[str, Any] | None = None,
-        score_impact: int | None = None,
     ) -> CheckResult:
-        return self._result("critical", message, data=data, score_impact=score_impact)
+        return self._result("critical", message, data=data)
 
     def _info(self, message: str, data: dict[str, Any] | None = None) -> CheckResult:
         return self._result("info", message, data=data)

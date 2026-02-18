@@ -207,10 +207,19 @@ class SIPCheck(BaseCheck):
         if rc != 0 or not stdout:
             return self._info(f"Could not determine SIP status: {stderr[:80]}")
 
-        out = stdout.lower()
+        out = stdout.strip().lower()
 
-        if "enabled" in out and "disabled" not in out:
+        # Full SIP enabled: "system integrity protection status: enabled."
+        # Must not match "enabled (custom configuration)" — that's partial.
+        if "status: enabled." in out and "custom" not in out:
             return self._pass("System Integrity Protection is enabled")
+
+        # Partial: SIP enabled with specific flags removed
+        if "enabled" in out and "custom" in out:
+            return self._warning(
+                "SIP is partially disabled (custom configuration — some protections removed)",
+                data={"sip_status": stdout.strip()[:120]},
+            )
 
         if "disabled" in out:
             return self._warning(
@@ -292,10 +301,7 @@ class FirewallCheck(BaseCheck):
     )
     fix_level = "auto_sudo"
     fix_description = "Enables the application firewall"
-    fix_command = (
-        f'do shell script "{_FIREWALL} --setglobalstate on" '
-        f"with administrator privileges"
-    )
+    fix_command = f"{_FIREWALL} --setglobalstate on"
     fix_reversible = True
     fix_time_estimate = "~5 seconds"
     requires_sudo = True
@@ -343,10 +349,7 @@ class FirewallStealthCheck(BaseCheck):
     )
     fix_level = "auto_sudo"
     fix_description = "Enables firewall stealth mode"
-    fix_command = (
-        f'do shell script "{_FIREWALL} --setstealthmode on" '
-        f"with administrator privileges"
-    )
+    fix_command = f"{_FIREWALL} --setstealthmode on"
     fix_reversible = True
     fix_time_estimate = "~5 seconds"
     requires_sudo = True
@@ -397,7 +400,7 @@ class GatekeeperCheck(BaseCheck):
     )
     fix_level = "auto_sudo"
     fix_description = "Re-enables Gatekeeper app verification"
-    fix_command = "do shell script \"spctl --master-enable\" with administrator privileges"
+    fix_command = "spctl --master-enable"
     fix_reversible = True
     fix_time_estimate = "~5 seconds"
     requires_sudo = True
@@ -630,10 +633,7 @@ class RosettaCheck(BaseCheck):
     )
     fix_level = "auto_sudo"
     fix_description = "Installs Rosetta 2 for Intel app compatibility"
-    fix_command = (
-        'do shell script "softwareupdate --install-rosetta --agree-to-license" '
-        "with administrator privileges"
-    )
+    fix_command = "softwareupdate --install-rosetta --agree-to-license"
     fix_reversible = False
     fix_time_estimate = "~2 minutes"
 
