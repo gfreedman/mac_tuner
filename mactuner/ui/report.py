@@ -4,6 +4,7 @@ Phase 4 — Report renderer.
 Renders the post-scan output:
   1. Summary panel  — health score + bar + status counts + verdict
   2. Category panels — one Rich Panel per category
+  3. Recommendations panel — what to fix next (scan/targeted modes only)
 
 Failing checks (critical / warning / error): 4 lines
   • Line 1: status icon + name + short message
@@ -17,6 +18,7 @@ Skipped checks: 1 line (very dim)
 """
 
 from collections import defaultdict
+from typing import Optional
 
 from rich.console import Console, Group
 from rich.padding import Padding
@@ -48,6 +50,8 @@ _ISSUE_STATUSES = frozenset(("critical", "warning", "error"))
 # Indentation for explanation / recommendation / fix lines
 _INDENT = 8
 
+_FIXABLE_LEVELS = frozenset(("auto", "auto_sudo", "guided", "instructions"))
+
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
@@ -57,6 +61,7 @@ def print_report(
     issues_only: bool = False,
     explain: bool = False,
     scan_duration: float = 0.0,
+    mode: str = "scan",
 ) -> None:
     """
     Render the complete post-scan report to the console.
@@ -67,6 +72,7 @@ def print_report(
         issues_only:   If True, show only panels that have warnings/criticals.
         explain:       If True, show extra context for info/pass checks too.
         scan_duration: Wall-clock seconds the scan took (0 = not tracked).
+        mode:          Active mode — "scan", "fix", or "targeted".
     """
     if not results:
         console.print("[dim]  No results to display.[/dim]")
@@ -77,6 +83,10 @@ def print_report(
 
     for panel in build_category_panels(results, issues_only=issues_only, explain=explain):
         console.print(panel)
+
+    recs = build_recommendations_panel(results, mode=mode)
+    if recs is not None:
+        console.print(recs)
 
     console.print()
 
@@ -197,6 +207,96 @@ def build_category_panels(
             panels.append(panel)
 
     return panels
+
+
+def build_recommendations_panel(
+    results: list[CheckResult],
+    mode: str = "scan",
+) -> Optional[Panel]:
+    """
+    Build a "What to do next" panel summarising fixable items.
+
+    Returns None when mode == "fix" (fix flow IS the next step).
+    Returns None when there is nothing actionable.
+    """
+    if mode == "fix":
+        return None
+
+    # Collect actionable items
+    actionable = [
+        r for r in results
+        if r.status in _ISSUE_STATUSES and r.fix_level in _FIXABLE_LEVELS
+    ]
+    info_fixable = [
+        r for r in results
+        if r.status == "info" and r.fix_level in _FIXABLE_LEVELS
+    ]
+    all_fixable = actionable + info_fixable
+    total = len(all_fixable)
+
+    if total == 0:
+        # Nothing to fix — show a healthy system message
+        body = Text()
+        body.append("\n  ✨  Nothing actionable — your Mac looks healthy.\n", style="bold bright_green")
+        return Panel(body, title="[bold]Recommendations[/bold]", border_style="bright_green", padding=(0, 1))
+
+    # Sort: critical=0, warning=1, error=2, info=3
+    _order = {"critical": 0, "warning": 1, "error": 2, "info": 3}
+    all_fixable_sorted = sorted(all_fixable, key=lambda r: _order.get(r.status, 9))
+
+    # Show up to 6 items
+    shown = all_fixable_sorted[:6]
+    remainder = total - len(shown)
+
+    parts: list = []
+
+    for r in shown:
+        icon = STATUS_ICONS.get(r.status, "?")
+        style = STATUS_STYLES.get(r.status)
+        fix_label = FIX_LEVEL_LABELS.get(r.fix_level, r.fix_level)
+
+        line1 = Text()
+        line1.append(f"  {icon}  ", style=str(style))
+        line1.append(r.name, style="bold")
+        line1.append(f"   {r.message}", style=str(style))
+        parts.append(line1)
+
+        if r.fix_description:
+            fix_text = Text()
+            fix_text.append(f"· {fix_label}", style="dim cyan")
+            fix_text.append(f"  —  {r.fix_description}", style="dim white")
+            parts.append(Padding(fix_text, (0, 2, 0, _INDENT)))
+
+        parts.append(Text(""))
+
+    if remainder > 0:
+        more = Text()
+        more.append(f"  … and {remainder} more fixable item{'s' if remainder != 1 else ''}", style="dim white")
+        parts.append(more)
+        parts.append(Text(""))
+
+    # CTA footer
+    parts.append(Text("  " + "─" * 50, style="dim white"))
+    cta = Text()
+    cta.append("\n  Run  ", style="dim white")
+    cta.append("mactuner --fix", style="bold white")
+    cta.append(f"  to step through {total} fixable item{'s' if total != 1 else ''} interactively.\n", style="dim white")
+    cta.append("  Add  ", style="dim white")
+    cta.append("--auto", style="bold white")
+    cta.append("  to apply safe automatic fixes without prompting.\n", style="dim white")
+    parts.append(cta)
+
+    # Border: bright_red if any critical, yellow if any warning, cyan otherwise
+    has_critical = any(r.status == "critical" for r in all_fixable)
+    has_warning  = any(r.status == "warning"  for r in all_fixable)
+    border = "bright_red" if has_critical else "yellow" if has_warning else "cyan"
+
+    return Panel(
+        Group(*parts),
+        title="[bold]Recommendations[/bold]",
+        border_style=border,
+        padding=(0, 1),
+    )
 
 
 # ── Internal: category panel ──────────────────────────────────────────────────

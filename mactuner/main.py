@@ -4,7 +4,9 @@ MacTuner — entry point and orchestrator.
 CLI flags, scan loop, result collection, report dispatch.
 """
 
+import shutil
 import time
+from pathlib import Path
 from typing import Optional
 
 import click
@@ -18,7 +20,13 @@ from mactuner.ui.theme import MACTUNER_THEME
 
 # ── Console (shared across the tool) ─────────────────────────────────────────
 
-console = Console(theme=MACTUNER_THEME)
+_WIDTH = min(shutil.get_terminal_size(fallback=(120, 40)).columns, 120)
+console = Console(theme=MACTUNER_THEME, width=_WIDTH)
+
+
+# ── MDM flag ─────────────────────────────────────────────────────────────────
+
+_MDM_FLAG = Path.home() / ".config" / "mactuner" / ".mdm_warned"
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
@@ -58,6 +66,9 @@ console = Console(theme=MACTUNER_THEME)
     default=False,
     help="With --fix: automatically apply all safe AUTO fixes without prompting for each one.",
 )
+# Skip prompts
+@click.option("--yes", "-y", is_flag=True, default=False,
+              help="Skip the pre-scan confirmation prompt.")
 # Exit code contract
 @click.option(
     "--fail-on-critical",
@@ -89,6 +100,7 @@ def cli(
     quiet: bool,
     fix: bool,
     auto: bool,
+    yes: bool,
     fail_on_critical: bool,
     check_shell_secrets: bool,
     show_completion: bool,
@@ -108,9 +120,13 @@ def cli(
         _print_completion_help(console)
         return
 
+    # ── Resolve category filters (needed for mode before header) ──────────────
+    only_cats = {c.strip().lower() for c in only.split(",")} if only else None
+    skip_cats = {c.strip().lower() for c in skip.split(",")} if skip else set()
+
     # ── Header ────────────────────────────────────────────────────────────────
     if not quiet and not as_json:
-        print_header(console)
+        print_header(console, mode=_resolve_mode(fix, only, skip), only_cats=only_cats)
         console.print()
         _warn_if_mdm_enrolled(console)
 
@@ -126,10 +142,6 @@ def cli(
     # ── Resolve profile ───────────────────────────────────────────────────────
     resolved_profile = _resolve_profile(profile)
 
-    # ── Resolve category filters ──────────────────────────────────────────────
-    only_cats = {c.strip().lower() for c in only.split(",")} if only else None
-    skip_cats = {c.strip().lower() for c in skip.split(",")} if skip else set()
-
     # ── Collect checks ────────────────────────────────────────────────────────
     all_checks = _collect_checks(
         profile=resolved_profile,
@@ -142,6 +154,22 @@ def cli(
         console.print("[dim]No checks match the specified filters.[/dim]")
         console.print()
         return
+
+    # ── Pre-scan prompt ───────────────────────────────────────────────────────
+    if not quiet and not as_json and not yes:
+        n = len(all_checks)
+        console.print(f"  [dim]Ready to run [bold white]{n}[/bold white] checks — ~30–45 seconds.[/dim]")
+        console.print()
+        console.print(
+            "  [dim]Press [bold white]↵[/bold white] to begin  "
+            "·  [bold white]Ctrl-C[/bold white] to cancel[/dim]"
+        )
+        try:
+            input()
+        except (KeyboardInterrupt, EOFError):
+            console.print("\n  [dim]Cancelled.[/dim]\n")
+            return
+        console.print()
 
     # ── Run checks (narrated) ─────────────────────────────────────────────────
     _scan_start = time.monotonic()
@@ -161,7 +189,8 @@ def cli(
         return
 
     from mactuner.ui.report import print_report
-    print_report(results, console, issues_only=issues_only, explain=explain, scan_duration=_scan_elapsed)
+    print_report(results, console, issues_only=issues_only, explain=explain,
+                 scan_duration=_scan_elapsed, mode=_resolve_mode(fix, only, skip))
 
     # ── Fix mode ──────────────────────────────────────────────────────────────
     if fix:
@@ -173,6 +202,16 @@ def cli(
         criticals = sum(1 for r in results if r.status == "critical")
         if criticals:
             raise SystemExit(2)
+
+
+# ── Mode resolution ───────────────────────────────────────────────────────────
+
+def _resolve_mode(fix: bool, only: Optional[str], skip: Optional[str]) -> str:
+    if fix:
+        return "fix"
+    if only or skip:
+        return "targeted"
+    return "scan"
 
 
 # ── Shell completion help ─────────────────────────────────────────────────────
@@ -221,10 +260,11 @@ def _warn_if_mdm_enrolled(console: Console) -> None:
     """
     Detect MDM enrollment and print a brief advisory if the Mac is managed.
 
-    On MDM-enrolled Macs, IT policy enforces many settings that mactuner
-    may flag (FileVault, profiles, auto-updates, sharing). Alerting the user
-    prevents false-alarm panic over findings they cannot and should not change.
+    The warning is shown at most once (flagged by ~/.config/mactuner/.mdm_warned).
     """
+    if _MDM_FLAG.exists():
+        return
+
     import subprocess
     try:
         r = subprocess.run(
@@ -244,13 +284,19 @@ def _warn_if_mdm_enrolled(console: Console) -> None:
         note.append(
             "  Some settings (FileVault, auto-updates, profiles, sharing) may be\n"
             "  enforced by your organization. Warnings about these may reflect IT\n"
-            "  policy rather than security issues — check with your administrator.",
+            "  policy rather than security issues — check with your administrator.\n",
             style="dim white",
         )
+        note.append("  This notice will not appear again.", style="dim white")
         console.print(
             Panel(note, title="[yellow]Managed Device[/yellow]", border_style="yellow")
         )
         console.print()
+        try:
+            _MDM_FLAG.parent.mkdir(parents=True, exist_ok=True)
+            _MDM_FLAG.touch()
+        except OSError:
+            pass
 
 
 # ── Profile resolution ────────────────────────────────────────────────────────
@@ -266,7 +312,6 @@ def _resolve_profile(requested: Optional[str]) -> str:
     if requested:
         return requested.lower()
 
-    import shutil
     if shutil.which("brew"):
         return "developer"
     return "standard"

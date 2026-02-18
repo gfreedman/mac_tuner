@@ -1,25 +1,23 @@
 """
 Fix session orchestrator.
 
-Presents an interactive checkbox menu of fixable issues (using questionary),
-handles per-fix confirmation, and routes each fix to the correct executor.
+Pure sequential 1:1 fix flow — each fix shown in full context,
+approve or skip inline, then run. No pre-selection menu.
 
-Fix level behaviour in the menu:
-  auto         — pre-selected if reversible and no sudo
-  auto_sudo    — not pre-selected (requires password)
-  guided       — not pre-selected (opens System Settings)
-  instructions — not pre-selected (just prints steps)
+Fix level behaviour:
+  auto         — show card, ask y/N, run command
+  auto_sudo    — show card, ask y/N, run command (may prompt for password)
+  guided       — show card, press ↵ to open System Settings or skip
+  instructions — show card, press ↵ to print steps or skip
 
---auto mode bypasses the menu and applies all safe AUTO fixes directly.
+--auto mode bypasses the interactive loop and applies all safe AUTO fixes directly.
 """
 
 from __future__ import annotations
 
-import types
-
-import click
-from rich.console import Console
+from rich.console import Console, Group
 from rich.panel import Panel
+from rich.padding import Padding
 from rich.text import Text
 
 from mactuner.checks.base import CheckResult
@@ -29,15 +27,15 @@ from mactuner.fixer.executor import (
     run_guided_fix,
     run_instructions_fix,
 )
-from mactuner.ui.theme import COLOR_BRAND
+from mactuner.ui.theme import COLOR_BRAND, STATUS_ICONS, STATUS_STYLES
 
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
-_FIXABLE_STATUSES = frozenset(("warning", "critical", "error"))
+_FIXABLE_STATUSES = frozenset(("warning", "critical", "error", "info"))
 _FIXABLE_LEVELS   = frozenset(("auto", "auto_sudo", "guided", "instructions"))
 
-_SEVERITY_ORDER = {"critical": 0, "warning": 1, "error": 2}
+_SEVERITY_ORDER = {"critical": 0, "warning": 1, "error": 2, "info": 3}
 
 _LEVEL_EMOJI = {
     "auto":          "🤖",
@@ -74,7 +72,7 @@ def run_fix_session(
     Args:
         results: All check results from the scan.
         console: Rich Console (shared with rest of tool).
-        auto:    If True, apply reversible AUTO fixes without prompting.
+        auto:    If True, apply reversible AUTO fixes without interactive menu or per-fix prompts.
     """
     fixable = _get_fixable(results)
 
@@ -97,33 +95,44 @@ def run_fix_session(
 # ── Interactive mode ──────────────────────────────────────────────────────────
 
 def _run_interactive_mode(fixable: list[CheckResult], console: Console) -> None:
-    """Show questionary checkbox, confirm each fix, execute."""
-    try:
-        import questionary
-    except ImportError:
-        console.print(
-            "[red]questionary not installed — run: pip install questionary[/red]\n"
-        )
-        return
+    """Pure sequential 1:1 loop — full context card, approve inline, run, next."""
+    applied = skipped = 0
+    total = len(fixable)
 
-    choices = _build_choices(fixable, questionary)
+    for idx, result in enumerate(fixable, 1):
+        _print_fix_card(console, result, idx, total)
 
-    try:
-        selected = questionary.checkbox(
-            "Select fixes to apply:",
-            choices=choices,
-            style=_questionary_style(questionary),
-        ).ask()
-    except KeyboardInterrupt:
-        console.print("\n  [dim]Fix mode cancelled.[/dim]\n")
-        return
+        if result.fix_level in ("auto", "auto_sudo"):
+            try:
+                console.print("  [bold white]Apply?[/bold white] [dim][y/N] › [/dim]", end="")
+                answer = input().strip().lower()
+            except (KeyboardInterrupt, EOFError):
+                console.print("\n\n  [dim]Fix mode cancelled.[/dim]\n")
+                _print_session_summary(console, applied, skipped, total)
+                return
+            if answer not in ("y", "yes"):
+                console.print("  [dim]Skipped.[/dim]\n")
+                skipped += 1
+                continue
+        else:  # guided / instructions
+            try:
+                console.print("  [dim]↵ to continue  ·  s to skip[/dim]  ", end="")
+                answer = input().strip().lower()
+            except (KeyboardInterrupt, EOFError):
+                console.print("\n\n  [dim]Fix mode cancelled.[/dim]\n")
+                _print_session_summary(console, applied, skipped, total)
+                return
+            if answer in ("s", "skip", "n", "no"):
+                console.print("  [dim]Skipped.[/dim]\n")
+                skipped += 1
+                continue
 
-    if selected is None or len(selected) == 0:
-        console.print("\n  [dim]No fixes selected — exiting fix mode.[/dim]\n")
-        return
+        console.print()
+        success = _dispatch(result, console)
+        applied += 1 if success else 0
+        skipped += 0 if success else 1
 
-    console.print()
-    _execute_fixes(selected, console, confirm_each=True)
+    _print_session_summary(console, applied, skipped, total)
 
 
 # ── Auto mode ─────────────────────────────────────────────────────────────────
@@ -150,44 +159,16 @@ def _run_auto_mode(fixable: list[CheckResult], console: Console) -> None:
     )
     console.print()
 
-    _execute_fixes(safe, console, confirm_each=False)
-
-
-# ── Execution loop ────────────────────────────────────────────────────────────
-
-def _execute_fixes(
-    selected: list[CheckResult],
-    console: Console,
-    confirm_each: bool,
-) -> None:
-    """Iterate selected fixes: optionally confirm, then dispatch."""
-    applied = 0
-    skipped = 0
-
-    for idx, result in enumerate(selected, 1):
-        _print_fix_header(console, result, idx, len(selected))
-
-        if confirm_each and result.fix_level in ("guided", "instructions"):
-            try:
-                confirmed = click.confirm(
-                    "  Apply?", default=False, prompt_suffix=" › "
-                )
-            except (click.exceptions.Abort, KeyboardInterrupt, EOFError):
-                confirmed = False
-
-            if not confirmed:
-                console.print("  [dim]Skipped.[/dim]\n")
-                skipped += 1
-                continue
-
+    applied = skipped = 0
+    for result in safe:
         success = _dispatch(result, console)
-        if success:
-            applied += 1
-        else:
-            skipped += 1
+        applied += 1 if success else 0
+        skipped += 0 if success else 1
 
-    _print_session_summary(console, applied, skipped, len(selected))
+    _print_session_summary(console, applied, skipped, len(safe))
 
+
+# ── Execution helpers ─────────────────────────────────────────────────────────
 
 def _dispatch(result: CheckResult, console: Console) -> bool:
     """Route to the correct executor."""
@@ -207,7 +188,7 @@ def _dispatch(result: CheckResult, console: Console) -> bool:
 # ── UI helpers ────────────────────────────────────────────────────────────────
 
 def _get_fixable(results: list[CheckResult]) -> list[CheckResult]:
-    """Return fixable results sorted by severity (critical first)."""
+    """Return fixable results sorted by severity (critical first, info last)."""
     fixable = [
         r for r in results
         if r.status in _FIXABLE_STATUSES
@@ -216,8 +197,95 @@ def _get_fixable(results: list[CheckResult]) -> list[CheckResult]:
     return sorted(fixable, key=lambda r: _SEVERITY_ORDER.get(r.status, 9))
 
 
+def _print_fix_card(
+    console: Console,
+    result: CheckResult,
+    idx: int,
+    total: int,
+) -> None:
+    """Print a rich Panel with full context for a single fix."""
+    status_icon  = STATUS_ICONS.get(result.status, "?")
+    status_style = STATUS_STYLES.get(result.status)
+    level_emoji  = _LEVEL_EMOJI.get(result.fix_level, "·")
+    level_label  = _LEVEL_LABEL.get(result.fix_level, result.fix_level)
+
+    parts: list = []
+
+    # ── Status badge + fix level ───────────────────────────────────────────────
+    badge = Text()
+    badge.append(f"  {status_icon}  ", style=str(status_style))
+    badge.append(result.status.upper(), style=f"bold {str(status_style)}")
+    badge.append("   ")
+    badge.append(f"{level_emoji}  {level_label}", style="dim white")
+    parts.append(badge)
+    parts.append(Text(""))
+
+    # ── Message + finding explanation ─────────────────────────────────────────
+    msg = Text()
+    msg.append(f"  {result.message}", style="white")
+    parts.append(msg)
+
+    if result.finding_explanation:
+        parts.append(
+            Padding(Text(result.finding_explanation, style="dim white"), (0, 2, 0, 4))
+        )
+
+    parts.append(Text(""))
+
+    # ── What this fix does ────────────────────────────────────────────────────
+    what = Text()
+    what.append("  What this fix does\n", style="bold white")
+    what.append(f"  {result.fix_description}", style="dim white")
+    parts.append(what)
+
+    if result.fix_level in ("auto", "auto_sudo") and result.fix_command:
+        cmd = Text()
+        cmd.append(f"\n  $ {result.fix_command}", style="dim cyan")
+        parts.append(cmd)
+    elif result.fix_level == "instructions" and result.fix_steps:
+        steps = Text()
+        for i, step in enumerate(result.fix_steps, 1):
+            steps.append(f"\n  {i}. {step}", style="dim white")
+        parts.append(steps)
+
+    parts.append(Text(""))
+
+    # ── Footer meta ───────────────────────────────────────────────────────────
+    meta_parts = []
+    if result.fix_time_estimate and result.fix_time_estimate not in ("N/A", ""):
+        meta_parts.append(f"⏱ {result.fix_time_estimate}")
+    meta_parts.append("reversible" if result.fix_reversible else "⚠️  irreversible")
+    if result.requires_sudo:
+        meta_parts.append("🔐 requires password")
+
+    footer = Text()
+    footer.append("  " + "  ·  ".join(meta_parts), style="dim white")
+    parts.append(footer)
+
+    # Border colour follows status
+    if result.status == "critical":
+        border = "bright_red"
+    elif result.status == "warning":
+        border = "yellow"
+    elif result.status == "info":
+        border = "cyan"
+    else:
+        border = "dim"
+
+    console.print()
+    console.print(
+        Panel(
+            Group(*parts),
+            title=f"[bold][{idx}/{total}]  {result.name}[/bold]",
+            title_align="left",
+            border_style=border,
+            padding=(0, 1),
+        )
+    )
+
+
 def _print_fix_mode_panel(fixable: list[CheckResult], console: Console) -> None:
-    """Print the Fix Mode header panel with inline issue count + legend."""
+    """Print the Fix Mode header panel — count, breakdown, one-line instruction."""
     counts: dict[str, int] = {}
     for r in fixable:
         counts[r.fix_level] = counts.get(r.fix_level, 0) + 1
@@ -230,74 +298,16 @@ def _print_fix_mode_panel(fixable: list[CheckResult], console: Console) -> None:
                 f"[bold]{n}[/bold] {_LEVEL_EMOJI[level]} {_LEVEL_LABEL_SHORT[level]}"
             )
 
-    summary = Text()
-    summary.append(f"  Found {len(fixable)} issues:  ", style="")
-    summary.append("  ".join(parts))
-    summary.append("  ")
+    body = Text()
+    body.append(f"\n  Found {len(fixable)} fixable item{'s' if len(fixable) != 1 else ''}:  ")
+    body.append("  ".join(parts))
+    body.append("\n\n  Each fix is shown one at a time. Approve or skip before anything runs.\n", style="dim white")
 
     console.print()
     console.print(
-        Panel(summary, title="[bold]Fix Mode[/bold]", title_align="left",
+        Panel(body, title="[bold magenta]Fix Mode[/bold magenta]", title_align="left",
               border_style=COLOR_BRAND)
     )
-    console.print()
-
-
-def _build_choices(fixable: list[CheckResult], questionary: types.ModuleType) -> list:
-    """Build questionary Choice objects, pre-selecting safe AUTO fixes."""
-    choices = []
-    for r in fixable:
-        emoji = _LEVEL_EMOJI.get(r.fix_level, "·")
-        irreversible = "  [irreversible]" if not r.fix_reversible else ""
-        label = f"  {emoji}  {r.name}  —  {r.message}{irreversible}"
-
-        preselected = (
-            r.fix_level == "auto"
-            and r.fix_reversible
-            and not r.requires_sudo
-        )
-
-        choices.append(
-            questionary.Choice(title=label, value=r, checked=preselected)
-        )
-    return choices
-
-
-def _questionary_style(questionary: types.ModuleType):
-    """Consistent colour style for the questionary prompt."""
-    return questionary.Style([
-        ("qmark",       "fg:#61afef bold"),
-        ("question",    "bold"),
-        ("pointer",     "fg:#61afef bold"),
-        ("highlighted", "fg:#61afef bold"),
-        ("selected",    "fg:#98c379"),
-        ("separator",   "fg:#586e75"),
-        ("instruction", "fg:#586e75 italic"),
-        ("answer",      "fg:#f8f8f2 bg:#282c34"),
-    ])
-
-
-def _print_fix_header(
-    console: Console,
-    result: CheckResult,
-    index: int,
-    total: int,
-) -> None:
-    emoji = _LEVEL_EMOJI.get(result.fix_level, "·")
-    label = _LEVEL_LABEL.get(result.fix_level, result.fix_level)
-
-    console.print(
-        f"\n  [dim][{index}/{total}][/dim]  "
-        f"[bold]{result.name}[/bold]  —  "
-        f"[dim]{emoji} {label}[/dim]"
-    )
-    console.print(f"  {result.fix_description}")
-
-    meta_parts = []
-    if result.fix_time_estimate and result.fix_time_estimate != "N/A":
-        meta_parts.append(result.fix_time_estimate)
-    meta_parts.append("reversible" if result.fix_reversible else "⚠️  irreversible")
-    console.print("  [dim]" + "  ·  ".join(meta_parts) + "[/dim]")
     console.print()
 
 
@@ -307,16 +317,26 @@ def _print_session_summary(
     skipped: int,
     total: int,
 ) -> None:
-    console.rule(style="dim")
-    console.print()
+    """Print a Panel summarising the fix session."""
+    body = Text()
 
     if applied == 0:
-        console.print("  [dim]No fixes were applied.[/dim]")
+        body.append("\n  No fixes were applied.", style="dim white")
     else:
         s = "es" if applied != 1 else ""
-        line = f"  [bright_green]✅  {applied} fix{s} applied[/bright_green]"
+        body.append(f"\n  ✅  {applied} fix{s} applied", style="bold bright_green")
         if skipped:
-            line += f"  [dim]·  {skipped} skipped[/dim]"
-        console.print(line)
+            body.append(f"   ·   {skipped} skipped", style="dim white")
 
+    body.append("\n\n  Run  ", style="dim white")
+    body.append("mactuner", style="bold white")
+    body.append("  again to rescan and confirm changes took effect.\n", style="dim white")
+
+    border = "bright_green" if applied > 0 else "dim"
+
+    console.print()
+    console.print(
+        Panel(body, title="[bold]Fix session complete[/bold]", title_align="left",
+              border_style=border)
+    )
     console.print()

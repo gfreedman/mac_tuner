@@ -3,10 +3,11 @@ MacTuner header banner.
 
 Two-column Claude Code-style panel:
   Left  — welcome greeting, beagle character art, system identity
-  Right — tips for getting started, last scan info
+  Right — mode chips + contextual tips per mode
 """
 
 import getpass
+from typing import Optional
 
 from rich.console import Console
 from rich.panel import Panel
@@ -17,12 +18,12 @@ from mactuner.system_info import get_system_info
 from mactuner.ui.theme import COLOR_BRAND, MACTUNER_THEME
 
 
-def build_header() -> Panel:
+def build_header(mode: str = "scan", only_cats: Optional[set] = None) -> Panel:
     """
     Return a two-column Rich Panel (Claude Code style).
 
     Left column : greeting + beagle art + system identity
-    Right column: tips for getting started + last scan info
+    Right column: mode chips + contextual tips for the active mode
     """
     info = get_system_info()
 
@@ -30,7 +31,7 @@ def build_header() -> Panel:
     table.add_column(width=28, justify="center")
     table.add_column(justify="left")
 
-    table.add_row(_build_left(info), _build_right())
+    table.add_row(_build_left(info), _build_right(mode, only_cats))
 
     return Panel(table, border_style=COLOR_BRAND)
 
@@ -87,34 +88,83 @@ def _append_beagle(t: Text) -> None:
     row((L, "   ▀▘      ▝▀"))
 
 
-def _build_right() -> Text:
-    """Right column: tips for getting started + last scan info."""
+def _build_right(mode: str = "scan", only_cats: Optional[set] = None) -> Text:
+    """Right column: mode chips + contextual tips for the active mode."""
     t = Text(justify="left")
     t.append("\n")
-    t.append("Tips for getting started", style="bold white")
-    t.append("\n\n")
+    t.append("  Modes\n", style="bold white")
+    t.append("\n")
 
-    tips = [
-        ("--fix",             " after the scan to repair issues interactively"),
-        ("--only",            " security,disk  for a targeted category scan"),
-        ("--explain",         "  adds deeper context to every finding"),
-        ("--show-completion", "  to enable tab completion"),
+    # ── Mode chips ────────────────────────────────────────────────────────────
+    modes = [
+        ("scan",     "🔍", "cyan",    "mactuner",        "Full system audit (read-only)"),
+        ("fix",      "🔧", "magenta", "mactuner --fix",   "Apply fixes interactively"),
+        ("targeted", "🎯", "yellow",  "mactuner --only …","Targeted category scan"),
     ]
-    for flag, desc in tips:
-        t.append("  • mactuner ", style="dim white")
-        t.append(flag, style="bold white")
-        t.append(desc + "\n", style="dim white")
 
+    for m_id, icon, color, cmd, desc in modes:
+        if m_id == mode:
+            # Active mode — full brightness with ← active label
+            if m_id == "targeted" and only_cats:
+                cats_str = ",".join(sorted(only_cats))
+                cmd = f"mactuner --only {cats_str}"
+            t.append(f"  {icon} ", style=f"bold {color}")
+            t.append(f"{cmd}", style=f"bold {color}")
+            t.append("   ← active\n", style=f"dim {color}")
+            t.append(f"     {desc}\n", style=color)
+        else:
+            # Inactive — dim
+            t.append(f"  ·  {icon} {cmd}", style="dim white")
+            t.append(f"  {desc}\n", style="dim white")
+
+    # ── Divider ───────────────────────────────────────────────────────────────
     t.append("\n")
-    t.append("  " + "─" * 32 + "\n", style="dim white")
+    t.append("  " + "─" * 34 + "\n", style="dim white")
     t.append("\n")
-    t.append("  Last scan\n", style="bold white")
-    t.append("  No recent scans\n", style="dim white")
+
+    # ── Contextual tips ───────────────────────────────────────────────────────
+    if mode == "scan":
+        t.append("  Scan mode tips\n", style="bold white")
+        t.append("\n")
+        tips = [
+            ("mactuner --fix",     "after scan to repair issues"),
+            ("mactuner --only",    "security,disk  targeted scan"),
+            ("mactuner --explain", "deeper context per finding"),
+            ("mactuner -y",        "skip pre-scan prompt"),
+        ]
+    elif mode == "fix":
+        t.append("  Fix mode tips\n", style="bold white")
+        t.append("\n")
+        tips = [
+            ("mactuner --auto",    "apply safe fixes without prompting"),
+            ("mactuner --only",    "security  fix one category only"),
+            ("mactuner -y",        "skip pre-scan prompt"),
+            ("mactuner --explain", "see deeper context first"),
+        ]
+    else:  # targeted
+        t.append("  Targeted mode tips\n", style="bold white")
+        t.append("\n")
+        tips = [
+            ("mactuner --fix",     "add to apply fixes after scan"),
+            ("mactuner --explain", "deeper context per finding"),
+            ("mactuner --only",    "combine categories e.g. security,disk"),
+            ("mactuner -y",        "skip pre-scan prompt"),
+        ]
+
+    for flag, desc in tips:
+        t.append(f"  • ", style="dim white")
+        t.append(flag, style="bold white")
+        t.append(f"  {desc}\n", style="dim white")
+
     return t
 
 
-def print_header(console: Console | None = None) -> None:
+def print_header(
+    console: Optional[Console] = None,
+    mode: str = "scan",
+    only_cats: Optional[set] = None,
+) -> None:
     """Render the header to the given Console (or create a themed one)."""
     if console is None:
         console = Console(theme=MACTUNER_THEME)
-    console.print(build_header())
+    console.print(build_header(mode=mode, only_cats=only_cats))
