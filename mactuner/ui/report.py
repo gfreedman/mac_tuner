@@ -57,22 +57,24 @@ def print_report(
     console: Console,
     issues_only: bool = False,
     explain: bool = False,
+    scan_duration: float = 0.0,
 ) -> None:
     """
     Render the complete post-scan report to the console.
 
     Args:
-        results:     All CheckResult objects from the scan.
-        console:     Rich Console to print to.
-        issues_only: If True, show only panels that have warnings/criticals.
-        explain:     If True, show extra context for info/pass checks too.
+        results:       All CheckResult objects from the scan.
+        console:       Rich Console to print to.
+        issues_only:   If True, show only panels that have warnings/criticals.
+        explain:       If True, show extra context for info/pass checks too.
+        scan_duration: Wall-clock seconds the scan took (0 = not tracked).
     """
     if not results:
         console.print("[dim]  No results to display.[/dim]")
         return
 
     console.print()
-    console.print(build_summary_panel(results))
+    console.print(build_summary_panel(results, scan_duration=scan_duration))
 
     for panel in build_category_panels(results, issues_only=issues_only, explain=explain):
         console.print(panel)
@@ -80,7 +82,7 @@ def print_report(
     console.print()
 
 
-def build_summary_panel(results: list[CheckResult]) -> Panel:
+def build_summary_panel(results: list[CheckResult], scan_duration: float = 0.0) -> Panel:
     """Return the top-level Summary Panel."""
     score = calculate_health_score(results)
 
@@ -143,7 +145,20 @@ def build_summary_panel(results: list[CheckResult]) -> Panel:
         style="dim white",
     )
 
-    content = Group(score_line, counts_line, verdict_line)
+    # ── Line 4: scan duration (optional) ─────────────────────────────────────
+    duration_line = Text()
+    if scan_duration > 0:
+        n = len(results)
+        dur_str = (
+            f"{scan_duration:.0f}s" if scan_duration >= 10
+            else f"{scan_duration:.1f}s"
+        )
+        duration_line.append(
+            f"\n   {n} checks completed in {dur_str}",
+            style="dim white",
+        )
+
+    content = Group(score_line, counts_line, verdict_line, duration_line)
 
     # Panel border follows worst status
     border = (

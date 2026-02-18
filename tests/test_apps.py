@@ -2,8 +2,7 @@
 Tests for checks/apps.py.
 
 Covers:
-  - LoginItemsCheck._SYSTEM_LABEL_PREFIXES: correct inclusions / exclusions
-  - LoginItemsCheck.run(): pass / warning thresholds with mocked launchctl
+  - LoginItemsCheck.run(): pass / info / warning thresholds with mocked osascript
   - AppStoreUpdatesCheck: skip when mas absent, pass/warning with mocked output
 """
 
@@ -14,93 +13,60 @@ import pytest
 from mactuner.checks.apps import AppStoreUpdatesCheck, LoginItemsCheck
 
 
-# ── LoginItemsCheck label prefix list ────────────────────────────────────────
-
-class TestSystemLabelPrefixes:
-    prefixes = LoginItemsCheck._SYSTEM_LABEL_PREFIXES
-
-    def test_com_apple_is_excluded(self):
-        assert "com.apple." in self.prefixes
-
-    def test_com_openssh_is_excluded(self):
-        assert "com.openssh." in self.prefixes
-
-    def test_numeric_hex_pids_are_excluded(self):
-        assert "0x" in self.prefixes
-
-    def test_com_microsoft_is_not_excluded(self):
-        assert not any("microsoft" in p for p in self.prefixes), (
-            "Microsoft is a third party — its agents should count as user-installed"
-        )
-
-    def test_com_adobe_is_not_excluded(self):
-        assert not any("adobe" in p for p in self.prefixes), (
-            "Adobe is a third party — its agents should count as user-installed"
-        )
-
-    def test_prefixes_is_a_tuple(self):
-        assert isinstance(self.prefixes, tuple)
-
-
 # ── LoginItemsCheck.run() ─────────────────────────────────────────────────────
 
-_LAUNCHCTL_HEADER = "PID\tStatus\tLabel\n"
-
-
-def _launchctl_output(*labels: str) -> str:
-    """Build fake `launchctl list` output for the given label strings."""
-    lines = [_LAUNCHCTL_HEADER]
-    for label in labels:
-        lines.append(f"-\t0\t{label}")
-    return "\n".join(lines)
+def _osascript_output(*names: str) -> str:
+    """Build fake osascript output for the given login item name strings."""
+    return ", ".join(names)
 
 
 class TestLoginItemsCheckRun:
-    def _run_with_output(self, launchctl_stdout: str):
+    def _run_with_output(self, osascript_stdout: str, rc: int = 0):
         check = LoginItemsCheck()
-        with patch.object(check, "shell", return_value=(0, launchctl_stdout, "")):
+        with patch.object(check, "shell", return_value=(rc, osascript_stdout, "")):
             return check.run()
 
-    def test_only_apple_agents_returns_pass(self):
-        output = _launchctl_output(
-            "com.apple.Finder",
-            "com.apple.mds",
-            "com.openssh.sshd",
-            "0x1234",
-        )
+    def test_no_items_returns_pass(self):
+        result = self._run_with_output("")
+        assert result.status == "pass"
+
+    def test_few_items_returns_pass(self):
+        # 3 items — well under the >8 info threshold
+        output = _osascript_output("Dropbox", "Spotify", "Zoom")
         result = self._run_with_output(output)
         assert result.status == "pass"
 
-    def test_few_third_party_agents_returns_pass(self):
-        output = _launchctl_output(
-            "com.apple.Finder",
-            "com.dropbox.DropboxMacUpdate",
-            "com.google.keystone.agent",
-            "com.spotify.webhelper",
-        )
+    def test_moderate_items_returns_info(self):
+        # 9 items — just over >8 threshold → info
+        names = [f"App{i}" for i in range(9)]
+        output = _osascript_output(*names)
         result = self._run_with_output(output)
-        assert result.status in ("pass", "info")
+        assert result.status == "info"
 
-    def test_many_third_party_agents_returns_warning(self):
-        # 21 third-party agents → warning (threshold is >20)
-        labels = [f"com.vendor.app{i}" for i in range(21)]
-        output = _launchctl_output(*labels)
+    def test_many_items_returns_warning(self):
+        # 16 items — over >15 threshold → warning
+        names = [f"App{i}" for i in range(16)]
+        output = _osascript_output(*names)
         result = self._run_with_output(output)
         assert result.status == "warning"
 
     def test_shell_error_returns_info(self):
-        check = LoginItemsCheck()
-        with patch.object(check, "shell", return_value=(1, "", "permission denied")):
-            result = check.run()
+        result = self._run_with_output("", rc=1)
         assert result.status == "info"
 
-    def test_microsoft_agents_are_counted(self):
-        # 25 microsoft agents — should count towards the third-party total
-        labels = [f"com.microsoft.app{i}" for i in range(25)]
-        output = _launchctl_output(*labels)
+    def test_data_contains_count(self):
+        names = [f"App{i}" for i in range(16)]
+        output = _osascript_output(*names)
         result = self._run_with_output(output)
-        assert result.status == "warning"
-        assert result.data["count"] == 25
+        assert result.data is not None
+        assert result.data["count"] == 16
+
+    def test_eight_items_returns_pass(self):
+        # Exactly 8 items — at boundary, should be pass (threshold is >8)
+        names = [f"App{i}" for i in range(8)]
+        output = _osascript_output(*names)
+        result = self._run_with_output(output)
+        assert result.status == "pass"
 
 
 # ── AppStoreUpdatesCheck.run() ────────────────────────────────────────────────

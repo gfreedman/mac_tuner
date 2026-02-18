@@ -146,7 +146,9 @@ class SMARTStatusCheck(BaseCheck):
     fix_time_estimate = "N/A"
 
     def run(self) -> CheckResult:
-        rc, out, _ = self.shell(["diskutil", "info", "disk0"])
+        # Use "/" to resolve the boot volume dynamically — avoids hardcoding
+        # disk0 which breaks on external boot drives and Fusion Drive setups.
+        rc, out, _ = self.shell(["diskutil", "info", "/"])
         if rc != 0 or not out:
             return self._info("Could not read disk SMART status")
 

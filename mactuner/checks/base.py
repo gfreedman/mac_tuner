@@ -8,6 +8,7 @@ This file is the single source of truth for the data shape.
 Do not deviate from the field names or types defined here.
 """
 
+import os
 import shutil
 import subprocess
 from abc import ABC, abstractmethod
@@ -169,6 +170,10 @@ class BaseCheck(ABC):
             On timeout or missing binary, returncode is -1 and stderr
             contains a human-readable error description.
         """
+        # Force C locale so command output is always English, regardless of
+        # the user's system language. Without this, string matching breaks on
+        # non-English macOS (e.g. "Enabled" vs "Activé" in French).
+        _env = {**os.environ, "LANG": "C", "LC_ALL": "C"}
         try:
             result = subprocess.run(
                 cmd,
@@ -176,6 +181,7 @@ class BaseCheck(ABC):
                 text=True,
                 timeout=timeout,
                 check=False,
+                env=_env,
             )
             return result.returncode, result.stdout, result.stderr
         except subprocess.TimeoutExpired:

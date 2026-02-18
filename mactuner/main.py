@@ -4,6 +4,7 @@ MacTuner — entry point and orchestrator.
 CLI flags, scan loop, result collection, report dispatch.
 """
 
+import time
 from typing import Optional
 
 import click
@@ -51,7 +52,19 @@ console = Console(theme=MACTUNER_THEME)
 @click.option("--quiet", is_flag=True, default=False, help="Print only health score and critical count.")
 # Fix modes
 @click.option("--fix", is_flag=True, default=False, help="Enter interactive fix mode after scan.")
-@click.option("--auto", is_flag=True, default=False, help="With --fix: apply safe AUTO fixes without prompting.")
+@click.option(
+    "--auto",
+    is_flag=True,
+    default=False,
+    help="With --fix: automatically apply all safe AUTO fixes without prompting for each one.",
+)
+# Exit code contract
+@click.option(
+    "--fail-on-critical",
+    is_flag=True,
+    default=False,
+    help="Exit with code 2 if any critical issues are found (useful in scripts and CI).",
+)
 # Opt-in checks
 @click.option(
     "--check-shell-secrets",
@@ -69,18 +82,33 @@ def cli(
     quiet: bool,
     fix: bool,
     auto: bool,
+    fail_on_critical: bool,
     check_shell_secrets: bool,
 ) -> None:
     """Mac System Health Inspector & Tuner.
 
     Run a full narrated audit of your Mac. Explains every finding.
     Safe, read-only by default — use --fix to apply changes.
+
+    \b
+    Environment variables:
+      NO_COLOR=1   Disable all colour output (ANSI-stripped plain text).
+      TERM=dumb    Alternative way to suppress colour in some terminals.
     """
     # ── Header ────────────────────────────────────────────────────────────────
     if not quiet and not as_json:
         print_header(console)
         console.print()
         _warn_if_mdm_enrolled(console)
+
+    # ── Warn: --check-shell-secrets + --json exposes redacted credential hints ──
+    if check_shell_secrets and as_json:
+        import sys
+        print(
+            "Warning: --check-shell-secrets with --json includes redacted credential "
+            "hints in the JSON output. Treat the output file as sensitive.",
+            file=sys.stderr,
+        )
 
     # ── Resolve profile ───────────────────────────────────────────────────────
     resolved_profile = _resolve_profile(profile)
@@ -103,7 +131,9 @@ def cli(
         return
 
     # ── Run checks (narrated) ─────────────────────────────────────────────────
+    _scan_start = time.monotonic()
     results = _run_checks(all_checks, quiet=quiet, as_json=as_json)
+    _scan_elapsed = time.monotonic() - _scan_start
 
     # ── Output ────────────────────────────────────────────────────────────────
     if as_json:
@@ -118,12 +148,18 @@ def cli(
         return
 
     from mactuner.ui.report import print_report
-    print_report(results, console, issues_only=issues_only, explain=explain)
+    print_report(results, console, issues_only=issues_only, explain=explain, scan_duration=_scan_elapsed)
 
     # ── Fix mode ──────────────────────────────────────────────────────────────
     if fix:
         from mactuner.fixer.runner import run_fix_session
         run_fix_session(results, console, auto=auto)
+
+    # ── Exit code contract ────────────────────────────────────────────────────
+    if fail_on_critical:
+        criticals = sum(1 for r in results if r.status == "critical")
+        if criticals:
+            raise SystemExit(2)
 
 
 # ── MDM enrollment advisory ───────────────────────────────────────────────────
@@ -289,6 +325,7 @@ def _output_json(results: list[CheckResult]) -> None:
         serialised.append(d)
 
     payload = {
+        "schema_version": 1,
         "mactuner_version": __version__,
         "scan_time": datetime.now(timezone.utc).isoformat(),
         "system": {

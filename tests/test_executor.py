@@ -70,8 +70,8 @@ class TestRunAutoFix:
         run_auto_fix(_result(fix_command="echo mactuner_test_output"), con)
         assert "mactuner_test_output" in buf.getvalue()
 
-    def test_uses_shell_false(self):
-        """Verify we're NOT using shell=True (shell injection risk)."""
+    def test_uses_shell_true(self):
+        """Verify shell=True is used so ~ and glob patterns are expanded."""
         con, _ = _console()
         import subprocess
         with patch("subprocess.Popen") as mock_popen:
@@ -84,10 +84,10 @@ class TestRunAutoFix:
             run_auto_fix(_result(fix_command="echo hello"), con)
 
             call_kwargs = mock_popen.call_args
-            assert call_kwargs.kwargs.get("shell") is False
+            assert call_kwargs.kwargs.get("shell") is True
 
-    def test_command_split_correctly_with_spaces(self):
-        """fix_command string should be split into a list, not passed as string."""
+    def test_command_passed_as_string(self):
+        """fix_command is passed as a string (not split) so shell can expand ~ and globs."""
         con, _ = _console()
         import subprocess
         with patch("subprocess.Popen") as mock_popen:
@@ -101,8 +101,8 @@ class TestRunAutoFix:
 
             call_args = mock_popen.call_args
             cmd = call_args.args[0]  # First positional arg is the command
-            assert isinstance(cmd, list), "Command should be a list, not a string"
-            assert cmd[0] == "brew"
+            assert isinstance(cmd, str), "Command should be a string when shell=True"
+            assert "brew" in cmd
 
 
 # ── run_instructions_fix ──────────────────────────────────────────────────────

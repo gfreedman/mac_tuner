@@ -89,30 +89,36 @@ mactuner --profile standard
 # Opt-in privacy check: scan shell configs for hardcoded secrets
 mactuner --check-shell-secrets
 
+# Exit with code 2 if critical issues found (useful in CI / scripts)
+mactuner --fail-on-critical
+
 # Quiet mode — just the score
 mactuner --quiet
 
-# JSON output for scripting
+# JSON output for scripting (schema_version field included for forward compatibility)
 mactuner --json > report.json
 mactuner --json | jq '.score'
+
+# Disable colour output (also respected via NO_COLOR=1 env var)
+NO_COLOR=1 mactuner
 ```
 
 ---
 
 ## What It Checks
 
-MacTuner runs **62 checks** across 10 categories:
+MacTuner runs **69 checks** across 10 categories:
 
 | Category | Checks |
 |---|---|
-| **System** | macOS version, pending updates, SIP, FileVault, Firewall, Gatekeeper, Time Machine, screen lock, Rosetta, Secure Boot |
-| **Security** | Auto-login, SSH keys, launch agents, /etc/hosts, sharing services, Activation Lock, MDM profiles, system root CA certificates |
+| **System** | macOS version, pending updates, SIP, FileVault, Firewall (inbound-only), Gatekeeper, Time Machine, screen lock, Rosetta, Secure Boot |
+| **Security** | Auto-login, guest account, SSH keys (presence + strength + config), launch agents, login/logout hooks, cron jobs, /etc/hosts, sharing services, Activation Lock, MDM profiles, system root CA certificates, system extensions, XProtect signature freshness |
 | **Privacy** | Guided review of Full Disk Access, Screen Recording, and Accessibility grants |
 | **Homebrew** | brew doctor, outdated formulae & casks, orphaned dependencies, cleanup savings |
 | **Disk** | Free space, APFS snapshots, Xcode DerivedData, Docker usage, Trash, caches |
-| **Hardware** | Battery cycle count & condition, SMART status, kernel panics, thermal throttling |
+| **Hardware** | Battery cycle count & condition, SMART status (boot volume), kernel panics, thermal throttling |
 | **Memory** | Memory pressure, swap usage, top CPU & memory consumers |
-| **Network** | AirDrop visibility, Remote Login, Screen/File Sharing, DNS, proxy, saved Wi-Fi, Bluetooth discoverability, listening ports |
+| **Network** | AirDrop visibility, Remote Login, Screen/File Sharing, Internet Sharing, DNS, proxy, saved Wi-Fi, Bluetooth discoverability, listening ports (TCP + UDP) |
 | **Dev Env** | Xcode CLTools, Python/Ruby PATH conflicts, conda, Node managers, git config |
 | **Apps** | App Store updates (via mas), iCloud status, login items |
 
@@ -191,6 +197,8 @@ Override with `--profile developer/creative/standard`.
 - **Transparent** — every command is shown before running
 - **Reversibility labelled** — irreversible fixes are always marked
 - **MDM-aware** — detects managed Macs and notes that IT-enforced settings may appear as warnings
+- **Locale-safe** — forces `LANG=C` on all subprocess calls for consistent results regardless of system language
+- **Multi-user note** — checks run in the context of the current user only; other accounts are not audited
 
 ---
 
@@ -202,8 +210,9 @@ mactuner --json | jq '{score, summary: .summary}'
 
 ```json
 {
-  "mactuner_version": "1.0.0",
-  "scan_time": "2026-02-17T20:00:00+00:00",
+  "schema_version": 1,
+  "mactuner_version": "1.2.0",
+  "scan_time": "2026-02-18T20:00:00+00:00",
   "system": {
     "macos_version": "15.3",
     "architecture": "arm64",

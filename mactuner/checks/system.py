@@ -292,12 +292,16 @@ class FirewallCheck(BaseCheck):
         "unexpected incoming connections to your Mac."
     )
     finding_explanation = (
-        "The macOS firewall controls which apps can accept incoming network "
-        "connections. With it disabled, any running app can receive data from "
-        "the network without restriction — a significant risk on public Wi-Fi."
+        "The macOS Application Firewall (ALF) controls which apps can accept "
+        "incoming network connections. Note: it is inbound-only — it does not "
+        "filter outbound traffic. With ALF disabled, any running app can receive "
+        "unsolicited inbound data from the network, which is a significant risk on "
+        "public Wi-Fi. For outbound traffic control, a third-party tool such as "
+        "Little Snitch or Lulu is needed."
     )
     recommendation = (
-        "Enable the firewall in System Settings → Network → Firewall."
+        "Enable the firewall in System Settings → Network → Firewall. "
+        "For outbound traffic filtering, consider Little Snitch or Lulu (free)."
     )
     fix_level = "auto_sudo"
     fix_description = "Enables the application firewall"

@@ -182,8 +182,7 @@ class ShellSecretsCheck(BaseCheck):
                     "key":     key,
                     "display": f"{config_path.name}:{lineno}  {key}={display_value}",
                 })
-                # One finding per line is enough — move to next line
-                break
+                # Continue to next line — multiple credentials per file are possible
 
         if not findings:
             n = len(files_scanned)

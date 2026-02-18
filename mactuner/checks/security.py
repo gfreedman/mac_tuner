@@ -656,16 +656,352 @@ class SystemRootCACheck(BaseCheck):
         )
 
 
+class GuestAccountCheck(BaseCheck):
+    id = "guest_account"
+    name = "Guest Account"
+    category = "security"
+    category_icon = "🛡️ "
+
+    scan_description = (
+        "Checking if the Guest account is enabled — an enabled Guest account "
+        "gives anyone who picks up your Mac a login with filesystem access."
+    )
+    finding_explanation = (
+        "The macOS Guest account lets anyone log in without a password. "
+        "While Guest sessions are sandboxed, Guest users can browse the web, "
+        "use apps, and access iCloud-enabled services. "
+        "It is also a common first step in local privilege-escalation research."
+    )
+    recommendation = (
+        "Disable the Guest account in System Settings → General → Users & Groups → Guest User."
+    )
+    fix_level = "guided"
+    fix_description = "Opens Users & Groups to disable the Guest account"
+    fix_url = "x-apple.systempreferences:com.apple.preferences.users"
+    fix_reversible = True
+    fix_time_estimate = "~30 seconds"
+
+    def run(self) -> CheckResult:
+        rc, out, _ = self.shell(
+            ["defaults", "read", "/Library/Preferences/com.apple.loginwindow", "GuestEnabled"]
+        )
+        if rc == 0 and out.strip() == "1":
+            return self._warning(
+                "Guest account is enabled — anyone can log in without a password",
+                data={"guest_enabled": True},
+            )
+        return self._pass("Guest account is disabled")
+
+
+class LoginHooksCheck(BaseCheck):
+    id = "login_hooks"
+    name = "Login/Logout Hooks"
+    category = "security"
+    category_icon = "🛡️ "
+
+    scan_description = (
+        "Checking for login and logout hooks — these run arbitrary scripts as root "
+        "at every login and logout event, a technique used by malware to persist."
+    )
+    finding_explanation = (
+        "Login hooks run a script as root every time any user logs in. "
+        "Logout hooks run at logout. They are a legacy persistence mechanism "
+        "rarely needed by legitimate software today — their presence on a "
+        "personal Mac is highly suspicious."
+    )
+    recommendation = (
+        "If you did not set these hooks intentionally, remove them: "
+        "sudo defaults delete com.apple.loginwindow LoginHook"
+    )
+    fix_level = "instructions"
+    fix_description = "Remove unrecognised login/logout hooks"
+    fix_steps = [
+        "Check current hooks: defaults read com.apple.loginwindow LoginHook",
+        "To remove login hook:  sudo defaults delete com.apple.loginwindow LoginHook",
+        "To remove logout hook: sudo defaults delete com.apple.loginwindow LogoutHook",
+        "Investigate the script path before removing to understand what it was doing",
+    ]
+    fix_reversible = True
+    fix_time_estimate = "~5 minutes"
+
+    def run(self) -> CheckResult:
+        found: list[str] = []
+        for key in ("LoginHook", "LogoutHook"):
+            rc, out, _ = self.shell(
+                ["defaults", "read", "com.apple.loginwindow", key]
+            )
+            if rc == 0 and out.strip():
+                found.append(f"{key}: {out.strip()[:60]}")
+
+        if found:
+            return self._warning(
+                f"Login/logout hook{'s' if len(found) > 1 else ''} detected: "
+                f"{'; '.join(found)}",
+                data={"hooks": found},
+            )
+        return self._pass("No login or logout hooks configured")
+
+
+class SSHConfigCheck(BaseCheck):
+    id = "ssh_config"
+    name = "SSH Server Config"
+    category = "security"
+    category_icon = "🛡️ "
+
+    scan_description = (
+        "Checking sshd_config for risky settings — password authentication and "
+        "root login over SSH are among the most exploited server misconfigurations."
+    )
+    finding_explanation = (
+        "SSH with password authentication enabled is constantly brute-forced on the "
+        "internet. PermitRootLogin exposes the most privileged account. "
+        "If Remote Login is enabled, these settings directly affect your Mac's "
+        "exposure — key-only auth is the strong default."
+    )
+    recommendation = (
+        "In /etc/ssh/sshd_config: set 'PasswordAuthentication no' and "
+        "'PermitRootLogin no'. Restart SSH: sudo launchctl kickstart -k system/com.openssh.sshd"
+    )
+    fix_level = "instructions"
+    fix_description = "Harden sshd_config to disable password auth and root login"
+    fix_steps = [
+        "Open: sudo nano /etc/ssh/sshd_config",
+        "Set: PasswordAuthentication no",
+        "Set: PermitRootLogin no",
+        "Save and restart SSH: sudo launchctl kickstart -k system/com.openssh.sshd",
+    ]
+    fix_reversible = True
+    fix_time_estimate = "~5 minutes"
+
+    def run(self) -> CheckResult:
+        config_path = Path("/etc/ssh/sshd_config")
+        if not config_path.exists():
+            return self._skip("sshd_config not found")
+
+        # First check if SSH server is actually running — skip if not
+        rc_ssh, ssh_out, _ = self.shell(["systemsetup", "-getremotelogin"], timeout=5)
+        if rc_ssh == 0 and "off" in ssh_out.lower():
+            return self._pass("Remote Login (SSH) is off — sshd_config not applicable")
+
+        try:
+            content = config_path.read_text(errors="replace")
+        except PermissionError:
+            return self._info(
+                "Could not read /etc/ssh/sshd_config — run mactuner with sudo to check"
+            )
+
+        issues: list[str] = []
+        for line in content.splitlines():
+            stripped = line.strip().lower()
+            if stripped.startswith("#"):
+                continue
+            if stripped.startswith("passwordauthentication") and "yes" in stripped:
+                issues.append("PasswordAuthentication yes (enables password brute-force)")
+            if stripped.startswith("permitrootlogin") and "no" not in stripped and "prohibit" not in stripped:
+                issues.append("PermitRootLogin is not 'no' (root login permitted)")
+
+        if issues:
+            return self._warning(
+                f"Risky SSH config: {'; '.join(issues)}",
+                data={"issues": issues},
+            )
+        return self._pass("SSH server config looks secure")
+
+
+class SystemExtensionsCheck(BaseCheck):
+    id = "system_extensions"
+    name = "System Extensions"
+    category = "security"
+    category_icon = "🛡️ "
+
+    scan_description = (
+        "Checking installed system extensions — these run as kernel-adjacent "
+        "privileged code. Unexpected extensions can be left by uninstalled apps "
+        "or indicate compromise."
+    )
+    finding_explanation = (
+        "System extensions (DriverKit, Network Extensions, Endpoint Security) "
+        "run at the highest privilege level below the kernel. "
+        "Legitimate apps like antivirus, VPNs, and virtualization tools use them. "
+        "Extensions that remain after app uninstall continue running indefinitely."
+    )
+    recommendation = (
+        "Review in System Settings → Privacy & Security → Security → System Extensions. "
+        "Or run: systemextensionsctl list"
+    )
+    fix_level = "guided"
+    fix_description = "Review system extensions in System Settings → Privacy & Security"
+    fix_url = "x-apple.systempreferences:com.apple.preference.security"
+    fix_reversible = True
+    fix_time_estimate = "~5 minutes"
+
+    def run(self) -> CheckResult:
+        rc, out, _ = self.shell(["systemextensionsctl", "list"], timeout=10)
+        if rc != 0 or not out.strip():
+            return self._info("Could not list system extensions")
+
+        extensions: list[str] = []
+        for line in out.splitlines():
+            # Active extension lines have [activated enabled] or similar
+            if "[" in line and ("enabled" in line.lower() or "activated" in line.lower()):
+                parts = line.strip().split()
+                if len(parts) >= 2:
+                    extensions.append(line.strip()[:80])
+
+        n = len(extensions)
+        if n == 0:
+            return self._pass("No active system extensions found")
+        return self._info(
+            f"{n} system extension{'s' if n != 1 else ''} active — verify all are from apps you installed",
+            data={"extensions": extensions, "count": n},
+        )
+
+
+class CronJobsCheck(BaseCheck):
+    id = "cron_jobs"
+    name = "Cron Jobs"
+    category = "security"
+    category_icon = "🛡️ "
+
+    scan_description = (
+        "Checking for cron jobs — scheduled tasks are a classic persistence "
+        "mechanism used by malware to survive reboots and re-infect after cleanup."
+    )
+    finding_explanation = (
+        "Cron jobs execute commands on a schedule. Legitimate developers sometimes "
+        "use them, but on a typical Mac user's system they're rare. "
+        "Malware uses cron to periodically re-download payloads or exfiltrate data. "
+        "Any unexpected cron entry warrants close inspection."
+    )
+    recommendation = (
+        "Review your crontab with: crontab -l\n"
+        "Remove unexpected entries with: crontab -e\n"
+        "Also check /etc/cron.d/ and /var/at/tabs/ for system-level crons."
+    )
+    fix_level = "instructions"
+    fix_description = "Review and remove unexpected cron entries"
+    fix_steps = [
+        "List current crons: crontab -l",
+        "Edit crontab: crontab -e  (remove suspicious lines and save)",
+        "Check system crons: ls /etc/cron.d/ (if it exists)",
+    ]
+    fix_reversible = True
+    fix_time_estimate = "~5 minutes"
+
+    def run(self) -> CheckResult:
+        rc, out, _ = self.shell(["crontab", "-l"])
+        if rc != 0 or not out.strip():
+            return self._pass("No cron jobs configured for this user")
+
+        jobs = [
+            ln.strip()
+            for ln in out.splitlines()
+            if ln.strip() and not ln.strip().startswith("#")
+        ]
+        if not jobs:
+            return self._pass("No active cron jobs configured")
+
+        n = len(jobs)
+        return self._warning(
+            f"{n} cron job{'s' if n != 1 else ''} found — verify each is intentional",
+            data={"jobs": jobs, "count": n},
+        )
+
+
+class XProtectCheck(BaseCheck):
+    id = "xprotect_freshness"
+    name = "XProtect Signatures"
+    category = "security"
+    category_icon = "🛡️ "
+
+    scan_description = (
+        "Checking XProtect signature freshness — stale signatures leave your Mac "
+        "unprotected against malware families Apple has already detected and catalogued."
+    )
+    finding_explanation = (
+        "XProtect is macOS's built-in malware scanner. It relies on a signature "
+        "database that Apple updates silently in the background. If auto-updates "
+        "are disabled or a proxy blocks downloads, signatures become stale and "
+        "won't detect newer malware variants."
+    )
+    recommendation = (
+        "Ensure 'Install System Data Files and Security Updates' is enabled in "
+        "System Settings → General → Software Update → Automatic Updates."
+    )
+    fix_level = "guided"
+    fix_description = "Enable automatic XProtect updates via Software Update settings"
+    fix_url = "x-apple.systempreferences:com.apple.preferences.softwareupdate"
+    fix_reversible = True
+    fix_time_estimate = "~30 seconds"
+
+    def run(self) -> CheckResult:
+        import time as _time
+
+        rc, out, _ = self.shell(
+            ["pkgutil", "--pkg-info", "com.apple.pkg.XProtectPlistConfigData"],
+            timeout=5,
+        )
+
+        if rc != 0 or not out.strip():
+            # Fallback: check the XProtect bundle directly
+            bundle = Path(
+                "/Library/Apple/System/Library/CoreServices/XProtect.bundle"
+            )
+            if bundle.exists():
+                return self._info("XProtect is present (version unreadable via pkgutil)")
+            return self._info("XProtect bundle not found — may be part of System volume")
+
+        version = ""
+        install_time = 0
+        for line in out.splitlines():
+            if line.startswith("version:"):
+                version = line.split(":", 1)[1].strip()
+            elif line.startswith("install-time:"):
+                try:
+                    install_time = int(line.split(":", 1)[1].strip())
+                except ValueError:
+                    pass
+
+        if install_time:
+            age_days = int((_time.time() - install_time) / 86400)
+            age_str = f"{age_days} day{'s' if age_days != 1 else ''} ago"
+            ver_str = f" (v{version})" if version else ""
+
+            if age_days > 30:
+                return self._warning(
+                    f"XProtect signatures are {age_days} days old{ver_str} — "
+                    "signatures may be stale",
+                    data={"version": version, "age_days": age_days},
+                )
+            return self._pass(
+                f"XProtect signatures updated {age_str}{ver_str}",
+                data={"version": version, "age_days": age_days},
+            )
+
+        if version:
+            return self._info(
+                f"XProtect present (v{version} — install date unavailable)",
+                data={"version": version},
+            )
+        return self._info("XProtect present (details unavailable)")
+
+
 # ── Public list for main.py ───────────────────────────────────────────────────
 
 ALL_CHECKS: list[type[BaseCheck]] = [
     AutoLoginCheck,
+    GuestAccountCheck,
     SSHAuthorizedKeysCheck,
     SSHKeyStrengthCheck,
+    SSHConfigCheck,
     LaunchAgentsCheck,
+    LoginHooksCheck,
+    CronJobsCheck,
     EtcHostsCheck,
     SharingServicesCheck,
     ActivationLockCheck,
     MDMProfilesCheck,
     SystemRootCACheck,
+    SystemExtensionsCheck,
+    XProtectCheck,
 ]

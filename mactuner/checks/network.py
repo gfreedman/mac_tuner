@@ -496,22 +496,24 @@ class ListeningPortsCheck(BaseCheck):
     category_icon = "🔌"
 
     scan_description = (
-        "Checking for services listening on network ports — "
+        "Checking for services listening on network ports (TCP and UDP) — "
         "each open port is a potential entry point for network-based attacks."
     )
     finding_explanation = (
         "Services that bind to network ports accept incoming connections. "
         "Beyond expected system services, unexpected listeners could indicate "
-        "software you forgot about, development servers left running, or malicious processes."
+        "software you forgot about, development servers left running, or malicious processes. "
+        "UDP listeners are checked too — they're commonly used for tunnels and C2 channels."
     )
     recommendation = (
-        "Run 'lsof -i TCP -sTCP:LISTEN -n -P' to see all listeners. "
+        "Run 'lsof -i TCP -sTCP:LISTEN -n -P' and 'lsof -i UDP -n -P' to see all listeners. "
         "Identify each process and disable or uninstall anything unexpected."
     )
     fix_level = "instructions"
     fix_description = "Identify and disable unexpected listening services"
     fix_steps = [
         "Run: lsof -i TCP -sTCP:LISTEN -n -P",
+        "Run: lsof -i UDP -n -P",
         "Identify each process by name and port number",
         "Disable unexpected services in System Settings → General → Sharing",
         "Quit or uninstall software you don't recognize",
@@ -520,7 +522,7 @@ class ListeningPortsCheck(BaseCheck):
     fix_time_estimate = "10–30 minutes"
 
     # Well-known system ports that don't warrant a flag
-    _EXPECTED_PORTS = {
+    _EXPECTED_TCP_PORTS = {
         22,    # SSH (Remote Login)
         88,    # Kerberos
         443,   # HTTPS system services
@@ -534,24 +536,37 @@ class ListeningPortsCheck(BaseCheck):
         8009,  # AirPlay
     }
 
-    def run(self) -> CheckResult:
-        rc, out, _ = self.shell(
-            ["lsof", "-i", "TCP", "-sTCP:LISTEN", "-n", "-P"], timeout=12
-        )
+    _EXPECTED_UDP_PORTS = {
+        53,    # DNS
+        67,    # DHCP server
+        68,    # DHCP client
+        123,   # NTP
+        137,   # NetBIOS name service
+        138,   # NetBIOS datagram service
+        5353,  # mDNS / Bonjour
+        5354,  # mDNSResponder
+        1900,  # SSDP / UPnP
+        4500,  # IKE NAT traversal
+        500,   # IKE (VPN)
+    }
 
-        if rc != 0 or not out:
-            return self._info("Could not enumerate listening ports")
-
-        # Parse: COMMAND  PID  USER  FD  TYPE  DEVICE  SIZE  NODE  NAME
+    def _parse_lsof_output(self, out: str) -> dict[int, list[str]]:
+        """Extract (port → [commands]) from lsof output, excluding loopback and high ports."""
         listeners: dict[int, list[str]] = {}
         for line in out.splitlines()[1:]:  # skip header
             parts = line.split()
             if len(parts) < 9:
                 continue
             command = parts[0]
-            name_field = parts[-1]  # e.g. "*:5900" or "127.0.0.1:631"
+            name_field = parts[-1]  # e.g. "*:5900" or "127.0.0.1:631" or "[::1]:631"
             if ":" not in name_field:
                 continue
+
+            # Skip loopback-only listeners — not exposed to the network
+            host_part = name_field.rsplit(":", 1)[0].lstrip("[").rstrip("]")
+            if host_part in ("127.0.0.1", "::1", "localhost"):
+                continue
+
             port_str = name_field.rsplit(":", 1)[-1]
             try:
                 port = int(port_str)
@@ -564,41 +579,110 @@ class ListeningPortsCheck(BaseCheck):
                 listeners[port] = []
             if command not in listeners[port]:
                 listeners[port].append(command)
+        return listeners
 
-        if not listeners:
-            return self._pass("No services listening on network ports")
+    def run(self) -> CheckResult:
+        # TCP listeners
+        rc_tcp, out_tcp, _ = self.shell(
+            ["lsof", "-i", "TCP", "-sTCP:LISTEN", "-n", "-P"], timeout=12
+        )
+        # UDP listeners
+        rc_udp, out_udp, _ = self.shell(
+            ["lsof", "-i", "UDP", "-n", "-P"], timeout=12
+        )
 
-        unexpected = {
-            port: procs
-            for port, procs in listeners.items()
-            if port not in self._EXPECTED_PORTS
-        }
-        total = len(listeners)
+        if (rc_tcp != 0 or not out_tcp) and (rc_udp != 0 or not out_udp):
+            return self._info("Could not enumerate listening ports")
 
-        if not unexpected:
+        tcp_listeners = self._parse_lsof_output(out_tcp) if rc_tcp == 0 else {}
+        udp_listeners = self._parse_lsof_output(out_udp) if rc_udp == 0 else {}
+
+        unexpected_tcp = {p: c for p, c in tcp_listeners.items() if p not in self._EXPECTED_TCP_PORTS}
+        unexpected_udp = {p: c for p, c in udp_listeners.items() if p not in self._EXPECTED_UDP_PORTS}
+        total = len(tcp_listeners) + len(udp_listeners)
+
+        if not unexpected_tcp and not unexpected_udp:
             return self._pass(
-                f"{total} system port{'s' if total != 1 else ''} listening (all expected)",
+                f"{total} port{'s' if total != 1 else ''} listening (TCP+UDP — all expected)",
                 data={"port_count": total},
             )
 
-        examples = [
-            f":{port} ({', '.join(procs[:2])})"
-            for port, procs in sorted(unexpected.items())[:5]
-        ]
-        n = len(unexpected)
+        all_unexpected: list[str] = []
+        for port, procs in sorted(unexpected_tcp.items()):
+            all_unexpected.append(f"TCP:{port} ({', '.join(procs[:2])})")
+        for port, procs in sorted(unexpected_udp.items()):
+            all_unexpected.append(f"UDP:{port} ({', '.join(procs[:2])})")
+
+        examples = all_unexpected[:5]
+        n = len(unexpected_tcp) + len(unexpected_udp)
 
         if n > 5:
             return self._warning(
                 f"{n} unexpected listening port{'s' if n != 1 else ''}: "
                 f"{', '.join(examples)}{'…' if n > 5 else ''}",
-                data={"unexpected_ports": {str(k): v for k, v in unexpected.items()},
+                data={"unexpected_tcp": {str(k): v for k, v in unexpected_tcp.items()},
+                      "unexpected_udp": {str(k): v for k, v in unexpected_udp.items()},
                       "total": total},
             )
         return self._info(
             f"{n} non-system port{'s' if n != 1 else ''} listening: {', '.join(examples)}",
-            data={"unexpected_ports": {str(k): v for k, v in unexpected.items()},
+            data={"unexpected_tcp": {str(k): v for k, v in unexpected_tcp.items()},
+                  "unexpected_udp": {str(k): v for k, v in unexpected_udp.items()},
                   "total": total},
         )
+
+
+# ── Internet Sharing ──────────────────────────────────────────────────────────
+
+class InternetSharingCheck(BaseCheck):
+    id = "internet_sharing"
+    name = "Internet Sharing"
+    category = "network"
+    category_icon = "📡"
+
+    scan_description = (
+        "Checking if Internet Sharing is enabled — sharing your connection "
+        "creates a new network hotspot that other devices can join without authentication."
+    )
+    finding_explanation = (
+        "Internet Sharing turns your Mac into a Wi-Fi hotspot and broadcasts "
+        "your internet connection to nearby devices. Unless you deliberately set "
+        "this up, it is a significant exposure — other devices on your network or "
+        "in range could silently route traffic through your Mac."
+    )
+    recommendation = (
+        "Disable Internet Sharing in System Settings → General → Sharing → Internet Sharing."
+    )
+    fix_level = "guided"
+    fix_description = "Disable Internet Sharing in System Settings → Sharing"
+    fix_url = "x-apple.systempreferences:com.apple.preference.sharing"
+    fix_reversible = True
+    fix_time_estimate = "~30 seconds"
+
+    def run(self) -> CheckResult:
+        # Internet Sharing is controlled via the NAT plist
+        rc, out, _ = self.shell(
+            [
+                "defaults", "read",
+                "/Library/Preferences/SystemConfiguration/com.apple.nat",
+                "NAT",
+            ]
+        )
+
+        if rc == 0 and "Enabled = 1" in out:
+            return self._warning(
+                "Internet Sharing is enabled — your Mac is acting as a network hotspot",
+                data={"internet_sharing_enabled": True},
+            )
+
+        # Also check if the NAT kernel module is loaded as a secondary signal
+        rc2, out2, _ = self.shell(["kextstat"])
+        if rc2 == 0 and "com.apple.nke.ppp" in out2:
+            return self._info(
+                "Internet Sharing may be partially active — verify in System Settings → Sharing"
+            )
+
+        return self._pass("Internet Sharing is off")
 
 
 # ── Export ────────────────────────────────────────────────────────────────────
@@ -608,6 +692,7 @@ ALL_CHECKS = [
     RemoteLoginCheck,
     ScreenSharingCheck,
     FileSharingCheck,
+    InternetSharingCheck,
     DNSCheck,
     ProxyCheck,
     SavedWifiCheck,
