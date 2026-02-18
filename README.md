@@ -101,18 +101,18 @@ mactuner --json | jq '.score'
 
 ## What It Checks
 
-MacTuner runs **59 checks** across 10 categories:
+MacTuner runs **62 checks** across 10 categories:
 
 | Category | Checks |
 |---|---|
 | **System** | macOS version, pending updates, SIP, FileVault, Firewall, Gatekeeper, Time Machine, screen lock, Rosetta, Secure Boot |
-| **Security** | Auto-login, SSH keys, launch agents, /etc/hosts, sharing services, Activation Lock, MDM profiles |
+| **Security** | Auto-login, SSH keys, launch agents, /etc/hosts, sharing services, Activation Lock, MDM profiles, system root CA certificates |
 | **Privacy** | Guided review of Full Disk Access, Screen Recording, and Accessibility grants |
 | **Homebrew** | brew doctor, outdated formulae & casks, orphaned dependencies, cleanup savings |
 | **Disk** | Free space, APFS snapshots, Xcode DerivedData, Docker usage, Trash, caches |
 | **Hardware** | Battery cycle count & condition, SMART status, kernel panics, thermal throttling |
 | **Memory** | Memory pressure, swap usage, top CPU & memory consumers |
-| **Network** | AirDrop visibility, Remote Login, Screen/File Sharing, DNS, proxy, saved Wi-Fi |
+| **Network** | AirDrop visibility, Remote Login, Screen/File Sharing, DNS, proxy, saved Wi-Fi, Bluetooth discoverability, listening ports |
 | **Dev Env** | Xcode CLTools, Python/Ruby PATH conflicts, conda, Node managers, git config |
 | **Apps** | App Store updates (via mas), iCloud status, login items |
 
@@ -190,6 +190,7 @@ Override with `--profile developer/creative/standard`.
 - **Graceful** — one failing check never crashes the scan
 - **Transparent** — every command is shown before running
 - **Reversibility labelled** — irreversible fixes are always marked
+- **MDM-aware** — detects managed Macs and notes that IT-enforced settings may appear as warnings
 
 ---
 
