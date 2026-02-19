@@ -131,9 +131,10 @@ def _render(console: Console, info: dict, display_name: str) -> None:
     console.print(
         f"  [bold bright_green]Welcome, {display_name}![/bold bright_green]"
     )
+    console.print()
 
-    # ── Beagle + system identity (tight side-by-side) ─────────────────────────
-    beagle = Text(justify="left")
+    # ── Beagle + system identity ──────────────────────────────────────────────
+    beagle = Text(justify="center")
     _append_beagle(beagle)
 
     macos_name = info.get("macos_name", "")
@@ -151,18 +152,15 @@ def _render(console: Console, info: dict, display_name: str) -> None:
     if ram:
         chip_parts.append(f"{ram} GB")
 
-    # Right column: blank line 1 aligns info with body (line 2), cwd with belly (line 3)
     right = Text(justify="left")
-    right.append("\n")
-    right.append("  ·  ".join(chip_parts) + "\n", style="dim white")
-    right.append(str(Path.cwd()), style="dim white")
+    right.append("\n\n\n")  # nudge down to vertically center next to 9-line beagle
+    right.append("  " + "  ·  ".join(chip_parts) + "\n", style="dim white")
+    right.append("  " + str(Path.cwd()) + "\n", style="dim white")
 
-    # padding=(0, 2): 2-char gap on left/right of each cell — keeps art and info tight
-    ident = Table(box=None, show_header=False, padding=(0, 2), expand=False)
-    ident.add_column(width=16, justify="left")   # exactly fits 16-char wide art
+    ident = Table(box=None, show_header=False, padding=(0, 1), expand=False)
+    ident.add_column(width=18, justify="center")
     ident.add_column(justify="left")
     ident.add_row(beagle, right)
-    console.print()
     console.print(ident)
     console.print()
 
@@ -231,22 +229,17 @@ def _render_last_scan(console: Console, data: dict) -> None:
     else:
         score_style = "bold bright_red"
 
-    # Line 1: label + date
-    line1 = Text()
-    line1.append("  Last scan  ", style="dim white")
-    line1.append(date_str, style="dim white")
-    console.print(line1)
-
-    # Line 2: score + issue counts (indented to align under date)
-    line2 = Text()
-    line2.append("  Score ", style="dim white")
-    line2.append(str(score), style=score_style)
+    line = Text()
+    line.append("  Last scan  ·  ", style="dim white")
+    line.append(date_str, style="dim white")
+    line.append("  ·  ", style="dim white")
+    line.append(f"Score {score}", style=score_style)
 
     if critical:
-        line2.append(f"  ·  🔴 {critical} critical", style="bold bright_red")
+        line.append(f"  ·  🔴 {critical} critical", style="bold bright_red")
     if warning:
-        line2.append(f"  ·  ⚠️  {warning} warnings", style="yellow")
+        line.append(f"  ·  ⚠️  {warning} warnings", style="yellow")
     if not critical and not warning:
-        line2.append("  ·  ✨ all clear", style="bright_green")
+        line.append("  ·  ✨ all clear", style="bright_green")
 
-    console.print(line2)
+    console.print(line)
