@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mactuner"
-version = "1.3.0"
+version = "1.3.1"
 description = "Mac System Health Inspector & Tuner — narrated, educational, beautiful"
 readme = "README.md"
 requires-python = ">=3.10"
