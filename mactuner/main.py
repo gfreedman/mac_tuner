@@ -90,6 +90,13 @@ _MDM_FLAG = Path.home() / ".config" / "mactuner" / ".mdm_warned"
     default=False,
     help="Print shell completion setup instructions and exit.",
 )
+# Welcome screen
+@click.option(
+    "--welcome",
+    is_flag=True,
+    default=False,
+    help="Show the welcome screen and exit.",
+)
 def cli(
     profile: Optional[str],
     only: Optional[str],
@@ -104,6 +111,7 @@ def cli(
     fail_on_critical: bool,
     check_shell_secrets: bool,
     show_completion: bool,
+    welcome: bool,
 ) -> None:
     """Mac System Health Inspector & Tuner.
 
@@ -120,15 +128,31 @@ def cli(
         _print_completion_help(console)
         return
 
+    # ── Welcome flag ──────────────────────────────────────────────────────────
+    if welcome:
+        if not quiet and not as_json:
+            from mactuner.ui.welcome import show_welcome
+            show_welcome(console, first_run=False)
+        return
+
     # ── Resolve category filters (needed for mode before header) ──────────────
     only_cats = {c.strip().lower() for c in only.split(",")} if only else None
     skip_cats = {c.strip().lower() for c in skip.split(",")} if skip else set()
 
-    # ── Header ────────────────────────────────────────────────────────────────
+    # ── Header / first-run welcome ────────────────────────────────────────────
+    _first_run = False
     if not quiet and not as_json:
-        print_header(console, mode=_resolve_mode(fix, only, skip), only_cats=only_cats)
-        console.print()
-        _warn_if_mdm_enrolled(console)
+        from mactuner.ui.welcome import is_first_run, show_welcome
+        if is_first_run():
+            _first_run = True
+            ok = show_welcome(console, first_run=True)
+            if not ok:
+                return
+            _warn_if_mdm_enrolled(console)
+        else:
+            print_header(console, mode=_resolve_mode(fix, only, skip), only_cats=only_cats)
+            console.print()
+            _warn_if_mdm_enrolled(console)
 
     # ── Warn: --check-shell-secrets + --json exposes redacted credential hints ──
     if check_shell_secrets and as_json:
@@ -156,7 +180,7 @@ def cli(
         return
 
     # ── Pre-scan prompt ───────────────────────────────────────────────────────
-    if not quiet and not as_json and not yes:
+    if not quiet and not as_json and not yes and not _first_run:
         n = len(all_checks)
         console.print(f"  [dim]Ready to run [bold white]{n}[/bold white] checks — ~30–45 seconds.[/dim]")
         console.print()
@@ -175,6 +199,14 @@ def cli(
     _scan_start = time.monotonic()
     results = _run_checks(all_checks, quiet=quiet, as_json=as_json)
     _scan_elapsed = time.monotonic() - _scan_start
+
+    # ── Persist last-scan summary for welcome screen ──────────────────────────
+    if not as_json:
+        from mactuner.ui.welcome import save_last_scan
+        _counts: dict[str, int] = {}
+        for r in results:
+            _counts[r.status] = _counts.get(r.status, 0) + 1
+        save_last_scan(calculate_health_score(results), _counts)
 
     # ── Output ────────────────────────────────────────────────────────────────
     if as_json:
