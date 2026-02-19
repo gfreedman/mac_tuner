@@ -64,27 +64,28 @@ def _build_left(info: dict) -> Text:
 
 
 def _append_beagle(t: Text) -> None:
-    """Append beagle ASCII art with Rich color spans."""
-    E = "#4A2800"   # ear   — dark brown
-    H = "#9B6B3A"   # head  — medium brown
-    I = "#F0F0F0"   # eye   — near-white
-    N = "#2C1500"   # nose  — near-black
-    B = "#C48B4A"   # body  — golden tan
-    L = "#9B6B3A"   # legs  — medium brown
+    """Append beagle ASCII art with Rich color spans and body fill."""
+    E  = "#4A2800"              # ear        — dark brown
+    H  = "#9B6B3A"              # head       — medium brown
+    I  = "#F0F0F0"              # eye        — near-white
+    N  = "#2C1500"              # nose       — near-black
+    B  = "#C48B4A"              # body       — golden tan
+    HF = "on #9B6B3A"           # head fill  — bg medium brown on spaces
+    BF = "on #C48B4A"           # body fill  — bg golden tan on spaces
+    SP = "#9B6B3A on #C48B4A"   # spine      — brown glyph on tan bg
+    L  = "#9B6B3A"              # legs       — medium brown
 
-    def row(*spans: tuple[str, str]) -> None:
-        for color, chars in spans:
-            t.append(chars, style=color)
-        t.append("\n")
-
-    #   ___( o\>
-    row((H, "  ___"), (E, "("), (H, " "), (I, "o"), (N, "\\>"))
-    #  /   ___  \___/|
-    row((B, " /   "), (H, "___"), (B, "  \\___/|"))
-    #  \__/   \______|
-    row((B, " \\__/   \\______|"))
-    #     |___|  |___|
-    row((L, "    |___|  |___|"))
+    all_rows = [
+        [(H, "  ___"), (E, "("), (HF, " "), (I, "o"), (N, "\\>")],   #   ___( o\>
+        [(B, " /"), (BF, "   "), (SP, "___"), (BF, "  "), (B, "\\___/|")],  #  /[fill]___[fill]\___/|
+        [(B, " \\__/"), (BF, "   "), (B, "\\______|")],               #  \__/[fill]\______|
+        [(L, "    |___|  |___|")],                                     #     |___|  |___|
+    ]
+    for i, spans in enumerate(all_rows):
+        for style, chars in spans:
+            t.append(chars, style=style)
+        if i < len(all_rows) - 1:   # no trailing \n — prevents phantom blank row in tables
+            t.append("\n")
 
 
 def _build_right(mode: str = "scan", only_cats: Optional[set] = None) -> Text:
