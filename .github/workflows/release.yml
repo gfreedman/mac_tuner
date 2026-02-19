@@ -9,6 +9,8 @@ jobs:
   release:
     name: Tag → GitHub Release → Homebrew formula
     runs-on: macos-latest
+    permissions:
+      contents: write   # needed to create GitHub Releases
 
     steps:
       - name: Checkout mac_tuner
