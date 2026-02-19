@@ -35,13 +35,20 @@ Runs a full audit of your Mac: security settings, disk health, memory, developer
 
 ## Install
 
-**Recommended — [pipx](https://pipx.pypa.io)** (installs globally without affecting system Python):
+**Homebrew (recommended):**
+
+```bash
+brew tap gfreedman/mactuner
+brew install mactuner
+```
+
+**[pipx](https://pipx.pypa.io)** (installs globally without affecting system Python):
 
 ```bash
 pipx install mactuner
 ```
 
-**Alternatively — pip:**
+**pip:**
 
 ```bash
 pip3 install --user mactuner
@@ -51,11 +58,42 @@ pip3 install --user mactuner
 
 ```bash
 git clone https://github.com/gfreedman/mac_tuner
-cd mactuner
+cd mac_tuner
 bash install.sh
 ```
 
 **Requirements:** macOS 13 Ventura or later · Python 3.10+
+
+---
+
+## Uninstall
+
+**Homebrew:**
+
+```bash
+brew uninstall mactuner
+brew untap gfreedman/mactuner   # optional — removes the tap entirely
+```
+
+**pipx:**
+
+```bash
+pipx uninstall mactuner
+```
+
+**pip:**
+
+```bash
+pip3 uninstall mactuner
+```
+
+**Remove saved config and scan history** (any install method):
+
+```bash
+rm -rf ~/.config/mactuner
+```
+
+This removes the first-run flag, last scan summary, and MDM notice history. It does not affect any system settings MacTuner may have changed via `--fix`.
 
 ---
 
@@ -146,21 +184,37 @@ Scores run from 0–100, starting at 100:
 
 ## Fix Mode
 
-Run `mactuner --fix` after the scan to enter the interactive fix menu.
+Run `mactuner --fix` after the scan to step through fixes one at a time.
+
+Each fix gets its own card showing the full context — what was found, why it matters, what the fix does, and an estimated time. You approve or skip before anything runs:
 
 ```
-  Found 4 fixable issues:  3 🤖 Automatic    1 👆 Opens Settings
-
-  ◉  🤖  Homebrew Orphaned Dependencies — 79 deps can be removed
-  ◉  🤖  Homebrew Cache — 1.2 GB can be reclaimed
-  ○  👆  FileVault — disk encryption is off
-  ○  👆  Firewall — incoming connections are unrestricted
+╭─── [1/4]  Homebrew Orphaned Dependencies ────────────────────────────╮
+│  ⚠️  WARNING   🤖  Automatic                                          │
+│                                                                       │
+│  79 orphaned dependencies taking up space                             │
+│  Packages installed as dependencies but no longer needed by any      │
+│  formula. Safe to remove.                                             │
+│                                                                       │
+│  What this fix does                                                   │
+│  Runs brew autoremove to remove orphaned packages                     │
+│  $ brew autoremove                                                    │
+│                                                                       │
+│  ⏱ ~10s  ·  reversible  ·                                            │
+╰───────────────────────────────────────────────────────────────────────╯
+  Apply? [y/N] ›
 ```
 
 - **🤖 Automatic** — runs a shell command, streams output live
 - **🤖🔐 Requires password** — uses a native macOS authentication dialog (not a terminal sudo prompt)
 - **👆 Opens Settings** — opens the exact System Settings pane with guidance on what to change
 - **📋 Step-by-step** — prints manual instructions
+
+Auto-apply all safe fixes without prompting:
+
+```bash
+mactuner --fix --auto
+```
 
 MacTuner never modifies anything without `--fix`. Every fix shows what it will do before asking for confirmation. Irreversible fixes are labelled clearly.
 
@@ -213,7 +267,7 @@ mactuner --json | jq '{score, summary: .summary}'
 ```json
 {
   "schema_version": 1,
-  "mactuner_version": "1.2.0",
+  "mactuner_version": "1.3.0",
   "scan_time": "2026-02-18T20:00:00+00:00",
   "system": {
     "macos_version": "15.3",
