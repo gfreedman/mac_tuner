@@ -45,6 +45,7 @@ jobs:
           repository: gfreedman/homebrew-mactuner
           path: homebrew-mactuner
           token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          persist-credentials: false
 
       - name: Update formula
         working-directory: homebrew-mactuner
