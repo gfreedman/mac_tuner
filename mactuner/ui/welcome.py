@@ -5,15 +5,26 @@ Displayed on first run (before ~/.config/mactuner/.welcomed exists)
 or with --welcome. Provides orientation, system identity, and a quick-start
 command guide. Optionally shows the last scan summary if one exists.
 
-Layout:
-  header bar   mactuner v1.2.0 · Mac System Health Inspector
-  greeting     Welcome, Geoff!                           [bright green]
-  ident        beagle art left | macOS · CPU · model · RAM right
-               cwd line
-  divider
-  quick start  aligned command → description table
-  divider      (only if last_scan exists)
-  last scan    date · score · counts
+Layout (plain stacked text — no panels, no tables):
+  mactuner v1.2.0  ·  Mac System Health Inspector
+  ──────────────────────────────────────────────
+
+  Welcome, Geoff!
+
+  [beagle art]
+
+  macOS 26.3  ·  Apple M2  ·  MacBook Air  ·  16 GB
+  /Users/geoff/path
+
+  ──────────────────────────────────────────────
+  Quick start
+
+    mactuner              Full system health scan
+    mactuner --fix        Interactive fix mode
+    ...
+
+  ──────────────────────────────────────────────
+  Last scan  ·  18 Feb 2026  ·  22:06  ·  Score 94
 """
 
 import getpass
@@ -23,14 +34,12 @@ from pathlib import Path
 from typing import Optional
 
 from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
 from rich.text import Text
 
 from mactuner import __version__
 from mactuner.system_info import get_system_info
 from mactuner.ui.header import _append_beagle
-from mactuner.ui.theme import APP_NAME, APP_TAGLINE, COLOR_BRAND
+from mactuner.ui.theme import APP_NAME, APP_TAGLINE
 
 
 # ── Persistent state paths ────────────────────────────────────────────────────
@@ -116,27 +125,31 @@ def show_welcome(console: Console, first_run: bool = False) -> bool:
 
 # ── Renderer ──────────────────────────────────────────────────────────────────
 
+_DIV = "  " + "─" * 52  # reused divider line
+
+
 def _render(console: Console, info: dict, display_name: str) -> None:
-    # ── Header bar ────────────────────────────────────────────────────────────
+    # ── Version line + underline (no Panel box) ───────────────────────────────
     hdr = Text()
-    hdr.append(f" {APP_NAME} ", style="bold white")
-    hdr.append(f"v{__version__}", style="dim white")
+    hdr.append("  ")
+    hdr.append(APP_NAME, style="bold white")
+    hdr.append(f"  v{__version__}", style="dim white")
     hdr.append("  ·  ", style="dim white")
     hdr.append(APP_TAGLINE, style="dim white")
-    hdr.append(" ")
-    console.print(Panel(hdr, border_style=COLOR_BRAND, padding=(0, 1)))
+    console.print(hdr)
+    console.print(_DIV, style="dim white")
     console.print()
 
     # ── Greeting ──────────────────────────────────────────────────────────────
-    console.print(
-        f"  [bold bright_green]Welcome, {display_name}![/bold bright_green]"
-    )
+    console.print(f"  [bold bright_green]Welcome, {display_name}![/bold bright_green]")
     console.print()
 
-    # ── Beagle + system identity ──────────────────────────────────────────────
-    beagle = Text(justify="center")
+    # ── Beagle (printed directly — no table wrapper) ──────────────────────────
+    beagle = Text(justify="left")
     _append_beagle(beagle)
+    console.print(beagle)
 
+    # ── System identity ───────────────────────────────────────────────────────
     macos_name = info.get("macos_name", "")
     macos_ver  = info.get("macos_version", "")
     macos_str  = (
@@ -152,26 +165,18 @@ def _render(console: Console, info: dict, display_name: str) -> None:
     if ram:
         chip_parts.append(f"{ram} GB")
 
-    right = Text(justify="left")
-    right.append("\n\n\n")  # nudge down to vertically center next to 9-line beagle
-    right.append("  " + "  ·  ".join(chip_parts) + "\n", style="dim white")
-    right.append("  " + str(Path.cwd()) + "\n", style="dim white")
-
-    ident = Table(box=None, show_header=False, padding=(0, 1), expand=False)
-    ident.add_column(width=18, justify="center")
-    ident.add_column(justify="left")
-    ident.add_row(beagle, right)
-    console.print(ident)
-    console.print()
-
-    # ── Divider ───────────────────────────────────────────────────────────────
-    console.print("  " + "─" * 52, style="dim white")
+    console.print("  " + "  ·  ".join(chip_parts), style="dim white")
+    console.print("  " + str(Path.cwd()), style="dim white")
     console.print()
 
     # ── Quick start ───────────────────────────────────────────────────────────
+    console.print(_DIV, style="dim white")
+    console.print()
     console.print("  [bold white]Quick start[/bold white]")
     console.print()
 
+    # ljust pads command to fixed width so descriptions line up — no Table needed
+    _CMD_W = 22   # len("mactuner --explain") = 18, +4 breathing room
     cmds = [
         ("mactuner",           "Full system health scan"),
         ("mactuner --fix",     "Interactive fix mode — repair issues"),
@@ -179,21 +184,18 @@ def _render(console: Console, info: dict, display_name: str) -> None:
         ("mactuner --explain", "Deeper context for every finding"),
         ("mactuner --help",    "All options"),
     ]
-    cmd_tbl = Table(box=None, show_header=False, padding=(0, 0), expand=False)
-    cmd_tbl.add_column(width=30, no_wrap=True)
-    cmd_tbl.add_column(justify="left")
     for cmd, desc in cmds:
-        name = Text()
-        name.append("    ")
-        name.append(cmd, style="bold white")
-        cmd_tbl.add_row(name, Text(desc, style="dim white"))
-    console.print(cmd_tbl)
+        row = Text()
+        row.append("    ")
+        row.append(cmd.ljust(_CMD_W), style="bold white")
+        row.append(desc, style="dim white")
+        console.print(row)
     console.print()
 
     # ── Last scan ─────────────────────────────────────────────────────────────
     last = _load_last_scan()
     if last:
-        console.print("  " + "─" * 52, style="dim white")
+        console.print(_DIV, style="dim white")
         console.print()
         _render_last_scan(console, last)
         console.print()
