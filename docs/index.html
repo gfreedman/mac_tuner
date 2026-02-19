@@ -229,7 +229,7 @@
     /* ── Install grid ─────────────────────────────────────────────────── */
     .install-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 2px;
       margin: 12px 0 0;
     }
@@ -239,13 +239,8 @@
       padding: 16px 18px 14px;
     }
 
-    .install-opt:first-child {
-      grid-column: 1 / -1;
-      border-radius: 8px 8px 0 0;
-    }
-
-    .install-opt:nth-child(2) { border-radius: 0 0 0 8px; }
-    .install-opt:nth-child(3) { border-radius: 0 0 8px 0; }
+    .install-opt:first-child  { border-radius: 8px 0 0 8px; }
+    .install-opt:last-child   { border-radius: 0 8px 8px 0; }
 
     .install-label {
       font-size: 12px;
@@ -500,9 +495,9 @@
       .steps .step:last-child        { border-radius: 0; }
       .steps .step:first-child       { border-radius: 8px 8px 0 0; }
       .steps .step:last-child        { border-radius: 0 0 8px 8px; }
-      .install-opt:first-child       { border-radius: 8px 8px 0 0; }
-      .install-opt:nth-child(2)      { border-radius: 0; }
-      .install-opt:nth-child(3)      { border-radius: 0 0 8px 8px; }
+      .install-opt:first-child  { border-radius: 8px 8px 0 0; }
+      .install-opt:last-child   { border-radius: 0 0 8px 8px; }
+      .install-opt:not(:first-child):not(:last-child) { border-radius: 0; }
       .card:nth-child(odd)           { border-radius: 0; }
       .card:nth-child(even)          { border-radius: 0; }
       .grid-2 .card:first-child      { border-radius: 8px 8px 0 0; }
@@ -545,23 +540,20 @@
       <div class="step">
         <div class="step-num">Step 1</div>
         <div class="step-title">Install</div>
-        <p>Homebrew is the easiest way.</p>
+        <p>Homebrew is the easiest way. Or use <a href="#install">pipx or pip</a>.</p>
         <pre><code>brew install gfreedman/mactuner/mactuner</code></pre>
-        <p style="margin-top:8px">Also available via pipx or pip — see <a href="#install">all options</a>.</p>
       </div>
       <div class="step">
         <div class="step-num">Step 2</div>
         <div class="step-title">Scan</div>
-        <p>Open Terminal and run it.</p>
+        <p>69 checks, ~30 seconds. You get a health score out of 100.</p>
         <pre><code>mactuner</code></pre>
-        <p style="margin-top:8px">69 checks run. Takes ~30 seconds. You get a score out of 100.</p>
       </div>
       <div class="step">
         <div class="step-num">Step 3</div>
         <div class="step-title">Fix</div>
-        <p>Step through issues one at a time.</p>
+        <p>Each fix shows full context. Approve or skip before anything runs.</p>
         <pre><code>mactuner --fix</code></pre>
-        <p style="margin-top:8px">Each fix shows what it does. You approve or skip before anything runs.</p>
       </div>
     </div>
   </div>
