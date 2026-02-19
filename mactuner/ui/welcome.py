@@ -153,7 +153,7 @@ def _render(console: Console, info: dict, display_name: str) -> None:
         chip_parts.append(f"{ram} GB")
 
     right = Text(justify="left")
-    right.append("\n\n\n")  # nudge down to vertically center next to 9-line beagle
+    right.append("\n")  # nudge down to vertically center next to 4-line beagle
     right.append("  " + "  ·  ".join(chip_parts) + "\n", style="dim white")
     right.append("  " + str(Path.cwd()) + "\n", style="dim white")
 

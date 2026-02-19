@@ -64,28 +64,27 @@ def _build_left(info: dict) -> Text:
 
 
 def _append_beagle(t: Text) -> None:
-    """Append beagle block-character art with Rich color spans."""
-    E = "#4A2800"   # ears  — dark brown
+    """Append beagle ASCII art with Rich color spans."""
+    E = "#4A2800"   # ear   — dark brown
     H = "#9B6B3A"   # head  — medium brown
-    I = "#F0F0F0"   # eyes  — near-white
+    I = "#F0F0F0"   # eye   — near-white
     N = "#2C1500"   # nose  — near-black
     B = "#C48B4A"   # body  — golden tan
-    L = "#9B6B3A"   # legs  — same as head
+    L = "#9B6B3A"   # legs  — medium brown
 
     def row(*spans: tuple[str, str]) -> None:
         for color, chars in spans:
             t.append(chars, style=color)
         t.append("\n")
 
-    row((E, "  ▖         ▗"))
-    row((E, "  ▐         ▌"))
-    row((E, "  ▐"), (H, "  ▄▄▄▄▄"), (E, "  ▌"))
-    row((H, "  ▀██████████▀"))
-    row((H, "     "), (I, "◉"), (H, "   "), (I, "◉"))
-    row((H, "      "), (N, "▾▾▾"))
-    row((B, "     ▄████▄"))
-    row((L, "   ▗▌      ▌▖"))
-    row((L, "   ▀▘      ▝▀"))
+    #   ___( o\>
+    row((H, "  ___"), (E, "("), (H, " "), (I, "o"), (N, "\\>"))
+    #  /   ___  \___/|
+    row((B, " /   "), (H, "___"), (B, "  \\___/|"))
+    #  \__/   \______|
+    row((B, " \\__/   \\______|"))
+    #     |___|  |___|
+    row((L, "    |___|  |___|"))
 
 
 def _build_right(mode: str = "scan", only_cats: Optional[set] = None) -> Text:
