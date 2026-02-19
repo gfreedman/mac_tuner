@@ -155,7 +155,6 @@ def _build_left(info: dict, display_name: str) -> Text:
         identity_parts.append(f"{ram} GB")
 
     t = Text(justify="center")
-    t.append("\n")
     t.append(f"Welcome back, {display_name}!", style="bold white")
     t.append("\n\n")
     _append_beagle(t)
@@ -173,7 +172,6 @@ def _build_left(info: dict, display_name: str) -> Text:
 
 def _build_right() -> Text:
     t = Text(justify="left")
-    t.append("\n")
     t.append("Quick start\n", style="bold white")
     t.append("\n")
 
@@ -191,7 +189,7 @@ def _build_right() -> Text:
         t.append(desc + "\n", style="dim white")
 
     t.append("\n")
-    t.append("  " + "─" * 48 + "\n", style="dim white")
+    t.append("─" * 60 + "\n", style="dim white")
     t.append("\n")
 
     last = _load_last_scan()
@@ -202,7 +200,6 @@ def _build_right() -> Text:
     else:
         t.append("No previous scan\n", style="dim white")
 
-    t.append("\n")
     return t
 
 
