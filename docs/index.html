@@ -191,6 +191,12 @@
       background: var(--bg-card);
       padding: 20px 20px 18px;
       border-radius: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .step pre {
+      margin-top: auto;
     }
 
     .steps .step:first-child { border-radius: 8px 0 0 8px; }
@@ -218,7 +224,7 @@
       margin-bottom: 10px;
     }
 
-    .step pre { margin: 0; }
+    .step pre { margin-bottom: 0; }
 
     /* ── Install grid ─────────────────────────────────────────────────── */
     .install-grid {
@@ -540,8 +546,8 @@
         <div class="step-num">Step 1</div>
         <div class="step-title">Install</div>
         <p>Homebrew is the easiest way.</p>
-        <pre><code>brew tap gfreedman/mactuner
-brew install mactuner</code></pre>
+        <pre><code>brew install gfreedman/mactuner/mactuner</code></pre>
+        <p style="margin-top:8px">Also available via pipx or pip — see <a href="#install">all options</a>.</p>
       </div>
       <div class="step">
         <div class="step-num">Step 2</div>
