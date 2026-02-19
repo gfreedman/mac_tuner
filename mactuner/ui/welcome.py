@@ -152,22 +152,20 @@ def _build_left(info: dict, display_name: str) -> Text:
     ram   = info.get("ram_gb", 0)
     cpu   = info.get("cpu_brand", "") or info.get("architecture", "")
 
-    # Build "macOS Sequoia · Apple M2 · 16 GB" line
-    identity_parts = [p for p in [macos_display, cpu] if p]
-    if ram:
-        identity_parts.append(f"{ram} GB")
+    # Each info line must fit within the 28-char left column content width.
+    # Split chip/ram/model onto separate lines rather than one long joined string.
+    cpu_ram = "  ·  ".join([p for p in [cpu, f"{ram} GB" if ram else ""] if p])
 
     t = Text(justify="center")
     t.append(f"Welcome back, {display_name}!", style="bold white")
     t.append("\n\n")
     _append_beagle(t)
     t.append("\n")
-    t.append("  ·  ".join(identity_parts), style="dim")
-    t.append("\n")
-    t.append(model, style="dim")
-    t.append("\n")
-    t.append(str(Path.cwd()), style="dim")
-    t.append("\n")
+    t.append(macos_display + "\n", style="dim")
+    if cpu_ram:
+        t.append(cpu_ram + "\n", style="dim")
+    t.append(model + "\n", style="dim")
+    t.append(str(Path.cwd()) + "\n", style="dim")
     return t
 
 
