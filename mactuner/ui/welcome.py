@@ -233,11 +233,13 @@ def _append_last_scan(t: Text, data: dict) -> None:
     else:
         score_style = "bold bright_red"
 
+    # Line 1: date · time
     t.append("  ", style="dim white")
-    t.append(date_str, style="dim white")
-    t.append("  ·  ", style="dim white")
-    t.append(f"Score {score}", style=score_style)
+    t.append(date_str + "\n", style="dim white")
 
+    # Line 2: score + status badges
+    t.append("  ", style="dim white")
+    t.append(f"Score {score}", style=score_style)
     if critical:
         t.append(f"  ·  🔴 {critical} critical", style="bold bright_red")
     if warning:
