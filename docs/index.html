@@ -9,257 +9,341 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:           #ffffff;
-      --bg-warm:      #faf9f7;
-      --bg-card:      #f5f5f7;
-      --text:         #1d1d1f;
-      --muted:        #6e6e73;
-      --accent:       #c4622a;
-      --accent-bg:    #fdf2ea;
-      --border:       #e5e5ea;
-      --code-bg:      #1c1c1e;
-      --code-text:    #f2f2f7;
-      --green:        #1a8a5a;
-      --yellow:       #a07d00;
-      --red:          #c0392b;
-      --mono: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", Menlo, monospace;
+      --bg:        #f9f8f4;
+      --bg-white:  #ffffff;
+      --bg-card:   #f2f1ec;
+      --text:      #1a1917;
+      --muted:     #706e68;
+      --subtle:    #9e9b94;
+      --accent:    #c96329;
+      --accent-bg: #fdf0e7;
+      --border:    #e2e0d8;
+      --border-md: #d4d1c8;
+      --code-bg:   #1a1917;
+      --code-text: #f0ede6;
+      --green:     #1e7d4e;
+      --mono: "SF Mono", "Fira Code", ui-monospace, Menlo, monospace;
+      --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     }
 
+    html { scroll-behavior: smooth; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-      font-size: 17px;
+      font-family: var(--sans);
+      font-size: 16px;
       line-height: 1.65;
       color: var(--text);
       background: var(--bg);
     }
 
-    /* ── Nav ─────────────────────────────────────────────────────────── */
+    /* ── Nav ──────────────────────────────────────────────────────────── */
     nav {
-      background: var(--bg-warm);
+      background: rgba(249,248,244,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
-      padding: 0 32px;
-      height: 52px;
+      height: 56px;
       display: flex;
       align-items: center;
-      gap: 28px;
+      padding: 0 clamp(20px, 4vw, 48px);
+      gap: 24px;
       position: sticky;
       top: 0;
-      z-index: 20;
+      z-index: 40;
     }
 
     .nav-brand {
       font-weight: 700;
-      font-size: 16px;
+      font-size: 15px;
+      letter-spacing: -0.2px;
       color: var(--text);
       text-decoration: none;
-      letter-spacing: -0.3px;
+      margin-right: 8px;
     }
 
     nav a {
-      font-size: 14px;
+      font-size: 13.5px;
       color: var(--muted);
       text-decoration: none;
+      transition: color 0.15s;
     }
 
     nav a:hover { color: var(--text); }
     .nav-right  { margin-left: auto; }
 
-    /* ── Layout ──────────────────────────────────────────────────────── */
+    .nav-gh {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--muted);
+    }
+
+    /* ── Wrap ─────────────────────────────────────────────────────────── */
     .wrap {
-      max-width: 820px;
+      max-width: 800px;
       margin: 0 auto;
-      padding: 0 32px;
+      padding: 0 clamp(20px, 4vw, 48px);
     }
 
+    /* ── Sections ─────────────────────────────────────────────────────── */
     section {
-      padding: 64px 0;
-    }
-
-    section + section {
+      padding: 56px 0;
       border-top: 1px solid var(--border);
     }
 
-    /* ── Hero ────────────────────────────────────────────────────────── */
-    .hero {
-      padding: 80px 0 64px;
+    section.hero {
+      border-top: none;
+      padding: 64px 0 52px;
     }
 
-    .hero h1 {
-      font-size: 52px;
+    /* ── Hero ─────────────────────────────────────────────────────────── */
+    h1 {
+      font-size: clamp(38px, 6vw, 58px);
       font-weight: 800;
       letter-spacing: -2px;
-      line-height: 1.05;
-      margin-bottom: 20px;
+      line-height: 1.04;
+      margin-bottom: 18px;
     }
 
     .hero-tagline {
-      font-size: 22px;
+      font-size: clamp(17px, 2.5vw, 21px);
       color: var(--muted);
-      max-width: 520px;
-      margin-bottom: 40px;
+      max-width: 500px;
       line-height: 1.5;
+      margin-bottom: 36px;
     }
 
-    .install-box {
+    .install-pill {
       display: inline-flex;
       align-items: center;
-      gap: 16px;
+      gap: 12px;
       background: var(--code-bg);
-      padding: 16px 24px;
-      border-radius: 12px;
+      border-radius: 10px;
+      padding: 14px 20px;
+      max-width: 100%;
     }
 
-    .install-box code {
+    .install-pill .prompt {
+      color: #605e58;
       font-family: var(--mono);
-      font-size: 15px;
+      font-size: 14px;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .install-pill code {
+      font-family: var(--mono);
+      font-size: 14px;
       color: var(--code-text);
       background: none;
       padding: 0;
+      letter-spacing: 0.1px;
     }
 
-    .install-box .prompt {
-      color: #636366;
-      user-select: none;
-    }
-
-    /* ── Headings ────────────────────────────────────────────────────── */
+    /* ── Headings ─────────────────────────────────────────────────────── */
     h2 {
-      font-size: 30px;
+      font-size: 26px;
       font-weight: 700;
-      letter-spacing: -0.6px;
-      margin-bottom: 24px;
+      letter-spacing: -0.5px;
+      margin-bottom: 20px;
+      color: var(--text);
     }
 
     h3 {
-      font-size: 17px;
+      font-size: 15px;
       font-weight: 600;
-      margin-top: 40px;
-      margin-bottom: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--subtle);
+      margin-top: 36px;
+      margin-bottom: 10px;
     }
 
-    p { margin-bottom: 16px; }
+    p {
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
     p:last-child { margin-bottom: 0; }
 
-    /* ── Code ────────────────────────────────────────────────────────── */
+    p strong { color: var(--text); font-weight: 600; }
+
+    /* ── Code ─────────────────────────────────────────────────────────── */
     pre {
       background: var(--code-bg);
-      padding: 20px 24px;
-      border-radius: 10px;
+      border-radius: 8px;
+      padding: 16px 20px;
       overflow-x: auto;
-      margin: 16px 0;
+      margin: 12px 0;
     }
 
     pre code {
       font-family: var(--mono);
-      font-size: 14px;
+      font-size: 13.5px;
       color: var(--code-text);
-      line-height: 1.75;
+      line-height: 1.7;
       background: none;
       padding: 0;
     }
 
     code {
       font-family: var(--mono);
-      font-size: 14px;
+      font-size: 13px;
       background: var(--bg-card);
       color: var(--text);
       padding: 2px 6px;
-      border-radius: 5px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
     }
 
-    /* ── Terminal window ─────────────────────────────────────────────── */
+    /* ── Terminal ─────────────────────────────────────────────────────── */
     .terminal {
-      border-radius: 12px;
+      border-radius: 10px;
       overflow: hidden;
-      margin: 28px 0;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      margin: 24px 0;
+      border: 1px solid #2e2c28;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.1);
     }
 
     .terminal-bar {
-      background: #2c2c2e;
-      padding: 10px 16px;
+      background: #252320;
+      padding: 9px 14px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 7px;
     }
 
-    .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .dot { width: 11px; height: 11px; border-radius: 50%; }
     .dot-r { background: #ff5f57; }
     .dot-y { background: #ffbd2e; }
     .dot-g { background: #28c840; }
 
     .terminal pre {
-      background: #1c1c1e;
+      background: #1a1917;
       border-radius: 0;
       margin: 0;
-      padding: 24px 28px;
+      padding: 20px 22px;
+      border: none;
     }
 
-    /* terminal color helpers */
-    .t-pass { color: #3dba66; }
-    .t-warn { color: #e8b840; }
-    .t-crit { color: #ff5f5f; }
-    .t-info { color: #4db8c8; }
-    .t-dim  { color: #636366; }
-    .t-bold { color: #f2f2f7; font-weight: 600; }
-    .t-muted { color: #8e8e93; }
+    .t-pass  { color: #42c678; }
+    .t-warn  { color: #e8b840; }
+    .t-crit  { color: #ff5f5f; }
+    .t-info  { color: #4db8c8; }
+    .t-dim   { color: #5a5852; }
+    .t-bold  { color: #f0ede6; font-weight: 600; }
+    .t-muted { color: #8a8780; }
 
-    /* ── Tables ──────────────────────────────────────────────────────── */
+    /* ── Install grid ─────────────────────────────────────────────────── */
+    .install-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0 0;
+    }
+
+    .install-opt {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 20px 16px;
+    }
+
+    .install-opt.primary {
+      grid-column: 1 / -1;
+      background: var(--bg-white);
+    }
+
+    .install-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .install-opt pre { margin: 0; }
+
+    .badge {
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--accent-bg);
+      color: var(--accent);
+      padding: 2px 7px;
+      border-radius: 20px;
+    }
+
+    .opt-note {
+      font-size: 12.5px;
+      color: var(--subtle);
+      margin-top: 8px;
+    }
+
+    /* ── Table ────────────────────────────────────────────────────────── */
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 15px;
-      margin: 20px 0;
+      font-size: 14.5px;
+      margin: 16px 0;
     }
 
     th {
       text-align: left;
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--muted);
-      padding: 8px 14px;
-      border-bottom: 1px solid var(--border);
+      letter-spacing: 0.6px;
+      color: var(--subtle);
+      padding: 7px 12px;
+      border-bottom: 1px solid var(--border-md);
     }
 
     td {
-      padding: 13px 14px;
+      padding: 11px 12px;
       border-bottom: 1px solid var(--border);
-      vertical-align: top;
+      vertical-align: middle;
     }
 
     tr:last-child td { border-bottom: none; }
 
-    td:first-child { white-space: nowrap; }
-    td:last-child   { color: var(--muted); }
+    td:first-child {
+      white-space: nowrap;
+      width: 1%;
+    }
 
-    /* ── Cards ───────────────────────────────────────────────────────── */
+    td + td { color: var(--muted); }
+
+    /* ── Cards ────────────────────────────────────────────────────────── */
     .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 14px;
-      margin: 24px 0;
+      gap: 12px;
+      margin: 20px 0;
     }
 
     .card {
-      background: var(--bg-warm);
+      background: var(--bg-white);
       border: 1px solid var(--border);
       border-radius: 10px;
-      padding: 20px;
+      padding: 18px 20px;
     }
 
-    .card-icon { font-size: 22px; margin-bottom: 8px; }
-    .card-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
-    .card-body  { font-size: 14px; color: var(--muted); line-height: 1.55; }
+    .card-icon  { font-size: 20px; margin-bottom: 8px; display: block; }
+    .card-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+    .card-body  { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
 
-    /* ── Score bar ───────────────────────────────────────────────────── */
+    /* ── Score bar ────────────────────────────────────────────────────── */
     .score-bar {
       display: flex;
-      border-radius: 8px;
+      border-radius: 7px;
       overflow: hidden;
-      height: 52px;
-      margin: 24px 0;
+      height: 44px;
+      margin: 20px 0;
+      border: 1px solid rgba(0,0,0,0.08);
     }
 
     .score-seg {
@@ -268,49 +352,31 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: #fff;
-      font-size: 13px;
+      color: rgba(255,255,255,0.95);
+      font-size: 12px;
       font-weight: 600;
-      line-height: 1.3;
+      line-height: 1.25;
     }
 
-    .score-seg small { font-size: 11px; opacity: 0.82; font-weight: 400; }
-
-    /* ── Install options ─────────────────────────────────────────────── */
-    .install-opts { display: grid; gap: 28px; margin-top: 8px; }
-
-    .install-label {
-      font-weight: 600;
-      font-size: 15px;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    .score-seg small {
+      font-size: 10.5px;
+      opacity: 0.78;
+      font-weight: 400;
     }
 
-    .badge {
-      font-size: 11px;
-      font-weight: 600;
-      background: var(--accent-bg);
-      color: var(--accent);
-      padding: 2px 8px;
-      border-radius: 20px;
-      letter-spacing: 0.2px;
-    }
-
-    /* ── Safety list ─────────────────────────────────────────────────── */
+    /* ── Safety list ──────────────────────────────────────────────────── */
     .safety-list {
       list-style: none;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px 24px;
-      margin: 20px 0;
+      gap: 8px 32px;
+      margin: 16px 0;
     }
 
     .safety-list li {
-      font-size: 15px;
+      font-size: 14.5px;
       color: var(--muted);
-      padding-left: 20px;
+      padding-left: 18px;
       position: relative;
     }
 
@@ -322,104 +388,109 @@
       font-weight: 700;
     }
 
-    /* ── Note ────────────────────────────────────────────────────────── */
+    /* ── Note ─────────────────────────────────────────────────────────── */
     .note {
-      font-size: 14px;
-      color: var(--muted);
-      margin-top: 16px;
+      font-size: 13px;
+      color: var(--subtle);
+      margin-top: 14px;
+      line-height: 1.55;
     }
 
-    /* ── Footer ──────────────────────────────────────────────────────── */
+    /* ── Footer ───────────────────────────────────────────────────────── */
     footer {
       border-top: 1px solid var(--border);
-      background: var(--bg-warm);
-      padding: 32px;
+      padding: 28px clamp(20px, 4vw, 48px);
       text-align: center;
-      font-size: 14px;
-      color: var(--muted);
+      font-size: 13px;
+      color: var(--subtle);
     }
 
-    footer a { color: var(--muted); }
+    footer a {
+      color: var(--subtle);
+      text-decoration: none;
+    }
 
-    /* ── Responsive ──────────────────────────────────────────────────── */
-    @media (max-width: 600px) {
-      .wrap { padding: 0 20px; }
-      nav   { padding: 0 20px; }
-      .hero h1 { font-size: 36px; }
-      .hero-tagline { font-size: 18px; }
-      .grid-2, .safety-list { grid-template-columns: 1fr; }
-      nav .hide-mobile { display: none; }
+    footer a:hover { color: var(--muted); }
+
+    /* ── Responsive ───────────────────────────────────────────────────── */
+    @media (max-width: 580px) {
+      nav .hide-sm { display: none; }
+      .install-grid { grid-template-columns: 1fr; }
+      .install-opt.primary { grid-column: auto; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .safety-list { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-<!-- Navigation -->
 <nav>
   <a class="nav-brand" href="#top">MacTuner</a>
-  <a class="hide-mobile" href="#install">Install</a>
-  <a class="hide-mobile" href="#commands">Commands</a>
-  <a class="hide-mobile" href="#fix">Fix mode</a>
-  <a class="hide-mobile" href="#checks">What it checks</a>
-  <a class="nav-right" href="https://github.com/gfreedman/mac_tuner">GitHub ↗</a>
+  <a class="hide-sm" href="#install">Install</a>
+  <a class="hide-sm" href="#commands">Commands</a>
+  <a class="hide-sm" href="#fix">Fix mode</a>
+  <a class="hide-sm" href="#checks">What it checks</a>
+  <a class="nav-right nav-gh hide-sm" href="https://github.com/gfreedman/mac_tuner">
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+    GitHub
+  </a>
 </nav>
 
 <!-- Hero -->
-<div class="wrap">
 <section class="hero" id="top">
-  <h1>MacTuner</h1>
-  <p class="hero-tagline">Scans your Mac for security and health issues. Explains what it finds. Fixes what it can.</p>
-  <div class="install-box">
-    <span class="prompt">$</span>
-    <code>brew install gfreedman/mactuner/mactuner</code>
+  <div class="wrap">
+    <h1>MacTuner</h1>
+    <p class="hero-tagline">Scans your Mac for security and health issues. Explains what it finds. Fixes what it can.</p>
+    <div class="install-pill">
+      <span class="prompt">$</span>
+      <code>brew install gfreedman/mactuner/mactuner</code>
+    </div>
   </div>
 </section>
-</div>
 
 <!-- Install -->
-<div class="wrap">
 <section id="install">
-  <h2>Install</h2>
-  <div class="install-opts">
+  <div class="wrap">
+    <h2>Install</h2>
 
-    <div>
-      <div class="install-label">Homebrew <span class="badge">easiest</span></div>
-      <pre><code>brew tap gfreedman/mactuner
+    <div class="install-grid">
+      <div class="install-opt primary">
+        <div class="install-label">Homebrew <span class="badge">easiest</span></div>
+        <pre><code>brew tap gfreedman/mactuner
 brew install mactuner</code></pre>
+      </div>
+
+      <div class="install-opt">
+        <div class="install-label">pipx</div>
+        <pre><code>pipx install mactuner</code></pre>
+        <p class="opt-note">Good if you already use Python tools. Keeps mactuner isolated.</p>
+      </div>
+
+      <div class="install-opt">
+        <div class="install-label">pip</div>
+        <pre><code>pip3 install --user mactuner</code></pre>
+        <p class="opt-note">Works everywhere Python 3.10+ is installed.</p>
+      </div>
     </div>
 
-    <div>
-      <div class="install-label">pipx</div>
-      <pre><code>pipx install mactuner</code></pre>
-      <p class="note">pipx keeps command-line tools isolated from your Python setup. Good choice if you use Python for other things.</p>
-    </div>
-
-    <div>
-      <div class="install-label">pip</div>
-      <pre><code>pip3 install --user mactuner</code></pre>
-    </div>
-
+    <p class="note">Needs macOS 13 Ventura or later. Python 3.10 or later. Intel and Apple Silicon.</p>
   </div>
-
-  <p class="note">Needs macOS 13 Ventura or later and Python 3.10 or later. Works on Intel and Apple Silicon.</p>
 </section>
-</div>
 
 <!-- First run -->
-<div class="wrap">
 <section id="first-run">
-  <h2>First run</h2>
+  <div class="wrap">
+    <h2>First run</h2>
 
-  <p>Open Terminal, type <code>mactuner</code>, and press Enter.</p>
-  <p>MacTuner runs 69 checks, prints each result with a short explanation, and gives your Mac a score out of 100. It takes about 30 to 45 seconds.</p>
+    <p>Open Terminal, type <code>mactuner</code>, and press Enter. MacTuner runs 69 checks, explains each one, and gives your Mac a score out of 100. Takes about 30 to 45 seconds.</p>
 
-  <div class="terminal">
-    <div class="terminal-bar">
-      <div class="dot dot-r"></div>
-      <div class="dot dot-y"></div>
-      <div class="dot dot-g"></div>
-    </div>
-    <pre><code><span class="t-dim">  Scanning…</span>
+    <div class="terminal">
+      <div class="terminal-bar">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+      </div>
+      <pre><code><span class="t-dim">  Scanning…</span>
 
   <span class="t-pass">✅</span>  <span class="t-bold">macOS Version       </span>  <span class="t-muted">macOS 15.3 — current release</span>
   <span class="t-warn">⚠️ </span>  <span class="t-bold">FileVault           </span>  <span class="t-warn">Disk encryption is OFF</span>
@@ -427,237 +498,201 @@ brew install mactuner</code></pre>
   <span class="t-pass">✅</span>  <span class="t-bold">SIP                 </span>  <span class="t-muted">System Integrity Protection is enabled</span>
   <span class="t-info">ℹ️ </span>  <span class="t-bold">Outdated Formulae   </span>  <span class="t-info">3 packages out of date</span>
   <span class="t-warn">⚠️ </span>  <span class="t-bold">Disk Space          </span>  <span class="t-warn">14.2 GB free — getting low</span>
-  <span class="t-pass">✅</span>  <span class="t-bold">Battery             </span>  <span class="t-muted">342 cycles  ·  96% capacity  ·  Normal</span>
+  <span class="t-pass">✅</span>  <span class="t-bold">Battery             </span>  <span class="t-muted">342 cycles · 96% capacity · Normal</span>
 
-<span class="t-dim">  ─────────────────────────────────────────────────────</span>
+  <span class="t-dim">──────────────────────────────────────────────</span>
 
   <span class="t-bold">Health Score</span>  <span class="t-warn">71</span>  <span class="t-dim">[████████████████░░░░░░]  / 100</span>
 
   <span class="t-crit">🔴 1 Critical</span>   <span class="t-warn">⚠️  5 Warnings</span>   <span class="t-pass">✅ 17 Passed</span>   <span class="t-info">ℹ️  4 Info</span>
 
-<span class="t-dim">  Run  </span><span class="t-bold">mactuner --fix</span><span class="t-dim">  to step through 6 fixable items.</span></code></pre>
-  </div>
+  <span class="t-dim">Run </span><span class="t-bold">mactuner --fix</span><span class="t-dim"> to step through 6 fixable items.</span></code></pre>
+    </div>
 
-  <p class="note">MacTuner is read-only by default. Nothing on your Mac changes until you run <code>mactuner --fix</code>.</p>
+    <p class="note">MacTuner is read-only by default. Nothing changes until you run <code>mactuner --fix</code>.</p>
+  </div>
 </section>
-</div>
 
 <!-- Commands -->
-<div class="wrap">
 <section id="commands">
-  <h2>Commands</h2>
+  <div class="wrap">
+    <h2>Commands</h2>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Command</th>
-        <th>What it does</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><code>mactuner</code></td>
-        <td>Full scan</td>
-      </tr>
-      <tr>
-        <td><code>mactuner -y</code></td>
-        <td>Full scan, skip the start prompt</td>
-      </tr>
-      <tr>
-        <td><code>mactuner --issues-only</code></td>
-        <td>Show only warnings and criticals</td>
-      </tr>
-      <tr>
-        <td><code>mactuner --explain</code></td>
-        <td>Extra context per finding</td>
-      </tr>
-      <tr>
-        <td><code>mactuner --only security</code></td>
-        <td>Scan one category</td>
-      </tr>
-      <tr>
-        <td><code>mactuner --only security,disk</code></td>
-        <td>Scan multiple categories</td>
-      </tr>
-      <tr>
-        <td><code>mactuner --skip dev_env</code></td>
-        <td>Skip a category</td>
-      </tr>
-      <tr>
-        <td><code>mactuner --fix</code></td>
-        <td>Step through fixable issues after the scan</td>
-      </tr>
-      <tr>
-        <td><code>mactuner --fix --auto</code></td>
-        <td>Apply safe fixes without asking each time</td>
-      </tr>
-      <tr>
-        <td><code>mactuner --quiet</code></td>
-        <td>Print only the score</td>
-      </tr>
-      <tr>
-        <td><code>mactuner --json</code></td>
-        <td>Output as JSON for scripts</td>
-      </tr>
-      <tr>
-        <td><code>mactuner --check-shell-secrets</code></td>
-        <td>Scan shell configs for hardcoded credentials</td>
-      </tr>
-    </tbody>
-  </table>
+    <table>
+      <thead>
+        <tr>
+          <th>Command</th>
+          <th>What it does</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>mactuner</code></td><td>Full scan</td></tr>
+        <tr><td><code>mactuner -y</code></td><td>Full scan, no start prompt</td></tr>
+        <tr><td><code>mactuner --issues-only</code></td><td>Show only warnings and criticals</td></tr>
+        <tr><td><code>mactuner --explain</code></td><td>Extra context per finding</td></tr>
+        <tr><td><code>mactuner --only security</code></td><td>Scan one category</td></tr>
+        <tr><td><code>mactuner --only security,disk</code></td><td>Scan multiple categories</td></tr>
+        <tr><td><code>mactuner --skip dev_env</code></td><td>Skip a category</td></tr>
+        <tr><td><code>mactuner --fix</code></td><td>Step through fixable issues after the scan</td></tr>
+        <tr><td><code>mactuner --fix --auto</code></td><td>Apply safe fixes without prompting each time</td></tr>
+        <tr><td><code>mactuner --quiet</code></td><td>Print only the score</td></tr>
+        <tr><td><code>mactuner --json</code></td><td>Output as JSON for scripts</td></tr>
+        <tr><td><code>mactuner --check-shell-secrets</code></td><td>Scan shell configs for hardcoded credentials</td></tr>
+      </tbody>
+    </table>
 
-  <h3>Category names for --only and --skip</h3>
-  <pre><code>system  security  privacy  homebrew  disk  hardware  memory  network  dev_env  apps</code></pre>
+    <h3>Category names</h3>
+    <pre><code>system  security  privacy  homebrew  disk  hardware  memory  network  dev_env  apps</code></pre>
+    <p class="note">Use these with <code>--only</code> or <code>--skip</code>. Combine with commas: <code>--only security,disk</code></p>
+  </div>
 </section>
-</div>
 
 <!-- Fix mode -->
-<div class="wrap">
 <section id="fix">
-  <h2>Fix mode</h2>
+  <div class="wrap">
+    <h2>Fix mode</h2>
 
-  <p>Run <code>mactuner --fix</code> after a scan to go through fixable issues one at a time.</p>
-  <p>For each issue, MacTuner shows what it found, why it matters, and exactly what the fix does. You approve or skip it before moving on.</p>
+    <p>Run <code>mactuner --fix</code> after a scan to go through fixable issues one at a time. For each one, MacTuner shows what it found, why it matters, and exactly what the fix does. You approve or skip before anything runs.</p>
 
-  <div class="grid-2" style="margin-top: 28px;">
-    <div class="card">
-      <div class="card-icon">🤖</div>
-      <div class="card-title">Automatic</div>
-      <div class="card-body">Runs a shell command. Streams output live so you can see what happened.</div>
+    <div class="grid-2" style="margin-top: 24px;">
+      <div class="card">
+        <span class="card-icon">🤖</span>
+        <div class="card-title">Automatic</div>
+        <div class="card-body">Runs a shell command. Output streams live so you can see what happened.</div>
+      </div>
+      <div class="card">
+        <span class="card-icon">🤖🔐</span>
+        <div class="card-title">Requires password</div>
+        <div class="card-body">Same as automatic but needs your Mac password to run.</div>
+      </div>
+      <div class="card">
+        <span class="card-icon">👆</span>
+        <div class="card-title">Opens Settings</div>
+        <div class="card-body">Takes you to the exact System Settings pane with guidance on what to change.</div>
+      </div>
+      <div class="card">
+        <span class="card-icon">📋</span>
+        <div class="card-title">Step by step</div>
+        <div class="card-body">Prints clear instructions for things that need a human decision.</div>
+      </div>
     </div>
-    <div class="card">
-      <div class="card-icon">🤖🔐</div>
-      <div class="card-title">Requires password</div>
-      <div class="card-body">Same as automatic but needs your Mac password.</div>
-    </div>
-    <div class="card">
-      <div class="card-icon">👆</div>
-      <div class="card-title">Opens Settings</div>
-      <div class="card-body">Takes you to the exact System Settings pane and tells you what to change.</div>
-    </div>
-    <div class="card">
-      <div class="card-icon">📋</div>
-      <div class="card-title">Step by step</div>
-      <div class="card-body">Prints clear instructions for things that need a human decision.</div>
-    </div>
+
+    <p class="note">Fixes that cannot be undone are always labelled before you confirm.</p>
   </div>
-
-  <p class="note">Fixes that cannot be undone are always labelled before you confirm.</p>
 </section>
-</div>
 
 <!-- What it checks -->
-<div class="wrap">
 <section id="checks">
-  <h2>What it checks</h2>
-  <p>69 checks across 10 categories.</p>
+  <div class="wrap">
+    <h2>What it checks</h2>
+    <p>69 checks across 10 categories.</p>
 
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-icon">🛡️</div>
-      <div class="card-title">Security</div>
-      <div class="card-body">SSH keys, launch agents, login hooks, sharing services, cron jobs, /etc/hosts, Activation Lock, XProtect freshness</div>
+    <div class="grid-2">
+      <div class="card">
+        <span class="card-icon">🛡️</span>
+        <div class="card-title">Security</div>
+        <div class="card-body">SSH keys, launch agents, login hooks, sharing services, cron jobs, /etc/hosts, Activation Lock, XProtect</div>
+      </div>
+      <div class="card">
+        <span class="card-icon">🖥️</span>
+        <div class="card-title">System</div>
+        <div class="card-body">macOS version, FileVault, Firewall, SIP, Gatekeeper, Time Machine, Secure Boot, screen lock</div>
+      </div>
+      <div class="card">
+        <span class="card-icon">🔏</span>
+        <div class="card-title">Privacy</div>
+        <div class="card-body">Guided review of Full Disk Access, Screen Recording, and Accessibility grants</div>
+      </div>
+      <div class="card">
+        <span class="card-icon">🍺</span>
+        <div class="card-title">Homebrew</div>
+        <div class="card-body">brew doctor, outdated packages, orphaned dependencies, cache size</div>
+      </div>
+      <div class="card">
+        <span class="card-icon">💽</span>
+        <div class="card-title">Disk</div>
+        <div class="card-body">Free space, APFS snapshots, Xcode DerivedData, Docker, Trash, caches</div>
+      </div>
+      <div class="card">
+        <span class="card-icon">🔋</span>
+        <div class="card-title">Hardware</div>
+        <div class="card-body">Battery cycles and condition, SMART status, kernel panics, thermal throttling</div>
+      </div>
+      <div class="card">
+        <span class="card-icon">🧠</span>
+        <div class="card-title">Memory</div>
+        <div class="card-body">Memory pressure, swap usage, top CPU and memory consumers</div>
+      </div>
+      <div class="card">
+        <span class="card-icon">🌐</span>
+        <div class="card-title">Network</div>
+        <div class="card-body">AirDrop, Remote Login, DNS, proxy settings, saved Wi-Fi networks, open ports</div>
+      </div>
+      <div class="card">
+        <span class="card-icon">🧑‍💻</span>
+        <div class="card-title">Dev Env</div>
+        <div class="card-body">Xcode Command Line Tools, Python and Ruby PATH conflicts, conda, Node managers, git config</div>
+      </div>
+      <div class="card">
+        <span class="card-icon">📱</span>
+        <div class="card-title">Apps</div>
+        <div class="card-body">App Store updates, iCloud status, login items</div>
+      </div>
     </div>
-    <div class="card">
-      <div class="card-icon">🖥️</div>
-      <div class="card-title">System</div>
-      <div class="card-body">macOS version, FileVault, Firewall, SIP, Gatekeeper, Time Machine, Secure Boot, screen lock</div>
-    </div>
-    <div class="card">
-      <div class="card-icon">🔏</div>
-      <div class="card-title">Privacy</div>
-      <div class="card-body">Guided review of Full Disk Access, Screen Recording, and Accessibility grants</div>
-    </div>
-    <div class="card">
-      <div class="card-icon">🍺</div>
-      <div class="card-title">Homebrew</div>
-      <div class="card-body">brew doctor, outdated packages, orphaned dependencies, cache size</div>
-    </div>
-    <div class="card">
-      <div class="card-icon">💽</div>
-      <div class="card-title">Disk</div>
-      <div class="card-body">Free space, APFS snapshots, Xcode DerivedData, Docker, Trash, caches</div>
-    </div>
-    <div class="card">
-      <div class="card-icon">🔋</div>
-      <div class="card-title">Hardware</div>
-      <div class="card-body">Battery cycles and condition, SMART status, kernel panics, thermal throttling</div>
-    </div>
-    <div class="card">
-      <div class="card-icon">🧠</div>
-      <div class="card-title">Memory</div>
-      <div class="card-body">Memory pressure, swap usage, top CPU and memory consumers</div>
-    </div>
-    <div class="card">
-      <div class="card-icon">🌐</div>
-      <div class="card-title">Network</div>
-      <div class="card-body">AirDrop, Remote Login, DNS, proxy settings, saved Wi-Fi networks, open ports</div>
-    </div>
-    <div class="card">
-      <div class="card-icon">🧑‍💻</div>
-      <div class="card-title">Dev Env</div>
-      <div class="card-body">Xcode Command Line Tools, Python and Ruby PATH conflicts, conda, Node managers, git config</div>
-    </div>
-    <div class="card">
-      <div class="card-icon">📱</div>
-      <div class="card-title">Apps</div>
-      <div class="card-body">App Store updates, iCloud status, login items</div>
-    </div>
+
+    <p class="note">Add <code>--check-shell-secrets</code> to scan shell configs for hardcoded API keys and passwords. Opt-in because it reads private files.</p>
   </div>
-
-  <p class="note">Add <code>--check-shell-secrets</code> to also scan your shell config files for hardcoded API keys and passwords. Opt-in because it reads private files.</p>
 </section>
-</div>
 
 <!-- Score -->
-<div class="wrap">
 <section id="score">
-  <h2>The score</h2>
-  <p>MacTuner starts at 100 and subtracts points for each finding.</p>
+  <div class="wrap">
+    <h2>The score</h2>
+    <p>MacTuner starts at 100 and subtracts points for each finding.</p>
 
-  <table>
-    <thead>
-      <tr><th>Finding</th><th>Points off</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>Critical issue</td><td>10</td></tr>
-      <tr><td>Critical in security, privacy, or system</td><td>15</td></tr>
-      <tr><td>Warning</td><td>3</td></tr>
-      <tr><td>Warning in security, privacy, or system</td><td>4</td></tr>
-      <tr><td>Info, pass, or skip</td><td>0</td></tr>
-    </tbody>
-  </table>
+    <table>
+      <thead>
+        <tr><th>Finding</th><th>Points off</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Critical issue</td><td>10</td></tr>
+        <tr><td>Critical in security, privacy, or system</td><td>15</td></tr>
+        <tr><td>Warning</td><td>3</td></tr>
+        <tr><td>Warning in security, privacy, or system</td><td>4</td></tr>
+        <tr><td>Info, pass, or skip</td><td>0</td></tr>
+      </tbody>
+    </table>
 
-  <div class="score-bar">
-    <div class="score-seg" style="background: #1a8a5a;">95–100<small>Excellent</small></div>
-    <div class="score-seg" style="background: #2d9e6a;">85–94<small>Very good</small></div>
-    <div class="score-seg" style="background: #c9a300;">70–84<small>Good</small></div>
-    <div class="score-seg" style="background: #d4691e;">55–69<small>Fair</small></div>
-    <div class="score-seg" style="background: #c0392b;">0–54<small>Poor</small></div>
+    <div class="score-bar">
+      <div class="score-seg" style="background:#1e7d4e">95–100<small>Excellent</small></div>
+      <div class="score-seg" style="background:#2a9460">85–94<small>Very good</small></div>
+      <div class="score-seg" style="background:#c49000">70–84<small>Good</small></div>
+      <div class="score-seg" style="background:#c96329">55–69<small>Fair</small></div>
+      <div class="score-seg" style="background:#b83232">0–54<small>Poor</small></div>
+    </div>
   </div>
 </section>
-</div>
 
 <!-- Safety -->
-<div class="wrap">
 <section id="safety">
-  <h2>Safety</h2>
-  <ul class="safety-list">
-    <li>Read-only by default</li>
-    <li>Runs entirely offline</li>
-    <li>One failing check never stops the scan</li>
-    <li>Every command shown before it runs</li>
-    <li>Irreversible fixes always labelled</li>
-    <li>No private APIs, no TCC.db access</li>
-    <li>Detects managed Macs and flags MDM settings</li>
-    <li>Works on Intel and Apple Silicon</li>
-  </ul>
+  <div class="wrap">
+    <h2>Safety</h2>
+    <ul class="safety-list">
+      <li>Read-only by default</li>
+      <li>Runs entirely offline</li>
+      <li>One failing check never stops the scan</li>
+      <li>Every command shown before it runs</li>
+      <li>Irreversible fixes always labelled</li>
+      <li>No private APIs, no TCC.db access</li>
+      <li>Detects managed Macs, flags MDM settings</li>
+      <li>Works on Intel and Apple Silicon</li>
+    </ul>
+  </div>
 </section>
-</div>
 
-<!-- Footer -->
 <footer>
-  <p>MacTuner &middot; macOS only &middot; MIT license &middot; <a href="https://github.com/gfreedman/mac_tuner">github.com/gfreedman/mac_tuner</a></p>
+  MacTuner &middot; macOS only &middot; MIT license &middot;
+  <a href="https://github.com/gfreedman/mac_tuner">github.com/gfreedman/mac_tuner</a>
 </footer>
 
 </body>
