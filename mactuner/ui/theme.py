@@ -63,6 +63,7 @@ if DARK_MODE:
     COLOR_BRAND    = "#7B9FD4"      # Periwinkle blue
     COLOR_DIM      = "#787878"      # Medium gray
     COLOR_COMMAND  = "#C0C0C0"      # Light silver — commands stand out from dim text
+    COLOR_TEXT     = "#F0F0F0"      # Primary text — near-white
     COLOR_HEADER_BG = "grey11"
 
     COLOR_SCORE_HIGH = "#4DBD74"    # ≥ 90
@@ -83,6 +84,7 @@ else:
     COLOR_BRAND    = "#1D4ED8"      # Deep blue         (6.2:1)
     COLOR_DIM      = "#4B5563"      # Dark gray         (7.9:1)
     COLOR_COMMAND  = "#1F2937"      # Near-black        (15.8:1)
+    COLOR_TEXT     = "#0F172A"      # Primary text — near-black (18.1:1)
     COLOR_HEADER_BG = "grey93"
 
     COLOR_SCORE_HIGH = "#166534"    # ≥ 90
@@ -178,5 +180,6 @@ MACTUNER_THEME = Theme(
         "dim":      COLOR_DIM,
         "section":  f"{COLOR_BRAND} bold",
         "command":  COLOR_COMMAND,
+        "text":     COLOR_TEXT,        # primary text — use instead of hardcoded "white"
     }
 )

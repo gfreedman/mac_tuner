@@ -23,7 +23,7 @@ from rich.text import Text
 
 from mactuner.checks.base import BaseCheck, CheckResult
 from mactuner.ui.progress import render_progress
-from mactuner.ui.theme import CATEGORY_ICONS, STATUS_ICONS, STATUS_STYLES
+from mactuner.ui.theme import CATEGORY_ICONS, COLOR_TEXT, STATUS_ICONS, STATUS_STYLES
 
 
 class ScanNarrator:
@@ -112,8 +112,8 @@ class ScanNarrator:
         """
         # Line 1: category icon + check name
         title = Text()
-        title.append(f"\n  {self._current_icon} ", style="bold white")
-        title.append(self._current_name, style="bold white")
+        title.append(f"\n  {self._current_icon} ", style=f"bold {COLOR_TEXT}")
+        title.append(self._current_name, style=f"bold {COLOR_TEXT}")
 
         # Line 2: description (rich wraps long lines automatically)
         description = Text(

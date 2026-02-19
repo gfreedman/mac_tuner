@@ -29,6 +29,7 @@ from rich.text import Text
 from mactuner.checks.base import CheckResult, calculate_health_score
 from mactuner.ui.theme import (
     CATEGORY_ICONS,
+    COLOR_TEXT,
     FIX_LEVEL_LABELS,
     MACTUNER_THEME,
     STATUS_ICONS,
@@ -122,7 +123,7 @@ def build_summary_panel(results: list[CheckResult], scan_duration: float = 0.0) 
 
     # ── Line 1: score ─────────────────────────────────────────────────────────
     score_line = Text()
-    score_line.append("   Health Score  ", style="bold white")
+    score_line.append("   Health Score  ", style=f"bold {COLOR_TEXT}")
     score_line.append(f"{score:>3}", style=f"bold {score_color}")
     score_line.append("  [", style="dim white")
     score_line.append("█" * filled, style=score_color)
@@ -279,10 +280,10 @@ def build_recommendations_panel(
     parts.append(Text("  " + "─" * 50, style="dim white"))
     cta = Text()
     cta.append("\n  Run  ", style="dim white")
-    cta.append("mactuner --fix", style="bold white")
+    cta.append("mactuner --fix", style=f"bold {COLOR_TEXT}")
     cta.append(f"  to step through {total} fixable item{'s' if total != 1 else ''} interactively.\n", style="dim white")
     cta.append("  Add  ", style="dim white")
-    cta.append("--auto", style="bold white")
+    cta.append("--auto", style=f"bold {COLOR_TEXT}")
     cta.append("  to apply safe automatic fixes without prompting.\n", style="dim white")
     parts.append(cta)
 
@@ -387,7 +388,7 @@ def _render_issue(result: CheckResult) -> list:
     if result.recommendation:
         rec = Text()
         rec.append("→ ", style="white bold")
-        rec.append(result.recommendation, style="white")
+        rec.append(result.recommendation, style=COLOR_TEXT)
         parts.append(Padding(rec, (0, 2, 0, _INDENT)))
 
     # Line 4: fix info (muted)

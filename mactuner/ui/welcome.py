@@ -31,7 +31,7 @@ from mactuner import __version__
 from mactuner.system_info import get_system_info
 from mactuner.ui.header import _append_beagle
 from mactuner.ui.theme import (
-    APP_NAME, COLOR_BRAND,
+    APP_NAME, COLOR_BRAND, COLOR_TEXT,
     COLOR_CRITICAL, COLOR_WARNING, COLOR_PASS,
     COLOR_SCORE_HIGH, COLOR_SCORE_MID, COLOR_SCORE_LOW, COLOR_SCORE_POOR,
 )
@@ -106,8 +106,8 @@ def show_welcome(console: Console, first_run: bool = False) -> bool:
 
     if first_run:
         console.print(
-            "  [dim]Press [bold white]↵[/bold white] to start your first scan  "
-            "·  [bold white]Ctrl-C[/bold white] to exit[/dim]"
+            "  [dim]Press [bold text]↵[/bold text] to start your first scan  "
+            "·  [bold text]Ctrl-C[/bold text] to exit[/dim]"
         )
         try:
             input()
@@ -136,7 +136,7 @@ def _render(console: Console, info: dict, display_name: str) -> None:
     table.add_row(_build_left(info, display_name), _build_right(right_w))
 
     title = Text()
-    title.append(APP_NAME, style="bold white")
+    title.append(APP_NAME, style=f"bold {COLOR_TEXT}")
     title.append(f"  v{__version__}", style="dim white")
 
     console.print(Panel(table, title=title, title_align="left", border_style=COLOR_BRAND))
@@ -162,7 +162,7 @@ def _build_left(info: dict, display_name: str) -> Text:
 
     t = Text(justify="center")
     t.append("\n")
-    t.append(f"Welcome back, {display_name}!", style="bold white")
+    t.append(f"Welcome back, {display_name}!", style=f"bold {COLOR_TEXT}")
     t.append("\n\n")
     _append_beagle(t)
     t.append("\n")
@@ -192,7 +192,7 @@ def _build_right(right_w: int = 55) -> Text:
     ]
     for cmd, desc in cmds:
         t.append("  ")
-        t.append(cmd.ljust(_CMD_W), style="bold white")
+        t.append(cmd.ljust(_CMD_W), style=f"bold {COLOR_TEXT}")
         t.append(desc + "\n", style="dim white")
 
     t.append("\n")

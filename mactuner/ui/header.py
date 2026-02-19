@@ -15,7 +15,7 @@ from rich.table import Table
 from rich.text import Text
 
 from mactuner.system_info import get_system_info
-from mactuner.ui.theme import COLOR_BRAND, MACTUNER_THEME
+from mactuner.ui.theme import COLOR_BRAND, COLOR_TEXT, MACTUNER_THEME
 
 
 def build_header(mode: str = "scan", only_cats: Optional[set] = None) -> Panel:
@@ -52,7 +52,7 @@ def _build_left(info: dict) -> Text:
 
     t = Text(justify="center")
     t.append("\n")
-    t.append(f"Welcome back, {display_name}!", style="bold white")
+    t.append(f"Welcome back, {display_name}!", style=f"bold {COLOR_TEXT}")
     t.append("\n\n")
     _append_beagle(t)
     t.append("\n")
@@ -153,7 +153,7 @@ def _build_right(mode: str = "scan", only_cats: Optional[set] = None) -> Text:
 
     for flag, desc in tips:
         t.append(f"  • ", style="dim white")
-        t.append(flag, style="bold white")
+        t.append(flag, style=f"bold {COLOR_TEXT}")
         t.append(f"  {desc}\n", style="dim white")
 
     return t
