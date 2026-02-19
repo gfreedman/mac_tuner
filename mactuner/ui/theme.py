@@ -3,7 +3,13 @@ MacTuner visual design system.
 
 All colors, styles, and icons as named constants.
 Import from here — never hardcode markup strings in other modules.
+
+Color palette is selected at import time based on macOS appearance.
+Dark and light palettes are both 24-bit hex for consistent rendering
+across Terminal.app, iTerm2, Warp, Alacritty, etc.
 """
+
+import subprocess
 
 from rich.style import Style
 from rich.theme import Theme
@@ -16,37 +22,89 @@ APP_TAGLINE = "Mac System Health Inspector"
 APP_VERSION = "1.2.0"
 
 
+# ── Dark/light detection ──────────────────────────────────────────────────────
+
+def _is_dark_mode() -> bool:
+    """
+    Detect macOS system appearance.
+
+    Returns True for dark mode, False for light.
+    Falls back to True (dark palette) on any error — the dark palette
+    is readable in the vast majority of terminal configurations.
+    """
+    try:
+        r = subprocess.run(
+            ["defaults", "read", "-g", "AppleInterfaceStyle"],
+            capture_output=True, text=True, timeout=2, check=False,
+        )
+        # exit 0 + "Dark" → dark mode
+        # exit 1 (key absent) → light mode
+        if r.returncode == 0:
+            return "Dark" in r.stdout
+        if r.returncode == 1:
+            return False
+    except Exception:
+        pass
+    return True  # safe default
+
+
+DARK_MODE: bool = _is_dark_mode()
+
+
 # ── Color palette ─────────────────────────────────────────────────────────────
+# Two complete palettes — selected at import time.
 
-COLOR_CRITICAL = "#E05252"      # Warm severity red — intentional, not ANSI alarm
-COLOR_WARNING  = "#D4870A"      # Amber — reliable across all 24-bit terminals
-COLOR_PASS     = "#4DBD74"      # Calm sage-green — readable, not neon lime
-COLOR_INFO     = "#5BA3C9"      # Slate blue — neutral informational
-COLOR_BRAND    = "#7B9FD4"      # Periwinkle blue — trustworthy, frames without shouting
-COLOR_DIM      = "#787878"      # Medium gray — consistent across terminals
-COLOR_COMMAND  = "#C0C0C0"      # Light silver — commands stand out from secondary text
-COLOR_HEADER_BG = "grey11"      # Panel background for header
+if DARK_MODE:
+    # ── Dark palette (light text on dark background) ─────────────────────────
+    COLOR_CRITICAL = "#E05252"      # Warm severity red
+    COLOR_WARNING  = "#D4870A"      # Amber
+    COLOR_PASS     = "#4DBD74"      # Calm sage-green
+    COLOR_INFO     = "#5BA3C9"      # Slate blue
+    COLOR_BRAND    = "#7B9FD4"      # Periwinkle blue
+    COLOR_DIM      = "#787878"      # Medium gray
+    COLOR_COMMAND  = "#C0C0C0"      # Light silver — commands stand out from dim text
+    COLOR_HEADER_BG = "grey11"
 
-# Score color bands
-COLOR_SCORE_HIGH = "#4DBD74"    # ≥ 90
-COLOR_SCORE_MID  = "#7EC67E"    # 75–89 (optimistic green — room to improve)
-COLOR_SCORE_LOW  = "#D4870A"    # 55–74
-COLOR_SCORE_POOR = "#E05252"    # < 55
+    COLOR_SCORE_HIGH = "#4DBD74"    # ≥ 90
+    COLOR_SCORE_MID  = "#7EC67E"    # 75–89
+    COLOR_SCORE_LOW  = "#D4870A"    # 55–74
+    COLOR_SCORE_POOR = "#E05252"    # < 55
+
+    PROGRESS_BAR_COLOR      = "#7B9FD4"
+    PROGRESS_COMPLETE_COLOR = "#4DBD74"
+
+else:
+    # ── Light palette (dark text on light/white background) ──────────────────
+    # All values chosen for WCAG AA contrast (≥ 4.5:1) on white backgrounds.
+    COLOR_CRITICAL = "#B91C1C"      # Deep red         (contrast 6.5:1 on white)
+    COLOR_WARNING  = "#92400E"      # Dark amber        (7.2:1)
+    COLOR_PASS     = "#166534"      # Deep green        (7.5:1)
+    COLOR_INFO     = "#0369A1"      # Deep sky blue     (5.9:1)
+    COLOR_BRAND    = "#1D4ED8"      # Deep blue         (6.2:1)
+    COLOR_DIM      = "#4B5563"      # Dark gray         (7.9:1)
+    COLOR_COMMAND  = "#1F2937"      # Near-black        (15.8:1)
+    COLOR_HEADER_BG = "grey93"
+
+    COLOR_SCORE_HIGH = "#166534"    # ≥ 90
+    COLOR_SCORE_MID  = "#15803D"    # 75–89
+    COLOR_SCORE_LOW  = "#92400E"    # 55–74
+    COLOR_SCORE_POOR = "#B91C1C"    # < 55
+
+    PROGRESS_BAR_COLOR      = "#1D4ED8"
+    PROGRESS_COMPLETE_COLOR = "#166534"
 
 
 # ── Rich styles ───────────────────────────────────────────────────────────────
 
-STYLE_CRITICAL = Style(color="#E05252", bold=True)
-STYLE_WARNING  = Style(color="#D4870A", bold=True)
-STYLE_PASS     = Style(color="#4DBD74", bold=True)
-STYLE_INFO     = Style(color="#5BA3C9")
-STYLE_BRAND    = Style(color="#7B9FD4", bold=True)
-STYLE_DIM      = Style(color="#787878")
-STYLE_SECTION  = Style(color="#7B9FD4", bold=True)
-STYLE_COMMAND  = Style(color="#C0C0C0")
-
-# Spinner style for live checks — brand color: spinner is brand-motion
-STYLE_SPINNER  = Style(color="#7B9FD4")
+STYLE_CRITICAL = Style(color=COLOR_CRITICAL, bold=True)
+STYLE_WARNING  = Style(color=COLOR_WARNING,  bold=True)
+STYLE_PASS     = Style(color=COLOR_PASS,     bold=True)
+STYLE_INFO     = Style(color=COLOR_INFO)
+STYLE_BRAND    = Style(color=COLOR_BRAND,    bold=True)
+STYLE_DIM      = Style(color=COLOR_DIM)
+STYLE_SECTION  = Style(color=COLOR_BRAND,    bold=True)
+STYLE_COMMAND  = Style(color=COLOR_COMMAND)
+STYLE_SPINNER  = Style(color=COLOR_BRAND)
 
 
 # ── Status icons ──────────────────────────────────────────────────────────────
@@ -62,7 +120,6 @@ ICON_LOCK = "🔐"
 ICON_GUIDED = "👆"
 ICON_STEPS = "📋"
 
-# Map status → icon
 STATUS_ICONS: dict[str, str] = {
     "pass": ICON_PASS,
     "warning": ICON_WARNING,
@@ -72,7 +129,6 @@ STATUS_ICONS: dict[str, str] = {
     "error": ICON_ERROR,
 }
 
-# Map status → style
 STATUS_STYLES: dict[str, Style] = {
     "pass": STYLE_PASS,
     "warning": STYLE_WARNING,
@@ -110,23 +166,17 @@ FIX_LEVEL_LABELS: dict[str, str] = {
 }
 
 
-# ── Rich Theme (registered with Console) ─────────────────────────────────────
+# ── Rich Theme ────────────────────────────────────────────────────────────────
 
 MACTUNER_THEME = Theme(
     {
-        "critical": "#E05252 bold",
-        "warning":  "#D4870A bold",
-        "pass":     "#4DBD74 bold",
-        "info":     "#5BA3C9",
-        "brand":    "#7B9FD4 bold",
-        "dim":      "#787878",
-        "section":  "#7B9FD4 bold",
-        "command":  "#C0C0C0",
+        "critical": f"{COLOR_CRITICAL} bold",
+        "warning":  f"{COLOR_WARNING} bold",
+        "pass":     f"{COLOR_PASS} bold",
+        "info":     COLOR_INFO,
+        "brand":    f"{COLOR_BRAND} bold",
+        "dim":      COLOR_DIM,
+        "section":  f"{COLOR_BRAND} bold",
+        "command":  COLOR_COMMAND,
     }
 )
-
-
-# ── Progress bar style ────────────────────────────────────────────────────────
-
-PROGRESS_BAR_COLOR      = "#7B9FD4"   # Brand — spinner and bar are both motion UI
-PROGRESS_COMPLETE_COLOR = "#4DBD74"   # Same as PASS — completion = success
