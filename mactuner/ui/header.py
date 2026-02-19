@@ -92,7 +92,7 @@ def _build_right(mode: str = "scan", only_cats: Optional[set] = None) -> Text:
     """Right column: mode chips + contextual tips for the active mode."""
     t = Text(justify="left")
     t.append("\n")
-    t.append("  Modes\n", style="bold white")
+    t.append("  Modes\n", style=f"bold {COLOR_BRAND}")
     t.append("\n")
 
     # ── Mode chips ────────────────────────────────────────────────────────────
@@ -124,7 +124,7 @@ def _build_right(mode: str = "scan", only_cats: Optional[set] = None) -> Text:
 
     # ── Contextual tips ───────────────────────────────────────────────────────
     if mode == "scan":
-        t.append("  Scan mode tips\n", style="bold white")
+        t.append("  Scan mode tips\n", style=f"bold {COLOR_BRAND}")
         t.append("\n")
         tips = [
             ("mactuner --fix",     "after scan to repair issues"),
@@ -133,7 +133,7 @@ def _build_right(mode: str = "scan", only_cats: Optional[set] = None) -> Text:
             ("mactuner -y",        "skip pre-scan prompt"),
         ]
     elif mode == "fix":
-        t.append("  Fix mode tips\n", style="bold white")
+        t.append("  Fix mode tips\n", style=f"bold {COLOR_BRAND}")
         t.append("\n")
         tips = [
             ("mactuner --auto",    "apply safe fixes without prompting"),
@@ -142,7 +142,7 @@ def _build_right(mode: str = "scan", only_cats: Optional[set] = None) -> Text:
             ("mactuner --explain", "see deeper context first"),
         ]
     else:  # targeted
-        t.append("  Targeted mode tips\n", style="bold white")
+        t.append("  Targeted mode tips\n", style=f"bold {COLOR_BRAND}")
         t.append("\n")
         tips = [
             ("mactuner --fix",     "add to apply fixes after scan"),

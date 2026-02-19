@@ -179,7 +179,7 @@ def _build_left(info: dict, display_name: str) -> Text:
 def _build_right(right_w: int = 55) -> Text:
     t = Text(justify="left")
     t.append("\n")
-    t.append("Quick start\n", style="bold white")
+    t.append("Quick start\n", style=f"bold {COLOR_BRAND}")
     t.append("\n")
 
     _CMD_W = 20   # len("mactuner --explain") = 18, +2 breathing room
@@ -201,7 +201,7 @@ def _build_right(right_w: int = 55) -> Text:
 
     last = _load_last_scan()
     if last:
-        t.append("Last scan\n", style="bold white")
+        t.append("Last scan\n", style=f"bold {COLOR_BRAND}")
         t.append("\n")
         _append_last_scan(t, last)
     else:
