@@ -344,6 +344,23 @@
     .t-muted { color: #6b6b6b; }
 
     /* ── Copy button ───────────────────────────────────────────────────── */
+    .install-pill .pill-copy {
+      background: none;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #4a4a4a;
+      padding: 0;
+      margin-left: 4px;
+      flex-shrink: 0;
+      transition: color 0.15s;
+    }
+    .install-pill .pill-copy:hover { color: #888; }
+    .install-pill .pill-copy.ok    { color: #22c55e; }
+    .install-pill .pill-copy svg   { width: 14px; height: 14px; }
+
     .code-wrap { position: relative; }
 
     .copy-btn {
@@ -528,6 +545,7 @@
     <div class="install-pill">
       <span class="prompt">$</span>
       <code>brew install gfreedman/mactuner/mactuner</code>
+      <button class="pill-copy" aria-label="Copy install command"></button>
     </div>
   </div>
 </section>
@@ -812,6 +830,20 @@ brew untap gfreedman/mactuner</code></pre>
 <script>
   const CLIP_ICON = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="5.5" y="1.5" width="8" height="10" rx="1.5"/><path d="M3.5 4.5h-1a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1v-1"/></svg>`;
   const CHECK_ICON = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8l4 4 8-8"/></svg>`;
+
+  // Pill copy button
+  const pillBtn = document.querySelector('.install-pill .pill-copy');
+  if (pillBtn) {
+    pillBtn.innerHTML = CLIP_ICON;
+    pillBtn.addEventListener('click', () => {
+      const text = document.querySelector('.install-pill code').innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        pillBtn.classList.add('ok');
+        pillBtn.innerHTML = CHECK_ICON;
+        setTimeout(() => { pillBtn.classList.remove('ok'); pillBtn.innerHTML = CLIP_ICON; }, 1600);
+      });
+    });
+  }
 
   document.querySelectorAll('pre').forEach(pre => {
     if (pre.closest('.terminal')) return;
