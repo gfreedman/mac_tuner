@@ -30,7 +30,11 @@ from rich.text import Text
 from mactuner import __version__
 from mactuner.system_info import get_system_info
 from mactuner.ui.header import _append_beagle
-from mactuner.ui.theme import APP_NAME, COLOR_BRAND
+from mactuner.ui.theme import (
+    APP_NAME, COLOR_BRAND,
+    COLOR_CRITICAL, COLOR_WARNING, COLOR_PASS,
+    COLOR_SCORE_HIGH, COLOR_SCORE_MID, COLOR_SCORE_LOW, COLOR_SCORE_POOR,
+)
 
 # Box that renders only a │ column separator — no outer borders, no row rules.
 # Each 4-char line: left_border, fill, col_separator, right_border
@@ -157,6 +161,7 @@ def _build_left(info: dict, display_name: str) -> Text:
     cpu_ram = "  ·  ".join([p for p in [cpu, f"{ram} GB" if ram else ""] if p])
 
     t = Text(justify="center")
+    t.append("\n")
     t.append(f"Welcome back, {display_name}!", style="bold white")
     t.append("\n\n")
     _append_beagle(t)
@@ -173,6 +178,7 @@ def _build_left(info: dict, display_name: str) -> Text:
 
 def _build_right(right_w: int = 55) -> Text:
     t = Text(justify="left")
+    t.append("\n")
     t.append("Quick start\n", style="bold white")
     t.append("\n")
 
@@ -228,11 +234,13 @@ def _append_last_scan(t: Text, data: dict) -> None:
     warning  = data.get("warning",  0)
 
     if score >= 90:
-        score_style = "bold bright_green"
-    elif score >= 70:
-        score_style = "bold yellow"
+        score_style = f"bold {COLOR_SCORE_HIGH}"
+    elif score >= 75:
+        score_style = f"bold {COLOR_SCORE_MID}"
+    elif score >= 55:
+        score_style = f"bold {COLOR_SCORE_LOW}"
     else:
-        score_style = "bold bright_red"
+        score_style = f"bold {COLOR_SCORE_POOR}"
 
     # Line 1: date · time
     t.append("  ", style="dim white")
@@ -242,10 +250,10 @@ def _append_last_scan(t: Text, data: dict) -> None:
     t.append("  ", style="dim white")
     t.append(f"Score {score}", style=score_style)
     if critical:
-        t.append(f"  ·  {critical} critical", style="bold bright_red")
+        t.append(f"  ·  {critical} critical", style=f"bold {COLOR_CRITICAL}")
     if warning:
-        t.append(f"  ·  {warning} warnings", style="yellow")
+        t.append(f"  ·  {warning} warnings", style=COLOR_WARNING)
     if not critical and not warning:
-        t.append("  ·  all clear", style="bright_green")
+        t.append("  ·  all clear", style=COLOR_PASS)
 
     t.append("\n")

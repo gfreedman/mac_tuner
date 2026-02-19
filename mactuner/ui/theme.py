@@ -18,28 +18,35 @@ APP_VERSION = "1.2.0"
 
 # ── Color palette ─────────────────────────────────────────────────────────────
 
-COLOR_CRITICAL = "bright_red"       # Security risks, hardware failure
-COLOR_WARNING = "yellow"            # Outdated, suboptimal, needs review
-COLOR_PASS = "bright_green"         # All clear
-COLOR_INFO = "cyan"                 # Neutral context
-COLOR_BRAND = "magenta"             # Section headers, branding
-COLOR_DIM = "dim white"             # Secondary text, explanations, commands
-COLOR_HEADER_BG = "grey11"          # Panel background for header
+COLOR_CRITICAL = "#E05252"      # Warm severity red — intentional, not ANSI alarm
+COLOR_WARNING  = "#D4870A"      # Amber — reliable across all 24-bit terminals
+COLOR_PASS     = "#4DBD74"      # Calm sage-green — readable, not neon lime
+COLOR_INFO     = "#5BA3C9"      # Slate blue — neutral informational
+COLOR_BRAND    = "#7B9FD4"      # Periwinkle blue — trustworthy, frames without shouting
+COLOR_DIM      = "#787878"      # Medium gray — consistent across terminals
+COLOR_COMMAND  = "#C0C0C0"      # Light silver — commands stand out from secondary text
+COLOR_HEADER_BG = "grey11"      # Panel background for header
+
+# Score color bands
+COLOR_SCORE_HIGH = "#4DBD74"    # ≥ 90
+COLOR_SCORE_MID  = "#7EC67E"    # 75–89 (optimistic green — room to improve)
+COLOR_SCORE_LOW  = "#D4870A"    # 55–74
+COLOR_SCORE_POOR = "#E05252"    # < 55
 
 
 # ── Rich styles ───────────────────────────────────────────────────────────────
 
-STYLE_CRITICAL = Style(color="bright_red", bold=True)
-STYLE_WARNING = Style(color="yellow", bold=True)
-STYLE_PASS = Style(color="bright_green", bold=True)
-STYLE_INFO = Style(color="cyan")
-STYLE_BRAND = Style(color="magenta", bold=True)
-STYLE_DIM = Style(color="white", dim=True)
-STYLE_SECTION = Style(color="magenta", bold=True)
-STYLE_COMMAND = Style(color="white", dim=True)
+STYLE_CRITICAL = Style(color="#E05252", bold=True)
+STYLE_WARNING  = Style(color="#D4870A", bold=True)
+STYLE_PASS     = Style(color="#4DBD74", bold=True)
+STYLE_INFO     = Style(color="#5BA3C9")
+STYLE_BRAND    = Style(color="#7B9FD4", bold=True)
+STYLE_DIM      = Style(color="#787878")
+STYLE_SECTION  = Style(color="#7B9FD4", bold=True)
+STYLE_COMMAND  = Style(color="#C0C0C0")
 
-# Spinner style for live checks
-STYLE_SPINNER = Style(color="cyan")
+# Spinner style for live checks — brand color: spinner is brand-motion
+STYLE_SPINNER  = Style(color="#7B9FD4")
 
 
 # ── Status icons ──────────────────────────────────────────────────────────────
@@ -107,19 +114,19 @@ FIX_LEVEL_LABELS: dict[str, str] = {
 
 MACTUNER_THEME = Theme(
     {
-        "critical": COLOR_CRITICAL + " bold",
-        "warning": COLOR_WARNING + " bold",
-        "pass": COLOR_PASS + " bold",
-        "info": COLOR_INFO,
-        "brand": COLOR_BRAND + " bold",
-        "dim": "dim white",
-        "section": COLOR_BRAND + " bold",
-        "command": "dim white",
+        "critical": "#E05252 bold",
+        "warning":  "#D4870A bold",
+        "pass":     "#4DBD74 bold",
+        "info":     "#5BA3C9",
+        "brand":    "#7B9FD4 bold",
+        "dim":      "#787878",
+        "section":  "#7B9FD4 bold",
+        "command":  "#C0C0C0",
     }
 )
 
 
 # ── Progress bar style ────────────────────────────────────────────────────────
 
-PROGRESS_BAR_COLOR = "cyan"
-PROGRESS_COMPLETE_COLOR = "bright_green"
+PROGRESS_BAR_COLOR      = "#7B9FD4"   # Brand — spinner and bar are both motion UI
+PROGRESS_COMPLETE_COLOR = "#4DBD74"   # Same as PASS — completion = success
