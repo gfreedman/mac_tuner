@@ -60,9 +60,12 @@ jobs:
 
       - name: Commit and push formula update
         working-directory: homebrew-mactuner
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/gfreedman/homebrew-mactuner.git"
           git add Formula/mactuner.rb
           git commit -m "mactuner ${{ steps.sha.outputs.version }}"
           git push
