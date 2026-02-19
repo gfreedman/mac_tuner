@@ -151,14 +151,14 @@ MacTuner runs **69 checks** across 10 categories:
 
 | Category | Checks |
 |---|---|
-| **System** | macOS version, pending updates, SIP, FileVault, Firewall (inbound-only), Gatekeeper, Time Machine, screen lock, Rosetta, Secure Boot |
+| **System** | macOS version, pending updates, SIP, FileVault, Firewall (inbound-only), Firewall stealth mode, Gatekeeper, Time Machine, automatic security updates, screen lock, Rosetta, Secure Boot |
 | **Security** | Auto-login, guest account, SSH keys (presence + strength + config), launch agents, login/logout hooks, cron jobs, /etc/hosts, sharing services, Activation Lock, MDM profiles, system root CA certificates, system extensions, XProtect signature freshness |
 | **Privacy** | Guided review of Full Disk Access, Screen Recording, and Accessibility grants |
 | **Homebrew** | brew doctor, outdated formulae & casks, orphaned dependencies, cleanup savings |
 | **Disk** | Free space, APFS snapshots, Xcode DerivedData, Docker usage, Trash, caches |
 | **Hardware** | Battery cycle count & condition, SMART status (boot volume), kernel panics, thermal throttling |
 | **Memory** | Memory pressure, swap usage, top CPU & memory consumers |
-| **Network** | AirDrop visibility, Remote Login, Screen/File Sharing, Internet Sharing, DNS, proxy, saved Wi-Fi, Bluetooth discoverability, listening ports (TCP + UDP) |
+| **Network** | AirDrop visibility, Remote Login, Screen Sharing, File Sharing, Internet Sharing, DNS, proxy, saved Wi-Fi, Bluetooth, listening ports (TCP + UDP) |
 | **Dev Env** | Xcode CLTools, Python/Ruby PATH conflicts, conda, Node managers, git config |
 | **Apps** | App Store updates (via mas), iCloud status, login items |
 

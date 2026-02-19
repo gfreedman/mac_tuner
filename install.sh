@@ -3,7 +3,7 @@
 # Installs mactuner globally using pipx (recommended) or pip.
 #
 # Usage:
-#   curl -sSf https://raw.githubusercontent.com/your-org/mactuner/main/install.sh | bash
+#   curl -sSf https://raw.githubusercontent.com/gfreedman/mac_tuner/main/install.sh | bash
 #   — or —
 #   bash install.sh
 

@@ -2,7 +2,26 @@
 
 All notable changes to MacTuner are documented here.
 
-## [1.2.0] — Unreleased
+## [1.3.0] — 2026-02-19
+
+### Added
+- **Mode-aware header:** right column shows active mode (🔍 scan / 🔧 fix / 🎯 targeted) with contextual tips
+- **Recommendations panel:** after every scan, surfaces the top fixable items and the exact command to run next
+- **Pre-scan prompt:** count of checks + press ↵ to begin (skip with `-y`)
+- **Sequential fix cards:** `--fix` now shows one rich card per fix (status, explanation, command, time, reversibility) and prompts inline — no more checkbox pre-selection menu
+- **MDM warning suppression:** advisory banner only appears on first run; silenced on subsequent runs
+- **Console width cap:** all panels capped at 120 columns regardless of terminal width
+- **Light-mode palette:** all `white`/`dim white` style strings replaced with palette-aware constants — readable in both dark and light terminals
+- **Hero copy button:** clipboard icon on the `brew install` command in the docs site
+
+### Fixed
+- Removed `questionary` dependency (no longer used since fix mode was rewritten)
+- Docs site Quick Start code boxes now align vertically across all three step cards
+- Docs site install/uninstall grid uses equal-width 3-column layout
+
+---
+
+## [1.2.0] — 2026-02-18
 
 ### Added
 - **10 new security checks:** Guest Account, SSH Server Config (sshd_config), Login/Logout Hooks, Cron Jobs, System Extensions, XProtect signature freshness
