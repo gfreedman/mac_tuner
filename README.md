@@ -1,5 +1,7 @@
 # MacTuner
 
+**[Full documentation → gfreedman.github.io/mac_tuner](https://gfreedman.github.io/mac_tuner/)**
+
 **Mac System Health Inspector & Tuner** — narrated, educational, and beautiful.
 
 Runs a full audit of your Mac: security settings, disk health, memory, developer environment, and more. Explains every finding in plain language and can fix issues for you.
