@@ -2,29 +2,17 @@
 Welcome screen.
 
 Displayed on first run (before ~/.config/mactuner/.welcomed exists)
-or with --welcome. Provides orientation, system identity, and a quick-start
-command guide. Optionally shows the last scan summary if one exists.
+or with --welcome. Mirrors the Claude Code two-column Panel layout:
 
-Layout (plain stacked text — no panels, no tables):
-  mactuner v1.2.0  ·  Mac System Health Inspector
-  ──────────────────────────────────────────────
-
-  Welcome, Geoff!
-
-  [beagle art]
-
-  macOS 26.3  ·  Apple M2  ·  MacBook Air  ·  16 GB
-  /Users/geoff/path
-
-  ──────────────────────────────────────────────
-  Quick start
-
-    mactuner              Full system health scan
-    mactuner --fix        Interactive fix mode
-    ...
-
-  ──────────────────────────────────────────────
-  Last scan  ·  18 Feb 2026  ·  22:06  ·  Score 94
+  ╭─── MacTuner  v1.2.0 ─────────────────────────────────────────────╮
+  │                             │ Quick start                          │
+  │     Welcome back, Geoff!    │   mactuner           Full scan       │
+  │                             │   mactuner --fix     Fix mode        │
+  │           beagle            │ ──────────────────────────────────── │
+  │                             │ Last scan                            │
+  │   macOS 26.3 · MacBook Air  │   18 Feb 2026 · 22:06 · Score 94    │
+  │    /Users/geoff_freedman    │                                      │
+  ╰──────────────────────────────────────────────────────────────────╯
 """
 
 import getpass
@@ -34,12 +22,14 @@ from pathlib import Path
 from typing import Optional
 
 from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 
 from mactuner import __version__
 from mactuner.system_info import get_system_info
 from mactuner.ui.header import _append_beagle
-from mactuner.ui.theme import APP_NAME, APP_TAGLINE
+from mactuner.ui.theme import APP_NAME, COLOR_BRAND
 
 
 # ── Persistent state paths ────────────────────────────────────────────────────
@@ -106,7 +96,6 @@ def show_welcome(console: Console, first_run: bool = False) -> bool:
     _render(console, info, display_name)
 
     if first_run:
-        console.print()
         console.print(
             "  [dim]Press [bold white]↵[/bold white] to start your first scan  "
             "·  [bold white]Ctrl-C[/bold white] to exit[/dim]"
@@ -125,58 +114,62 @@ def show_welcome(console: Console, first_run: bool = False) -> bool:
 
 # ── Renderer ──────────────────────────────────────────────────────────────────
 
-_DIV = "  " + "─" * 52  # reused divider line
-
-
 def _render(console: Console, info: dict, display_name: str) -> None:
-    # ── Version line + underline (no Panel box) ───────────────────────────────
-    hdr = Text()
-    hdr.append("  ")
-    hdr.append(APP_NAME, style="bold white")
-    hdr.append(f"  v{__version__}", style="dim white")
-    hdr.append("  ·  ", style="dim white")
-    hdr.append(APP_TAGLINE, style="dim white")
-    console.print(hdr)
-    console.print(_DIV, style="dim white")
-    console.print()
+    table = Table(box=None, show_header=False, padding=(0, 2), expand=True)
+    table.add_column(width=28, justify="center")
+    table.add_column(justify="left")
+    table.add_row(_build_left(info, display_name), _build_right())
 
-    # ── Greeting ──────────────────────────────────────────────────────────────
-    console.print(f"  [bold bright_green]Welcome, {display_name}![/bold bright_green]")
-    console.print()
+    title = Text()
+    title.append(APP_NAME, style="bold white")
+    title.append(f"  v{__version__}", style="dim white")
 
-    # ── Beagle (printed directly — no table wrapper) ──────────────────────────
-    beagle = Text(justify="left")
-    _append_beagle(beagle)
-    console.print(beagle)
+    console.print(Panel(table, title=title, title_align="left", border_style=COLOR_BRAND))
 
-    # ── System identity ───────────────────────────────────────────────────────
+
+# ── Left column ───────────────────────────────────────────────────────────────
+
+def _build_left(info: dict, display_name: str) -> Text:
     macos_name = info.get("macos_name", "")
     macos_ver  = info.get("macos_version", "")
-    macos_str  = (
+    macos_display = (
         f"macOS {macos_name} {macos_ver}"
         if macos_name and not macos_name.isdigit()
         else f"macOS {macos_ver}"
     )
-    cpu   = info.get("cpu_brand", "") or info.get("architecture", "")
     model = info.get("model_name", "Mac")
     ram   = info.get("ram_gb", 0)
+    cpu   = info.get("cpu_brand", "") or info.get("architecture", "")
 
-    chip_parts = [p for p in [macos_str, cpu, model] if p]
+    # Build "macOS Sequoia · Apple M2 · 16 GB" line
+    identity_parts = [p for p in [macos_display, cpu] if p]
     if ram:
-        chip_parts.append(f"{ram} GB")
+        identity_parts.append(f"{ram} GB")
 
-    console.print("  " + "  ·  ".join(chip_parts), style="dim white")
-    console.print("  " + str(Path.cwd()), style="dim white")
-    console.print()
+    t = Text(justify="center")
+    t.append("\n")
+    t.append(f"Welcome back, {display_name}!", style="bold white")
+    t.append("\n\n")
+    _append_beagle(t)
+    t.append("\n")
+    t.append("  ·  ".join(identity_parts), style="dim")
+    t.append("\n")
+    t.append(model, style="dim")
+    t.append("\n")
+    t.append(str(Path.cwd()), style="dim")
+    t.append("\n")
+    return t
 
-    # ── Quick start ───────────────────────────────────────────────────────────
-    console.print(_DIV, style="dim white")
-    console.print()
-    console.print("  [bold white]Quick start[/bold white]")
-    console.print()
 
-    # ljust pads command to fixed width so descriptions line up — no Table needed
-    _CMD_W = 22   # len("mactuner --explain") = 18, +4 breathing room
+# ── Right column ──────────────────────────────────────────────────────────────
+
+def _build_right() -> Text:
+    t = Text(justify="left")
+    t.append("\n")
+    t.append("Quick start\n", style="bold white")
+    t.append("\n")
+
+    _CMD_W = 22
     cmds = [
         ("mactuner",           "Full system health scan"),
         ("mactuner --fix",     "Interactive fix mode — repair issues"),
@@ -185,20 +178,24 @@ def _render(console: Console, info: dict, display_name: str) -> None:
         ("mactuner --help",    "All options"),
     ]
     for cmd, desc in cmds:
-        row = Text()
-        row.append("    ")
-        row.append(cmd.ljust(_CMD_W), style="bold white")
-        row.append(desc, style="dim white")
-        console.print(row)
-    console.print()
+        t.append("  ")
+        t.append(cmd.ljust(_CMD_W), style="bold white")
+        t.append(desc + "\n", style="dim white")
 
-    # ── Last scan ─────────────────────────────────────────────────────────────
+    t.append("\n")
+    t.append("  " + "─" * 48 + "\n", style="dim white")
+    t.append("\n")
+
     last = _load_last_scan()
     if last:
-        console.print(_DIV, style="dim white")
-        console.print()
-        _render_last_scan(console, last)
-        console.print()
+        t.append("Last scan\n", style="bold white")
+        t.append("\n")
+        _append_last_scan(t, last)
+    else:
+        t.append("No previous scan\n", style="dim white")
+
+    t.append("\n")
+    return t
 
 
 # ── Last scan helpers ─────────────────────────────────────────────────────────
@@ -213,7 +210,7 @@ def _load_last_scan() -> Optional[dict]:
     return None
 
 
-def _render_last_scan(console: Console, data: dict) -> None:
+def _append_last_scan(t: Text, data: dict) -> None:
     try:
         dt = datetime.fromisoformat(data["date"])
         date_str = f"{dt.day} {dt.strftime('%b %Y')}  ·  {dt.strftime('%H:%M')}"
@@ -231,17 +228,16 @@ def _render_last_scan(console: Console, data: dict) -> None:
     else:
         score_style = "bold bright_red"
 
-    line = Text()
-    line.append("  Last scan  ·  ", style="dim white")
-    line.append(date_str, style="dim white")
-    line.append("  ·  ", style="dim white")
-    line.append(f"Score {score}", style=score_style)
+    t.append("  ", style="dim white")
+    t.append(date_str, style="dim white")
+    t.append("  ·  ", style="dim white")
+    t.append(f"Score {score}", style=score_style)
 
     if critical:
-        line.append(f"  ·  🔴 {critical} critical", style="bold bright_red")
+        t.append(f"  ·  🔴 {critical} critical", style="bold bright_red")
     if warning:
-        line.append(f"  ·  ⚠️  {warning} warnings", style="yellow")
+        t.append(f"  ·  ⚠️  {warning} warnings", style="yellow")
     if not critical and not warning:
-        line.append("  ·  ✨ all clear", style="bright_green")
+        t.append("  ·  ✨ all clear", style="bright_green")
 
-    console.print(line)
+    t.append("\n")
