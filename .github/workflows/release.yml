@@ -13,9 +13,6 @@ jobs:
       contents: write   # needed to create GitHub Releases
 
     steps:
-      - name: Checkout mac_tuner
-        uses: actions/checkout@v4
-
       - name: Read version from tag
         id: version
         run: echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
@@ -26,47 +23,38 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${{ steps.version.outputs.tag }}" \
+            --repo gfreedman/mac_tuner \
             --title "MacTuner ${{ steps.version.outputs.tag }}" \
             --generate-notes
 
-      - name: Compute tarball SHA256
-        id: sha
+      - name: Compute tarball SHA256 and update formula via API
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
         run: |
           VERSION=${{ steps.version.outputs.tag }}
+          BARE="${VERSION#v}"
           URL="https://github.com/gfreedman/mac_tuner/archive/refs/tags/${VERSION}.tar.gz"
+
+          # Wait for the tarball to be available
+          sleep 5
           SHA=$(curl -sL "$URL" | shasum -a 256 | awk '{print $1}')
-          echo "sha256=${SHA}" >> "$GITHUB_OUTPUT"
-          echo "url=${URL}" >> "$GITHUB_OUTPUT"
-          echo "version=${VERSION#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Checkout homebrew-mactuner tap
-        uses: actions/checkout@v4
-        with:
-          repository: gfreedman/homebrew-mactuner
-          path: homebrew-mactuner
-          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          persist-credentials: false
+          # Fetch current formula content + blob SHA from the API
+          RESPONSE=$(gh api repos/gfreedman/homebrew-mactuner/contents/Formula/mactuner.rb)
+          FILE_SHA=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['sha'])")
+          CURRENT=$(echo "$RESPONSE" | python3 -c "import sys,json,base64; print(base64.b64decode(json.load(sys.stdin)['content']).decode())")
 
-      - name: Update formula
-        working-directory: homebrew-mactuner
-        run: |
-          VERSION="${{ steps.sha.outputs.version }}"
-          URL="${{ steps.sha.outputs.url }}"
-          SHA="${{ steps.sha.outputs.sha256 }}"
+          # Patch version URL and main package SHA
+          UPDATED=$(echo "$CURRENT" \
+            | sed "s|url \"https://github.com/gfreedman/mac_tuner/archive/refs/tags/v[^\"]*\"|url \"${URL}\"|" \
+            | sed "s|^  sha256 \"[a-f0-9]*\"|  sha256 \"${SHA}\"|")
 
-          sed -i '' \
-            -e "s|url \"https://github.com/gfreedman/mac_tuner/archive/refs/tags/v[^\"]*\"|url \"${URL}\"|" \
-            -e "s|sha256 \"[a-f0-9]*\"|sha256 \"${SHA}\"|" \
-            Formula/mactuner.rb
+          # Base64-encode for the API
+          ENCODED=$(echo "$UPDATED" | base64)
 
-      - name: Commit and push formula update
-        working-directory: homebrew-mactuner
-        env:
-          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/gfreedman/homebrew-mactuner.git"
-          git add Formula/mactuner.rb
-          git commit -m "mactuner ${{ steps.sha.outputs.version }}"
-          git push
+          # Push update via Contents API
+          gh api repos/gfreedman/homebrew-mactuner/contents/Formula/mactuner.rb \
+            -X PUT \
+            -f message="mactuner ${BARE}" \
+            -f content="${ENCODED}" \
+            -f sha="${FILE_SHA}"
