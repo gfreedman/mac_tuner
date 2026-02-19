@@ -27,7 +27,7 @@ from mactuner.fixer.executor import (
     run_guided_fix,
     run_instructions_fix,
 )
-from mactuner.ui.theme import COLOR_BRAND, STATUS_ICONS, STATUS_STYLES
+from mactuner.ui.theme import COLOR_BRAND, COLOR_DIM, COLOR_TEXT, STATUS_ICONS, STATUS_STYLES
 
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ def _run_interactive_mode(fixable: list[CheckResult], console: Console) -> None:
 
         if result.fix_level in ("auto", "auto_sudo"):
             try:
-                console.print("  [bold white]Apply?[/bold white] [dim][y/N] › [/dim]", end="")
+                console.print("  [bold text]Apply?[/bold text] [dim][y/N] › [/dim]", end="")
                 answer = input().strip().lower()
             except (KeyboardInterrupt, EOFError):
                 console.print("\n\n  [dim]Fix mode cancelled.[/dim]\n")
@@ -216,26 +216,26 @@ def _print_fix_card(
     badge.append(f"  {status_icon}  ", style=str(status_style))
     badge.append(result.status.upper(), style=f"bold {str(status_style)}")
     badge.append("   ")
-    badge.append(f"{level_emoji}  {level_label}", style="dim white")
+    badge.append(f"{level_emoji}  {level_label}", style=COLOR_DIM)
     parts.append(badge)
     parts.append(Text(""))
 
     # ── Message + finding explanation ─────────────────────────────────────────
     msg = Text()
-    msg.append(f"  {result.message}", style="white")
+    msg.append(f"  {result.message}", style=COLOR_TEXT)
     parts.append(msg)
 
     if result.finding_explanation:
         parts.append(
-            Padding(Text(result.finding_explanation, style="dim white"), (0, 2, 0, 4))
+            Padding(Text(result.finding_explanation, style=COLOR_DIM), (0, 2, 0, 4))
         )
 
     parts.append(Text(""))
 
     # ── What this fix does ────────────────────────────────────────────────────
     what = Text()
-    what.append("  What this fix does\n", style="bold white")
-    what.append(f"  {result.fix_description}", style="dim white")
+    what.append("  What this fix does\n", style=f"bold {COLOR_TEXT}")
+    what.append(f"  {result.fix_description}", style=COLOR_DIM)
     parts.append(what)
 
     if result.fix_level in ("auto", "auto_sudo") and result.fix_command:
@@ -245,7 +245,7 @@ def _print_fix_card(
     elif result.fix_level == "instructions" and result.fix_steps:
         steps = Text()
         for i, step in enumerate(result.fix_steps, 1):
-            steps.append(f"\n  {i}. {step}", style="dim white")
+            steps.append(f"\n  {i}. {step}", style=COLOR_DIM)
         parts.append(steps)
 
     parts.append(Text(""))
@@ -259,7 +259,7 @@ def _print_fix_card(
         meta_parts.append("🔐 requires password")
 
     footer = Text()
-    footer.append("  " + "  ·  ".join(meta_parts), style="dim white")
+    footer.append("  " + "  ·  ".join(meta_parts), style=COLOR_DIM)
     parts.append(footer)
 
     # Border colour follows status
@@ -301,7 +301,7 @@ def _print_fix_mode_panel(fixable: list[CheckResult], console: Console) -> None:
     body = Text()
     body.append(f"\n  Found {len(fixable)} fixable item{'s' if len(fixable) != 1 else ''}:  ")
     body.append("  ".join(parts))
-    body.append("\n\n  Each fix is shown one at a time. Approve or skip before anything runs.\n", style="dim white")
+    body.append("\n\n  Each fix is shown one at a time. Approve or skip before anything runs.\n", style=COLOR_DIM)
 
     console.print()
     console.print(
@@ -321,16 +321,16 @@ def _print_session_summary(
     body = Text()
 
     if applied == 0:
-        body.append("\n  No fixes were applied.", style="dim white")
+        body.append("\n  No fixes were applied.", style=COLOR_DIM)
     else:
         s = "es" if applied != 1 else ""
         body.append(f"\n  ✅  {applied} fix{s} applied", style="bold bright_green")
         if skipped:
-            body.append(f"   ·   {skipped} skipped", style="dim white")
+            body.append(f"   ·   {skipped} skipped", style=COLOR_DIM)
 
-    body.append("\n\n  Run  ", style="dim white")
-    body.append("mactuner", style="bold white")
-    body.append("  again to rescan and confirm changes took effect.\n", style="dim white")
+    body.append("\n\n  Run  ", style=COLOR_DIM)
+    body.append("mactuner", style=f"bold {COLOR_TEXT}")
+    body.append("  again to rescan and confirm changes took effect.\n", style=COLOR_DIM)
 
     border = "bright_green" if applied > 0 else "dim"
 

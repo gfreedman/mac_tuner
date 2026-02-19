@@ -31,7 +31,7 @@ from mactuner import __version__
 from mactuner.system_info import get_system_info
 from mactuner.ui.header import _append_beagle
 from mactuner.ui.theme import (
-    APP_NAME, COLOR_BRAND, COLOR_TEXT,
+    APP_NAME, COLOR_BRAND, COLOR_DIM, COLOR_TEXT,
     COLOR_CRITICAL, COLOR_WARNING, COLOR_PASS,
     COLOR_SCORE_HIGH, COLOR_SCORE_MID, COLOR_SCORE_LOW, COLOR_SCORE_POOR,
 )
@@ -137,7 +137,7 @@ def _render(console: Console, info: dict, display_name: str) -> None:
 
     title = Text()
     title.append(APP_NAME, style=f"bold {COLOR_TEXT}")
-    title.append(f"  v{__version__}", style="dim white")
+    title.append(f"  v{__version__}", style=COLOR_DIM)
 
     console.print(Panel(table, title=title, title_align="left", border_style=COLOR_BRAND))
 
@@ -193,10 +193,10 @@ def _build_right(right_w: int = 55) -> Text:
     for cmd, desc in cmds:
         t.append("  ")
         t.append(cmd.ljust(_CMD_W), style=f"bold {COLOR_TEXT}")
-        t.append(desc + "\n", style="dim white")
+        t.append(desc + "\n", style=COLOR_DIM)
 
     t.append("\n")
-    t.append("─" * right_w + "\n", style="dim white")
+    t.append("─" * right_w + "\n", style=COLOR_DIM)
     t.append("\n")
 
     last = _load_last_scan()
@@ -205,7 +205,7 @@ def _build_right(right_w: int = 55) -> Text:
         t.append("\n")
         _append_last_scan(t, last)
     else:
-        t.append("No previous scan\n", style="dim white")
+        t.append("No previous scan\n", style=COLOR_DIM)
 
     return t
 
@@ -243,11 +243,11 @@ def _append_last_scan(t: Text, data: dict) -> None:
         score_style = f"bold {COLOR_SCORE_POOR}"
 
     # Line 1: date · time
-    t.append("  ", style="dim white")
-    t.append(date_str + "\n", style="dim white")
+    t.append("  ", style=COLOR_DIM)
+    t.append(date_str + "\n", style=COLOR_DIM)
 
     # Line 2: score + status badges
-    t.append("  ", style="dim white")
+    t.append("  ", style=COLOR_DIM)
     t.append(f"Score {score}", style=score_style)
     if critical:
         t.append(f"  ·  {critical} critical", style=f"bold {COLOR_CRITICAL}")

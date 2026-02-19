@@ -155,11 +155,11 @@ def run_guided_fix(result: CheckResult, console: Console) -> bool:
 
     # Print what to do inside Settings
     if result.recommendation:
-        console.print(f"  [white]{result.recommendation}[/white]")
+        console.print(f"  [text]{result.recommendation}[/text]")
         console.print()
 
     if result.fix_steps:
-        console.print("  [bold white]What to do:[/bold white]")
+        console.print("  [bold text]What to do:[/bold text]")
         for i, step in enumerate(result.fix_steps, 1):
             console.print(f"  [dim]{i}.[/dim]  {step}")
         console.print()
@@ -210,7 +210,7 @@ def run_instructions_fix(result: CheckResult, console: Console) -> bool:
     steps = result.fix_steps
 
     if steps:
-        console.print("  [bold white]Steps to follow:[/bold white]")
+        console.print("  [bold text]Steps to follow:[/bold text]")
         for i, step in enumerate(steps, 1):
             console.print(f"  [dim]{i}.[/dim]  {step}")
         console.print()
@@ -218,7 +218,7 @@ def run_instructions_fix(result: CheckResult, console: Console) -> bool:
 
     # Fall back to recommendation text if no explicit steps
     if result.recommendation:
-        console.print(f"  [white]{result.recommendation}[/white]\n")
+        console.print(f"  [text]{result.recommendation}[/text]\n")
         return True
 
     console.print("  [dim]No instructions defined for this check.[/dim]\n")

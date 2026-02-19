@@ -29,6 +29,7 @@ from rich.text import Text
 from mactuner.checks.base import CheckResult, calculate_health_score
 from mactuner.ui.theme import (
     CATEGORY_ICONS,
+    COLOR_DIM,
     COLOR_TEXT,
     FIX_LEVEL_LABELS,
     MACTUNER_THEME,
@@ -125,11 +126,11 @@ def build_summary_panel(results: list[CheckResult], scan_duration: float = 0.0) 
     score_line = Text()
     score_line.append("   Health Score  ", style=f"bold {COLOR_TEXT}")
     score_line.append(f"{score:>3}", style=f"bold {score_color}")
-    score_line.append("  [", style="dim white")
+    score_line.append("  [", style=COLOR_DIM)
     score_line.append("█" * filled, style=score_color)
-    score_line.append("░" * empty,  style="dim white")
-    score_line.append("]", style="dim white")
-    score_line.append(f"  / 100", style="dim white")
+    score_line.append("░" * empty,  style=COLOR_DIM)
+    score_line.append("]", style=COLOR_DIM)
+    score_line.append(f"  / 100", style=COLOR_DIM)
 
     # ── Line 2: status counts ─────────────────────────────────────────────────
     counts_line = Text()
@@ -137,7 +138,7 @@ def build_summary_panel(results: list[CheckResult], scan_duration: float = 0.0) 
 
     def _count_chip(icon: str, n: int, label: str, active_style: str) -> None:
         counts_line.append(icon + " ", style="bold")
-        style = active_style if n > 0 else "dim white"
+        style = active_style if n > 0 else COLOR_DIM
         counts_line.append(f"{n}  {label}", style=style)
         counts_line.append("    ")
 
@@ -152,7 +153,7 @@ def build_summary_panel(results: list[CheckResult], scan_duration: float = 0.0) 
     verdict_line = Text()
     verdict_line.append(
         f"\n   {_score_verdict(score, critical, warnings)}",
-        style="dim white",
+        style=COLOR_DIM,
     )
 
     # ── Line 4: scan duration (optional) ─────────────────────────────────────
@@ -165,7 +166,7 @@ def build_summary_panel(results: list[CheckResult], scan_duration: float = 0.0) 
         )
         duration_line.append(
             f"\n   {n} checks completed in {dur_str}",
-            style="dim white",
+            style=COLOR_DIM,
         )
 
     content = Group(score_line, counts_line, verdict_line, duration_line)
@@ -265,26 +266,26 @@ def build_recommendations_panel(
         if r.fix_description:
             fix_text = Text()
             fix_text.append(f"· {fix_label}", style="dim cyan")
-            fix_text.append(f"  —  {r.fix_description}", style="dim white")
+            fix_text.append(f"  —  {r.fix_description}", style=COLOR_DIM)
             parts.append(Padding(fix_text, (0, 2, 0, _INDENT)))
 
         parts.append(Text(""))
 
     if remainder > 0:
         more = Text()
-        more.append(f"  … and {remainder} more fixable item{'s' if remainder != 1 else ''}", style="dim white")
+        more.append(f"  … and {remainder} more fixable item{'s' if remainder != 1 else ''}", style=COLOR_DIM)
         parts.append(more)
         parts.append(Text(""))
 
     # CTA footer
-    parts.append(Text("  " + "─" * 50, style="dim white"))
+    parts.append(Text("  " + "─" * 50, style=COLOR_DIM))
     cta = Text()
-    cta.append("\n  Run  ", style="dim white")
+    cta.append("\n  Run  ", style=COLOR_DIM)
     cta.append("mactuner --fix", style=f"bold {COLOR_TEXT}")
-    cta.append(f"  to step through {total} fixable item{'s' if total != 1 else ''} interactively.\n", style="dim white")
-    cta.append("  Add  ", style="dim white")
+    cta.append(f"  to step through {total} fixable item{'s' if total != 1 else ''} interactively.\n", style=COLOR_DIM)
+    cta.append("  Add  ", style=COLOR_DIM)
     cta.append("--auto", style=f"bold {COLOR_TEXT}")
-    cta.append("  to apply safe automatic fixes without prompting.\n", style="dim white")
+    cta.append("  to apply safe automatic fixes without prompting.\n", style=COLOR_DIM)
     parts.append(cta)
 
     # Border: bright_red if any critical, yellow if any warning, cyan otherwise
@@ -379,7 +380,7 @@ def _render_issue(result: CheckResult) -> list:
     if result.finding_explanation:
         parts.append(
             Padding(
-                Text(result.finding_explanation, style="dim white"),
+                Text(result.finding_explanation, style=COLOR_DIM),
                 (0, 2, 0, _INDENT),
             )
         )
@@ -387,7 +388,7 @@ def _render_issue(result: CheckResult) -> list:
     # Line 3: recommendation
     if result.recommendation:
         rec = Text()
-        rec.append("→ ", style="white bold")
+        rec.append("→ ", style=f"bold {COLOR_TEXT}")
         rec.append(result.recommendation, style=COLOR_TEXT)
         parts.append(Padding(rec, (0, 2, 0, _INDENT)))
 
@@ -397,7 +398,7 @@ def _render_issue(result: CheckResult) -> list:
         fix_text = Text()
         fix_text.append(f"· {fix_label}", style="dim cyan")
         if result.fix_description:
-            fix_text.append(f"  —  {result.fix_description}", style="dim white")
+            fix_text.append(f"  —  {result.fix_description}", style=COLOR_DIM)
         if result.fix_reversible is False:
             fix_text.append("  [irreversible]", style="dim red")
         parts.append(Padding(fix_text, (0, 2, 0, _INDENT)))
@@ -440,8 +441,8 @@ def _compact_table(results: list[CheckResult], explain: bool = False) -> Table:
             msg_style  = "dim"
             icon_style = "dim"
         else:  # info
-            name_style = "white"
-            msg_style  = "dim white"
+            name_style = COLOR_TEXT
+            msg_style  = COLOR_DIM
             icon_style = "cyan"
 
         name_cell = Text()
@@ -455,7 +456,7 @@ def _compact_table(results: list[CheckResult], explain: bool = False) -> Table:
         # Explain mode: add recommendation below in a second indented row
         if explain and r.recommendation and r.status in ("info", "pass"):
             blank   = Text("")
-            rec     = Text(f"  → {r.recommendation}", style="dim white")
+            rec     = Text(f"  → {r.recommendation}", style=COLOR_DIM)
             table.add_row(blank, rec)
 
     return table

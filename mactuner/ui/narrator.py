@@ -23,7 +23,7 @@ from rich.text import Text
 
 from mactuner.checks.base import BaseCheck, CheckResult
 from mactuner.ui.progress import render_progress
-from mactuner.ui.theme import CATEGORY_ICONS, COLOR_TEXT, STATUS_ICONS, STATUS_STYLES
+from mactuner.ui.theme import CATEGORY_ICONS, COLOR_DIM, COLOR_TEXT, STATUS_ICONS, STATUS_STYLES
 
 
 class ScanNarrator:
@@ -92,8 +92,8 @@ class ScanNarrator:
         self._live.console.print()
         label = Text()
         label.append("  Scanning", style="bold magenta")
-        label.append("  —  ", style="dim white")
-        label.append("every check is explained as it runs", style="dim white")
+        label.append("  —  ", style=COLOR_DIM)
+        label.append("every check is explained as it runs", style=COLOR_DIM)
         self._live.console.print(label)
         self._live.console.print()
 
@@ -117,13 +117,13 @@ class ScanNarrator:
 
         # Line 2: description (rich wraps long lines automatically)
         description = Text(
-            f"     {self._current_description}", style="dim white"
+            f"     {self._current_description}", style=COLOR_DIM
         )
 
         # Spinner line — Spinner(text=…) renders "⠋ Running…" on one line
         spinner = Spinner(
             "dots",
-            text=Text("  Running…", style="dim white"),
+            text=Text("  Running…", style=COLOR_DIM),
             style="cyan",
         )
         spinner_indented = Padding(spinner, pad=(0, 0, 0, 4))
@@ -157,6 +157,6 @@ def _format_result(result: CheckResult) -> Text:
     line = Text()
     line.append(f"  {icon}  ", style=str(style))
     line.append(result.name.ljust(36), style=str(style))
-    line.append(f"  {result.message}", style="dim white")
+    line.append(f"  {result.message}", style=COLOR_DIM)
 
     return line

@@ -15,7 +15,7 @@ from rich.table import Table
 from rich.text import Text
 
 from mactuner.system_info import get_system_info
-from mactuner.ui.theme import COLOR_BRAND, COLOR_TEXT, MACTUNER_THEME
+from mactuner.ui.theme import COLOR_BRAND, COLOR_DIM, COLOR_TEXT, MACTUNER_THEME
 
 
 def build_header(mode: str = "scan", only_cats: Optional[set] = None) -> Panel:
@@ -114,12 +114,12 @@ def _build_right(mode: str = "scan", only_cats: Optional[set] = None) -> Text:
             t.append(f"     {desc}\n", style=color)
         else:
             # Inactive — dim
-            t.append(f"  ·  {icon} {cmd}", style="dim white")
-            t.append(f"  {desc}\n", style="dim white")
+            t.append(f"  ·  {icon} {cmd}", style=COLOR_DIM)
+            t.append(f"  {desc}\n", style=COLOR_DIM)
 
     # ── Divider ───────────────────────────────────────────────────────────────
     t.append("\n")
-    t.append("  " + "─" * 34 + "\n", style="dim white")
+    t.append("  " + "─" * 34 + "\n", style=COLOR_DIM)
     t.append("\n")
 
     # ── Contextual tips ───────────────────────────────────────────────────────
@@ -152,9 +152,9 @@ def _build_right(mode: str = "scan", only_cats: Optional[set] = None) -> Text:
         ]
 
     for flag, desc in tips:
-        t.append(f"  • ", style="dim white")
+        t.append(f"  • ", style=COLOR_DIM)
         t.append(flag, style=f"bold {COLOR_TEXT}")
-        t.append(f"  {desc}\n", style="dim white")
+        t.append(f"  {desc}\n", style=COLOR_DIM)
 
     return t
 

@@ -9,6 +9,8 @@ Output:  [████████████░░░░░░░░] 62%  · 
 
 from rich.text import Text
 
+from mactuner.ui.theme import COLOR_DIM
+
 
 BAR_WIDTH = 22
 
@@ -25,7 +27,7 @@ def render_progress(completed: int, total: int) -> Text:
         [████████████░░░░░░░░] 62%  ·  14 of 23 checks
     """
     if total == 0:
-        return Text("  No checks to run", style="dim white")
+        return Text("  No checks to run", style=COLOR_DIM)
 
     pct = completed / total
     filled = round(BAR_WIDTH * pct)
@@ -36,11 +38,11 @@ def render_progress(completed: int, total: int) -> Text:
     pct_color = "bright_green bold" if done else "bold cyan"
 
     t = Text()
-    t.append("  [", style="dim white")
+    t.append("  [", style=COLOR_DIM)
     t.append("█" * filled, style=bar_color)
-    t.append("░" * empty, style="dim white")
-    t.append("]  ", style="dim white")
+    t.append("░" * empty, style=COLOR_DIM)
+    t.append("]  ", style=COLOR_DIM)
     t.append(f"{int(pct * 100)}%", style=pct_color)
-    t.append(f"  ·  {completed} of {total} checks", style="dim white")
+    t.append(f"  ·  {completed} of {total} checks", style=COLOR_DIM)
 
     return t

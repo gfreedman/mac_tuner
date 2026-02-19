@@ -15,7 +15,7 @@ from rich.console import Console
 from mactuner import __version__
 from mactuner.checks.base import BaseCheck, CheckResult, calculate_health_score
 from mactuner.ui.header import print_header
-from mactuner.ui.theme import MACTUNER_THEME
+from mactuner.ui.theme import COLOR_DIM, COLOR_TEXT, MACTUNER_THEME
 
 
 # ── Console (shared across the tool) ─────────────────────────────────────────
@@ -182,11 +182,11 @@ def cli(
     # ── Pre-scan prompt ───────────────────────────────────────────────────────
     if not quiet and not as_json and not yes and not _first_run:
         n = len(all_checks)
-        console.print(f"  [dim]Ready to run [bold white]{n}[/bold white] checks — ~30–45 seconds.[/dim]")
+        console.print(f"  [dim]Ready to run [bold text]{n}[/bold text] checks — ~30–45 seconds.[/dim]")
         console.print()
         console.print(
-            "  [dim]Press [bold white]↵[/bold white] to begin  "
-            "·  [bold white]Ctrl-C[/bold white] to cancel[/dim]"
+            "  [dim]Press [bold text]↵[/bold text] to begin  "
+            "·  [bold text]Ctrl-C[/bold text] to cancel[/dim]"
         )
         try:
             input()
@@ -258,7 +258,7 @@ def _print_completion_help(console: Console) -> None:
     shell = os.environ.get("SHELL", "").split("/")[-1]
 
     t = Text()
-    t.append("\n  Shell completion for mactuner\n\n", style="bold white")
+    t.append("\n  Shell completion for mactuner\n\n", style=f"bold {COLOR_TEXT}")
 
     # Primary shell (detected)
     if shell in ("zsh", ""):
@@ -271,17 +271,17 @@ def _print_completion_help(console: Console) -> None:
         primary, primary_rc   = shell, f"~/.{shell}rc"
         secondary, secondary_rc = "zsh", "~/.zshrc"
 
-    t.append(f"  Add this to your {primary_rc}:\n", style="white")
+    t.append(f"  Add this to your {primary_rc}:\n", style=COLOR_TEXT)
     t.append(
         f'    eval "$(_MACTUNER_COMPLETE={primary}_source mactuner)"\n\n',
-        style="dim white",
+        style=COLOR_DIM,
     )
-    t.append(f"  For {secondary}, add to {secondary_rc}:\n", style="dim white")
+    t.append(f"  For {secondary}, add to {secondary_rc}:\n", style=COLOR_DIM)
     t.append(
         f'    eval "$(_MACTUNER_COMPLETE={secondary}_source mactuner)"\n\n',
-        style="dim white",
+        style=COLOR_DIM,
     )
-    t.append(f"  Then restart your terminal or run: source {primary_rc}\n", style="dim white")
+    t.append(f"  Then restart your terminal or run: source {primary_rc}\n", style=COLOR_DIM)
 
     console.print(Panel(t, border_style=COLOR_BRAND))
 
@@ -317,9 +317,9 @@ def _warn_if_mdm_enrolled(console: Console) -> None:
             "  Some settings (FileVault, auto-updates, profiles, sharing) may be\n"
             "  enforced by your organization. Warnings about these may reflect IT\n"
             "  policy rather than security issues — check with your administrator.\n",
-            style="dim white",
+            style=COLOR_DIM,
         )
-        note.append("  This notice will not appear again.", style="dim white")
+        note.append("  This notice will not appear again.", style=COLOR_DIM)
         console.print(
             Panel(note, title="[yellow]Managed Device[/yellow]", border_style="yellow")
         )
