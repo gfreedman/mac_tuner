@@ -125,8 +125,11 @@ def _render(console: Console, info: dict, display_name: str) -> None:
         border_style=COLOR_BRAND, padding=(0, 2), expand=True,
     )
     table.add_column(width=28, justify="center")
-    table.add_column(justify="left")
-    table.add_row(_build_left(info, display_name), _build_right())
+    table.add_column(justify="left", overflow="fold")
+    # Right column content width:
+    #   terminal(W) - panel_borders(2) - panel_padding(2) - left_col_total(32) - separator(1) - right_col_padding(4)
+    right_w = max(10, console.width - 41)
+    table.add_row(_build_left(info, display_name), _build_right(right_w))
 
     title = Text()
     title.append(APP_NAME, style="bold white")
@@ -170,17 +173,17 @@ def _build_left(info: dict, display_name: str) -> Text:
 
 # ── Right column ──────────────────────────────────────────────────────────────
 
-def _build_right() -> Text:
+def _build_right(right_w: int = 55) -> Text:
     t = Text(justify="left")
     t.append("Quick start\n", style="bold white")
     t.append("\n")
 
-    _CMD_W = 22
+    _CMD_W = 20   # len("mactuner --explain") = 18, +2 breathing room
     cmds = [
         ("mactuner",           "Full system health scan"),
-        ("mactuner --fix",     "Interactive fix mode — repair issues"),
-        ("mactuner --only",    "Targeted scan  e.g.  --only security,disk"),
-        ("mactuner --explain", "Deeper context for every finding"),
+        ("mactuner --fix",     "Interactive fix mode"),
+        ("mactuner --only",    "Target specific categories"),
+        ("mactuner --explain", "Verbose context per finding"),
         ("mactuner --help",    "All options"),
     ]
     for cmd, desc in cmds:
@@ -189,7 +192,7 @@ def _build_right() -> Text:
         t.append(desc + "\n", style="dim white")
 
     t.append("\n")
-    t.append("─" * 60 + "\n", style="dim white")
+    t.append("─" * right_w + "\n", style="dim white")
     t.append("\n")
 
     last = _load_last_scan()
