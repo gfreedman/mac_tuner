@@ -242,10 +242,10 @@ def _append_last_scan(t: Text, data: dict) -> None:
     t.append("  ", style="dim white")
     t.append(f"Score {score}", style=score_style)
     if critical:
-        t.append(f"  ·  🔴 {critical} critical", style="bold bright_red")
+        t.append(f"  ·  {critical} critical", style="bold bright_red")
     if warning:
-        t.append(f"  ·  ⚠️  {warning} warnings", style="yellow")
+        t.append(f"  ·  {warning} warnings", style="yellow")
     if not critical and not warning:
-        t.append("  ·  ✨ all clear", style="bright_green")
+        t.append("  ·  all clear", style="bright_green")
 
     t.append("\n")
