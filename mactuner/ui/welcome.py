@@ -21,6 +21,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from rich.box import Box
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -30,6 +31,10 @@ from mactuner import __version__
 from mactuner.system_info import get_system_info
 from mactuner.ui.header import _append_beagle
 from mactuner.ui.theme import APP_NAME, COLOR_BRAND
+
+# Box that renders only a │ column separator — no outer borders, no row rules.
+# Each 4-char line: left_border, fill, col_separator, right_border
+_VBAR = Box("    \n  │ \n    \n  │ \n    \n    \n  │ \n    \n")
 
 
 # ── Persistent state paths ────────────────────────────────────────────────────
@@ -115,7 +120,10 @@ def show_welcome(console: Console, first_run: bool = False) -> bool:
 # ── Renderer ──────────────────────────────────────────────────────────────────
 
 def _render(console: Console, info: dict, display_name: str) -> None:
-    table = Table(box=None, show_header=False, padding=(0, 2), expand=True)
+    table = Table(
+        box=_VBAR, show_header=False, show_edge=False, show_lines=False,
+        border_style=COLOR_BRAND, padding=(0, 2), expand=True,
+    )
     table.add_column(width=28, justify="center")
     table.add_column(justify="left")
     table.add_row(_build_left(info, display_name), _build_right())
