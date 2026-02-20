@@ -77,57 +77,17 @@ as interactive, so the time doesn't feel wasted.
 
 ---
 
-## 4. Module-level console captures terminal width at import time
+## ~~4. Module-level console captures terminal width at import time~~ ✅ Fixed
 
-**File:** `macaudit/main.py` — top-level `Console(...)` instantiation
-
-**Issue:**
-
-```python
-_WIDTH = min(shutil.get_terminal_size(fallback=(120, 40)).columns, 120)
-console = Console(theme=MACTUNER_THEME, width=_WIDTH)
-```
-
-Width is captured at module import. If the terminal is resized before `cli()` runs (rare but
-possible in shell pipelines or when spawned from an IDE), the console width will be stale. Rich's
-`Console` can handle this dynamically if `width` is not provided — it re-queries on each render.
-
-**Recommended fix:** Remove the explicit `width=_WIDTH` argument and let Rich determine width
-dynamically. Cap output elsewhere if needed (e.g. in panel construction via `min(console.width,
-120)`).
-
-**Priority:** Low. The current behaviour is only wrong in edge cases and the 120-column cap is
-a deliberate design choice.
+Removed `_WIDTH` computation and explicit `width=` arg from `Console(...)`. Rich now queries
+terminal width dynamically on each render.
 
 ---
 
-## 5. `lru_cache` state leaks between test runs
+## ~~5. `lru_cache` state leaks between test runs~~ ✅ Fixed
 
-**File:** `macaudit/checks/hardware.py` — `_get_power_data()`; similar pattern may exist in
-other modules.
-
-**Issue:** `@lru_cache(maxsize=1)` caches results for the process lifetime. In the test suite,
-if one test patches `subprocess.run` and calls a check, the cached value will be returned for
-all subsequent tests in the same process — even after the patch is removed. This causes false
-passes or unexpected failures depending on test order.
-
-**Recommended fix:** In `conftest.py`, add an `autouse` fixture that clears relevant caches
-between tests:
-
-```python
-import pytest
-from macaudit.checks import hardware
-
-@pytest.fixture(autouse=True)
-def clear_lru_caches():
-    yield
-    hardware._get_power_data.cache_clear()
-```
-
-Alternatively, convert module-level cached functions into instance methods or class-level lazy
-properties so they are naturally scoped to each check instance.
-
-**Priority:** Medium. Test isolation is a correctness concern, not just a nit.
+Added `tests/conftest.py` with an `autouse` fixture that calls `.cache_clear()` on all three
+cached functions (`_get_power_data`, `_fetch_software_updates`, `get_system_info`) after each test.
 
 ---
 

@@ -4,7 +4,6 @@ Mac Audit — entry point and orchestrator.
 CLI flags, scan loop, result collection, report dispatch.
 """
 
-import shutil
 import time
 from pathlib import Path
 from typing import Optional
@@ -20,8 +19,7 @@ from macaudit.ui.theme import COLOR_DIM, COLOR_TEXT, MACTUNER_THEME
 
 # ── Console (shared across the tool) ─────────────────────────────────────────
 
-_WIDTH = min(shutil.get_terminal_size(fallback=(120, 40)).columns, 120)
-console = Console(theme=MACTUNER_THEME, width=_WIDTH)
+console = Console(theme=MACTUNER_THEME)
 
 
 # ── MDM flag ─────────────────────────────────────────────────────────────────
