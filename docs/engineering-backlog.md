@@ -21,26 +21,12 @@ correctly.
 
 ---
 
-## 3. Parallel check execution
+## ~~3. Parallel check execution~~ ✅ Fixed
 
-**File:** `macaudit/main.py` — `_run_checks()`
-
-**Issue:** 69 checks run serially. Most checks are I/O-bound (subprocess calls, file reads).
-A `concurrent.futures.ThreadPoolExecutor` with 8–12 workers would cut total scan time from
-~35–45 s to ~10–15 s on an M-series Mac.
-
-**Constraints to handle:**
-- `@lru_cache` on `_get_power_data()` and similar module-level caches must be thread-safe (they
-  are — Python's GIL protects `lru_cache` dict writes, and `subprocess.run` is I/O that releases
-  the GIL).
-- Narrator (`start_check` / `finish_check`) uses Rich's `Live` context — needs a lock around
-  `finish_check` to prevent interleaved output.
-- Check ordering in the final report should remain deterministic regardless of completion order
-  (sort results by original `all_checks` index after collection).
-
-**Estimated effort:** ~2–3 hours.
-**Priority:** Low (UX improvement, not correctness). Users perceive the current narrated scan
-as interactive, so the time doesn't feel wasted.
+`_run_checks()` now uses `ThreadPoolExecutor(max_workers=8)` for narrated mode. Results flush
+in input order via an in-order buffer so the report stays deterministic. `ScanNarrator` shows a
+generic spinner + progress bar instead of per-check panels. Serial path preserved for
+`--quiet`/`--json`.
 
 ---
 

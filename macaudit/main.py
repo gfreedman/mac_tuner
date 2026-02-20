@@ -180,7 +180,7 @@ def cli(
     # ── Pre-scan prompt ───────────────────────────────────────────────────────
     if not quiet and not as_json and not yes and not _first_run:
         n = len(all_checks)
-        console.print(f"  [dim]Ready to run [bold text]{n}[/bold text] checks — ~30–45 seconds.[/dim]")
+        console.print(f"  [dim]Ready to run [bold text]{n}[/bold text] checks — ~10–15 seconds.[/dim]")
         console.print()
         console.print(
             "  [dim]Press [bold text]↵[/bold text] to begin  "
@@ -408,23 +408,34 @@ def _run_checks(checks: list, quiet: bool, as_json: bool) -> list[CheckResult]:
     Execute every check with live narration and progress bar.
 
     In quiet/JSON mode the narrator is bypassed and checks run silently.
+    In narrated mode, checks run in parallel via ThreadPoolExecutor(max_workers=8)
+    and results are printed in input order for deterministic output.
     """
+    import concurrent.futures
+
     from macaudit.ui.narrator import ScanNarrator
 
-    results: list[CheckResult] = []
-
     if quiet or as_json:
-        for check in checks:
-            results.append(check.execute())
-        return results
+        return [check.execute() for check in checks]
 
+    results: list[CheckResult | None] = [None] * len(checks)
     with ScanNarrator(console, total=len(checks)) as narrator:
         narrator.print_scan_header()
-        for check in checks:
-            narrator.start_check(check)
-            result = check.execute()
-            narrator.finish_check(result)
-            results.append(result)
+        next_to_print = 0
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+            future_to_idx = {
+                pool.submit(check.execute): i
+                for i, check in enumerate(checks)
+            }
+            for future in concurrent.futures.as_completed(future_to_idx):
+                idx = future_to_idx[future]
+                results[idx] = future.result()
+                narrator.increment()
+                # Flush contiguous completed results in input order
+                while next_to_print < len(results) and results[next_to_print] is not None:
+                    narrator.print_result(results[next_to_print])
+                    next_to_print += 1
 
     return results
 

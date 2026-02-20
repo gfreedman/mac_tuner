@@ -1,18 +1,18 @@
 """
-ScanNarrator — live narrated scan UI.
+ScanNarrator — live narrated scan UI (parallel mode).
 
-Wraps rich.live.Live to show three layers:
+Wraps rich.live.Live to show two layers:
 
-  1. Completed checks — printed above (scroll naturally)
-  2. Current check   — category icon + name + description + spinner (live)
-  3. Progress bar    — always at bottom (live)
+  1. Completed checks — printed above (scroll naturally, in input order)
+  2. Progress area    — spinner + "Running checks…" + progress bar (live)
 
 Usage:
     with ScanNarrator(console, total=len(checks)) as narrator:
-        for check in checks:
-            narrator.start_check(check)
-            result = check.execute()
-            narrator.finish_check(result)
+        narrator.print_scan_header()
+        # ... submit checks to ThreadPoolExecutor ...
+        # on each completion:
+        narrator.increment()
+        narrator.print_result(result)  # call in input order
 """
 
 from rich.console import Console, Group
@@ -21,34 +21,23 @@ from rich.padding import Padding
 from rich.spinner import Spinner
 from rich.text import Text
 
-from macaudit.checks.base import BaseCheck, CheckResult
+from macaudit.checks.base import CheckResult
 from macaudit.ui.progress import render_progress
-from macaudit.ui.theme import CATEGORY_ICONS, COLOR_DIM, COLOR_TEXT, STATUS_ICONS, STATUS_STYLES
+from macaudit.ui.theme import COLOR_DIM, STATUS_ICONS, STATUS_STYLES
 
 
 class ScanNarrator:
     """
-    Context manager for live narrated scan feedback.
+    Context manager for live scan feedback during parallel execution.
 
-    Each check gets:
-      • A "what we're checking and why" panel (dim, wraps naturally)
-      • An animated spinner while running
-      • A one-line result when done (printed and kept in scroll history)
-      • A progress bar that advances at the bottom
+    Completed results are printed in input order above the live area.
+    The live area shows a spinner + progress bar while checks run.
     """
 
     def __init__(self, console: Console, total: int) -> None:
         self.console = console
         self.total = total
         self.completed = 0
-
-        # State for the currently-running check
-        self._current_name: str = ""
-        self._current_icon: str = ""
-        self._current_description: str = ""
-
-        # Shared spinner — Live refreshes it at refresh_per_second
-        self._spinner = Spinner("dots", style="cyan")
 
         self._live = Live(
             console=console,
@@ -60,8 +49,7 @@ class ScanNarrator:
 
     def __enter__(self) -> "ScanNarrator":
         self._live.__enter__()
-        # Show idle progress bar immediately so the terminal isn't blank
-        self._live.update(_idle_bar(self.completed, self.total))
+        self._live.update(self._render_parallel())
         return self
 
     def __exit__(self, *args) -> None:
@@ -72,20 +60,14 @@ class ScanNarrator:
 
     # ── Public API ────────────────────────────────────────────────────────────
 
-    def start_check(self, check: BaseCheck) -> None:
-        """Call immediately before check.execute()."""
-        self._current_name = check.name
-        self._current_icon = CATEGORY_ICONS.get(check.category, "  ")
-        self._current_description = check.scan_description
-        self._live.update(self._render_running())
-
-    def finish_check(self, result: CheckResult) -> None:
-        """Call immediately after check.execute() returns a result."""
+    def increment(self) -> None:
+        """Bump completed count and refresh the live progress area."""
         self.completed += 1
-        # Print the completed line above the live area (scrolls up naturally)
+        self._live.update(self._render_parallel())
+
+    def print_result(self, result: CheckResult) -> None:
+        """Print a completed check result above the live area."""
         self._live.console.print(_format_result(result))
-        # Update progress bar
-        self._live.update(_idle_bar(self.completed, self.total))
 
     def print_scan_header(self) -> None:
         """Print a 'Scanning…' label before the first check."""
@@ -93,48 +75,33 @@ class ScanNarrator:
         label = Text()
         label.append("  Scanning", style="bold magenta")
         label.append("  —  ", style=COLOR_DIM)
-        label.append("every check is explained as it runs", style=COLOR_DIM)
+        label.append("checks run in parallel", style=COLOR_DIM)
         self._live.console.print(label)
         self._live.console.print()
 
     # ── Internal rendering ────────────────────────────────────────────────────
 
-    def _render_running(self) -> Group:
+    def _render_parallel(self) -> Group:
         """
-        Live panel shown while a check is in progress:
+        Live area while checks run in parallel:
 
-          🖥️  macOS Version Check
-               Checking if macOS is current — security updates patch known
-               vulnerabilities that attackers actively exploit.
-          ⠋  Running…
+          ⠋  Running checks…
 
           [████████░░░░░░░░░░░░░░] 34%  ·  8 of 23 checks
         """
-        # Line 1: category icon + check name
-        title = Text()
-        title.append(f"\n  {self._current_icon} ", style=f"bold {COLOR_TEXT}")
-        title.append(self._current_name, style=f"bold {COLOR_TEXT}")
-
-        # Line 2: description (rich wraps long lines automatically)
-        description = Text(
-            f"     {self._current_description}", style=COLOR_DIM
-        )
-
-        # Spinner line — Spinner(text=…) renders "⠋ Running…" on one line
         spinner = Spinner(
             "dots",
-            text=Text("  Running…", style=COLOR_DIM),
+            text=Text("  Running checks…", style=COLOR_DIM),
             style="cyan",
         )
         spinner_indented = Padding(spinner, pad=(0, 0, 0, 4))
 
-        # Progress bar with a blank line above it
         progress = Padding(
             render_progress(self.completed, self.total),
             pad=(1, 0, 0, 0),
         )
 
-        return Group(title, description, spinner_indented, progress)
+        return Group(spinner_indented, progress)
 
 
 # ── Module-level helpers ──────────────────────────────────────────────────────

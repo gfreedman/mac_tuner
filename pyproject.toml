@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "macaudit"
-version = "1.4.2"
+version = "1.5.0"
 description = "Mac System Health Inspector & Auditor — narrated, educational, beautiful"
 readme = "README.md"
 requires-python = ">=3.10"
