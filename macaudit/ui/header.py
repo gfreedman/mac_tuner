@@ -1,5 +1,5 @@
 """
-MacTuner header banner.
+Mac Audit header banner.
 
 Two-column Claude Code-style panel:
   Left  — welcome greeting, beagle character art, system identity
@@ -14,8 +14,8 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from mactuner.system_info import get_system_info
-from mactuner.ui.theme import COLOR_BRAND, COLOR_DIM, COLOR_TEXT, MACTUNER_THEME
+from macaudit.system_info import get_system_info
+from macaudit.ui.theme import COLOR_BRAND, COLOR_DIM, COLOR_TEXT, MACTUNER_THEME
 
 
 def build_header(mode: str = "scan", only_cats: Optional[set] = None) -> Panel:
@@ -97,9 +97,9 @@ def _build_right(mode: str = "scan", only_cats: Optional[set] = None) -> Text:
 
     # ── Mode chips ────────────────────────────────────────────────────────────
     modes = [
-        ("scan",     "🔍", "cyan",    "mactuner",        "Full system audit (read-only)"),
-        ("fix",      "🔧", "magenta", "mactuner --fix",   "Apply fixes interactively"),
-        ("targeted", "🎯", "yellow",  "mactuner --only …","Targeted category scan"),
+        ("scan",     "🔍", "cyan",    "macaudit",        "Full system audit (read-only)"),
+        ("fix",      "🔧", "magenta", "macaudit --fix",   "Apply fixes interactively"),
+        ("targeted", "🎯", "yellow",  "macaudit --only …","Targeted category scan"),
     ]
 
     for m_id, icon, color, cmd, desc in modes:
@@ -107,7 +107,7 @@ def _build_right(mode: str = "scan", only_cats: Optional[set] = None) -> Text:
             # Active mode — full brightness with ← active label
             if m_id == "targeted" and only_cats:
                 cats_str = ",".join(sorted(only_cats))
-                cmd = f"mactuner --only {cats_str}"
+                cmd = f"macaudit --only {cats_str}"
             t.append(f"  {icon} ", style=f"bold {color}")
             t.append(f"{cmd}", style=f"bold {color}")
             t.append("   ← active\n", style=f"dim {color}")
@@ -127,28 +127,28 @@ def _build_right(mode: str = "scan", only_cats: Optional[set] = None) -> Text:
         t.append("  Scan mode tips\n", style=f"bold {COLOR_BRAND}")
         t.append("\n")
         tips = [
-            ("mactuner --fix",     "after scan to repair issues"),
-            ("mactuner --only",    "security,disk  targeted scan"),
-            ("mactuner --explain", "deeper context per finding"),
-            ("mactuner -y",        "skip pre-scan prompt"),
+            ("macaudit --fix",     "after scan to repair issues"),
+            ("macaudit --only",    "security,disk  targeted scan"),
+            ("macaudit --explain", "deeper context per finding"),
+            ("macaudit -y",        "skip pre-scan prompt"),
         ]
     elif mode == "fix":
         t.append("  Fix mode tips\n", style=f"bold {COLOR_BRAND}")
         t.append("\n")
         tips = [
-            ("mactuner --auto",    "apply safe fixes without prompting"),
-            ("mactuner --only",    "security  fix one category only"),
-            ("mactuner -y",        "skip pre-scan prompt"),
-            ("mactuner --explain", "see deeper context first"),
+            ("macaudit --auto",    "apply safe fixes without prompting"),
+            ("macaudit --only",    "security  fix one category only"),
+            ("macaudit -y",        "skip pre-scan prompt"),
+            ("macaudit --explain", "see deeper context first"),
         ]
     else:  # targeted
         t.append("  Targeted mode tips\n", style=f"bold {COLOR_BRAND}")
         t.append("\n")
         tips = [
-            ("mactuner --fix",     "add to apply fixes after scan"),
-            ("mactuner --explain", "deeper context per finding"),
-            ("mactuner --only",    "combine categories e.g. security,disk"),
-            ("mactuner -y",        "skip pre-scan prompt"),
+            ("macaudit --fix",     "add to apply fixes after scan"),
+            ("macaudit --explain", "deeper context per finding"),
+            ("macaudit --only",    "combine categories e.g. security,disk"),
+            ("macaudit -y",        "skip pre-scan prompt"),
         ]
 
     for flag, desc in tips:

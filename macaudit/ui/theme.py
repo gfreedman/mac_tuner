@@ -1,5 +1,5 @@
 """
-MacTuner visual design system.
+Mac Audit visual design system.
 
 All colors, styles, and icons as named constants.
 Import from here — never hardcode markup strings in other modules.
@@ -17,9 +17,9 @@ from rich.theme import Theme
 
 # ── Brand ─────────────────────────────────────────────────────────────────────
 
-from mactuner import __version__
+from macaudit import __version__
 
-APP_NAME = "mactuner"
+APP_NAME = "macaudit"
 APP_TAGLINE = "Mac System Health Inspector"
 APP_VERSION = __version__
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# MacTuner installer
-# Installs mactuner globally using pipx (recommended) or pip.
+# Mac Audit installer
+# Installs macaudit globally using pipx (recommended) or pip.
 #
 # Usage:
-#   curl -sSf https://raw.githubusercontent.com/gfreedman/mac_tuner/main/install.sh | bash
+#   curl -sSf https://raw.githubusercontent.com/gfreedman/mac_audit/main/install.sh | bash
 #   — or —
 #   bash install.sh
 
@@ -27,12 +27,12 @@ header() { echo -e "\n${BOLD}$*${RESET}"; }
 # ── Check macOS ──────────────────────────────────────────────────────────────
 
 if [[ "$(uname)" != "Darwin" ]]; then
-    error "MacTuner only runs on macOS."
+    error "Mac Audit only runs on macOS."
 fi
 
 MACOS_MAJOR=$(sw_vers -productVersion | cut -d. -f1)
 if (( MACOS_MAJOR < 13 )); then
-    error "MacTuner requires macOS 13 Ventura or later (you have $(sw_vers -productVersion))."
+    error "Mac Audit requires macOS 13 Ventura or later (you have $(sw_vers -productVersion))."
 fi
 
 # ── Check Python ─────────────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ ok "Python $PYTHON_VERSION"
 
 # ── Install via pipx (recommended) ───────────────────────────────────────────
 
-header "Installing MacTuner…"
+header "Installing Mac Audit…"
 
 if command -v pipx &>/dev/null; then
     log "Using pipx (recommended)…"
@@ -69,7 +69,7 @@ if command -v pipx &>/dev/null; then
     if [[ -f "$PACKAGE_DIR/pyproject.toml" ]]; then
         pipx install "$PACKAGE_DIR" --force
     else
-        pipx install mactuner
+        pipx install macaudit
     fi
 
     ok "Installed via pipx"
@@ -83,7 +83,7 @@ elif command -v pip3 &>/dev/null; then
     if [[ -f "$PACKAGE_DIR/pyproject.toml" ]]; then
         pip3 install --user "$PACKAGE_DIR"
     else
-        pip3 install --user mactuner
+        pip3 install --user macaudit
     fi
 
     ok "Installed via pip3 --user"
@@ -97,11 +97,11 @@ fi
 
 header "Verifying…"
 
-if command -v mactuner &>/dev/null; then
-    VERSION=$(mactuner --version 2>&1 | head -1)
+if command -v macaudit &>/dev/null; then
+    VERSION=$(macaudit --version 2>&1 | head -1)
     ok "$VERSION — ready to use"
 else
-    warn "mactuner not found in PATH after install."
+    warn "macaudit not found in PATH after install."
     if [[ "$INSTALLED_VIA" == "pip" ]]; then
         echo ""
         echo "  Add this to your ~/.zshrc or ~/.bashrc:"
@@ -118,14 +118,14 @@ fi
 # ── Done ─────────────────────────────────────────────────────────────────────
 
 echo ""
-echo -e "${BOLD}  MacTuner installed!${RESET}"
+echo -e "${BOLD}  Mac Audit installed!${RESET}"
 echo ""
 echo "  Run a full system audit:"
-echo -e "    ${BOLD}mactuner${RESET}"
+echo -e "    ${BOLD}macaudit${RESET}"
 echo ""
 echo "  Show only warnings and criticals:"
-echo -e "    ${BOLD}mactuner --issues-only${RESET}"
+echo -e "    ${BOLD}macaudit --issues-only${RESET}"
 echo ""
 echo "  Enter fix mode:"
-echo -e "    ${BOLD}mactuner --fix${RESET}"
+echo -e "    ${BOLD}macaudit --fix${RESET}"
 echo ""

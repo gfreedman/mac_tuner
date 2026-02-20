@@ -15,8 +15,8 @@ import re
 from datetime import datetime, timedelta
 from functools import lru_cache
 
-from mactuner.checks.base import BaseCheck, CheckResult
-from mactuner.system_info import IS_APPLE_SILICON
+from macaudit.checks.base import BaseCheck, CheckResult
+from macaudit.system_info import IS_APPLE_SILICON
 
 
 # ── Shared data fetcher ────────────────────────────────────────────────────────

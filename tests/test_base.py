@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import pytest
 
-from mactuner.checks.base import BaseCheck, CheckResult, calculate_health_score
+from macaudit.checks.base import BaseCheck, CheckResult, calculate_health_score
 
 
 # ── Concrete check stubs ──────────────────────────────────────────────────────
@@ -123,7 +123,7 @@ class TestExecuteGates:
     def test_arch_gate_skips_on_apple_silicon_when_not_compatible(self):
         check = _AlwaysPass()
         check.apple_silicon_compatible = False
-        with patch("mactuner.checks.base.IS_APPLE_SILICON", True):
+        with patch("macaudit.checks.base.IS_APPLE_SILICON", True):
             result = check.execute()
         assert result.status == "skip"
         assert "Apple Silicon" in result.message
@@ -131,7 +131,7 @@ class TestExecuteGates:
     def test_arch_gate_passes_on_intel_when_not_compatible(self):
         check = _AlwaysPass()
         check.apple_silicon_compatible = False
-        with patch("mactuner.checks.base.IS_APPLE_SILICON", False):
+        with patch("macaudit.checks.base.IS_APPLE_SILICON", False):
             result = check.execute()
         assert result.status == "pass"
 

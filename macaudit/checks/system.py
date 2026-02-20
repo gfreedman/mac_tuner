@@ -11,8 +11,8 @@ from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 
-from mactuner.checks.base import BaseCheck, CheckResult
-from mactuner.system_info import IS_APPLE_SILICON, MACOS_VERSION
+from macaudit.checks.base import BaseCheck, CheckResult
+from macaudit.system_info import IS_APPLE_SILICON, MACOS_VERSION
 
 _FIREWALL = "/usr/libexec/ApplicationFirewall/socketfilterfw"
 
@@ -78,7 +78,7 @@ class MacOSVersionCheck(BaseCheck):
     fix_time_estimate = "20–60 minutes"
 
     def run(self) -> CheckResult:
-        from mactuner.system_info import MACOS_VERSION_STRING
+        from macaudit.system_info import MACOS_VERSION_STRING
 
         rc, output = _fetch_software_updates()
 

@@ -20,14 +20,14 @@ from rich.panel import Panel
 from rich.padding import Padding
 from rich.text import Text
 
-from mactuner.checks.base import CheckResult
-from mactuner.fixer.executor import (
+from macaudit.checks.base import CheckResult
+from macaudit.fixer.executor import (
     run_auto_fix,
     run_auto_sudo_fix,
     run_guided_fix,
     run_instructions_fix,
 )
-from mactuner.ui.theme import COLOR_BRAND, COLOR_DIM, COLOR_TEXT, STATUS_ICONS, STATUS_STYLES
+from macaudit.ui.theme import COLOR_BRAND, COLOR_DIM, COLOR_TEXT, STATUS_ICONS, STATUS_STYLES
 
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -329,7 +329,7 @@ def _print_session_summary(
             body.append(f"   ·   {skipped} skipped", style=COLOR_DIM)
 
     body.append("\n\n  Run  ", style=COLOR_DIM)
-    body.append("mactuner", style=f"bold {COLOR_TEXT}")
+    body.append("macaudit", style=f"bold {COLOR_TEXT}")
     body.append("  again to rescan and confirm changes took effect.\n", style=COLOR_DIM)
 
     border = "bright_green" if applied > 0 else "dim"

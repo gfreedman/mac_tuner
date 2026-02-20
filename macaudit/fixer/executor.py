@@ -20,7 +20,7 @@ import subprocess
 
 from rich.console import Console
 
-from mactuner.checks.base import CheckResult
+from macaudit.checks.base import CheckResult
 
 
 # ── AUTO — stream shell command output ────────────────────────────────────────
@@ -147,7 +147,7 @@ def run_guided_fix(result: CheckResult, console: Console) -> bool:
     Open the relevant System Settings pane and print guidance.
 
     The 'fix' for GUIDED items is showing the user exactly where to go
-    and what to look for — mactuner can't change these settings itself.
+    and what to look for — macaudit can't change these settings itself.
     """
     if not result.fix_url:
         console.print("  [red]No System Settings URL defined.[/red]\n")

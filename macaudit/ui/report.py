@@ -26,8 +26,8 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from mactuner.checks.base import CheckResult, calculate_health_score
-from mactuner.ui.theme import (
+from macaudit.checks.base import CheckResult, calculate_health_score
+from macaudit.ui.theme import (
     CATEGORY_ICONS,
     COLOR_DIM,
     COLOR_TEXT,
@@ -281,7 +281,7 @@ def build_recommendations_panel(
     parts.append(Text("  " + "─" * 50, style=COLOR_DIM))
     cta = Text()
     cta.append("\n  Run  ", style=COLOR_DIM)
-    cta.append("mactuner --fix", style=f"bold {COLOR_TEXT}")
+    cta.append("macaudit --fix", style=f"bold {COLOR_TEXT}")
     cta.append(f"  to step through {total} fixable item{'s' if total != 1 else ''} interactively.\n", style=COLOR_DIM)
     cta.append("  Add  ", style=COLOR_DIM)
     cta.append("--auto", style=f"bold {COLOR_TEXT}")

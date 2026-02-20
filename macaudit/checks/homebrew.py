@@ -5,7 +5,7 @@ ALL checks gracefully skip if Homebrew is not installed.
 MacPorts detection is noted but not checked in depth.
 """
 
-from mactuner.checks.base import BaseCheck, CheckResult
+from macaudit.checks.base import BaseCheck, CheckResult
 
 # Single shared check for brew existence (used by all subclasses)
 _BREW_MISSING_MSG = "Homebrew is not installed — skipping package checks"

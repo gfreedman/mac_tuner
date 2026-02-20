@@ -1,6 +1,6 @@
-# MacTuner
+# Mac Audit
 
-**[Full documentation → gfreedman.github.io/mac_tuner](https://gfreedman.github.io/mac_tuner/)**
+**[Full documentation → gfreedman.github.io/mac_audit](https://gfreedman.github.io/mac_audit/)**
 
 **Mac System Health Inspector & Tuner** — narrated, educational, and beautiful.
 
@@ -8,7 +8,7 @@ Runs a full audit of your Mac: security settings, disk health, memory, developer
 
 ```
 ╭──────────────────────────────────────────────────────────────────╮
-│       mactuner  ·  Mac System Health Inspector  ·  v1.0.0        │
+│       macaudit  ·  Mac System Health Inspector  ·  v1.0.0        │
 │       MacBook Pro (M3 Max)  ·  macOS Sequoia 15.3                │
 │       Scan started: Monday 16 Feb 2026  ·  10:41 AM              │
 ╰──────────────────────────────────────────────────────────────────╯
@@ -38,14 +38,14 @@ Runs a full audit of your Mac: security settings, disk health, memory, developer
 **Homebrew:**
 
 ```bash
-brew install gfreedman/mactuner/mactuner
+brew install gfreedman/macaudit/macaudit
 ```
 
 **From source:**
 
 ```bash
-git clone https://github.com/gfreedman/mac_tuner
-cd mac_tuner
+git clone https://github.com/gfreedman/mac_audit
+cd mac_audit
 bash install.sh
 ```
 
@@ -58,17 +58,17 @@ bash install.sh
 **Homebrew:**
 
 ```bash
-brew uninstall mactuner
-brew untap gfreedman/mactuner   # optional — removes the tap entirely
+brew uninstall macaudit
+brew untap gfreedman/macaudit   # optional — removes the tap entirely
 ```
 
 **Remove saved config and scan history**:
 
 ```bash
-rm -rf ~/.config/mactuner
+rm -rf ~/.config/macaudit
 ```
 
-This removes the first-run flag, last scan summary, and MDM notice history. It does not affect any system settings MacTuner may have changed via `--fix`.
+This removes the first-run flag, last scan summary, and MDM notice history. It does not affect any system settings Mac Audit may have changed via `--fix`.
 
 ---
 
@@ -76,53 +76,53 @@ This removes the first-run flag, last scan summary, and MDM notice history. It d
 
 ```bash
 # Full narrated audit (read-only)
-mactuner
+macaudit
 
 # Show only warnings and criticals
-mactuner --issues-only
+macaudit --issues-only
 
 # Verbose mode — extra educational context for every finding
-mactuner --explain
+macaudit --explain
 
 # Enter interactive fix mode after the scan
-mactuner --fix
+macaudit --fix
 
 # Auto-apply safe fixes without prompting
-mactuner --fix --auto
+macaudit --fix --auto
 
 # Run only specific categories
-mactuner --only security,disk,homebrew
+macaudit --only security,disk,homebrew
 
 # Skip specific categories
-mactuner --skip dev_env,network
+macaudit --skip dev_env,network
 
 # Force a profile
-mactuner --profile developer
-mactuner --profile creative
-mactuner --profile standard
+macaudit --profile developer
+macaudit --profile creative
+macaudit --profile standard
 
 # Opt-in privacy check: scan shell configs for hardcoded secrets
-mactuner --check-shell-secrets
+macaudit --check-shell-secrets
 
 # Exit with code 2 if critical issues found (useful in CI / scripts)
-mactuner --fail-on-critical
+macaudit --fail-on-critical
 
 # Quiet mode — just the score
-mactuner --quiet
+macaudit --quiet
 
 # JSON output for scripting (schema_version field included for forward compatibility)
-mactuner --json > report.json
-mactuner --json | jq '.score'
+macaudit --json > report.json
+macaudit --json | jq '.score'
 
 # Disable colour output (also respected via NO_COLOR=1 env var)
-NO_COLOR=1 mactuner
+NO_COLOR=1 macaudit
 ```
 
 ---
 
 ## What It Checks
 
-MacTuner runs **69 checks** across 10 categories:
+Mac Audit runs **69 checks** across 10 categories:
 
 | Category | Checks |
 |---|---|
@@ -159,7 +159,7 @@ Scores run from 0–100, starting at 100:
 
 ## Fix Mode
 
-Run `mactuner --fix` after the scan to step through fixes one at a time.
+Run `macaudit --fix` after the scan to step through fixes one at a time.
 
 Each fix gets its own card showing the full context — what was found, why it matters, what the fix does, and an estimated time. You approve or skip before anything runs:
 
@@ -188,16 +188,16 @@ Each fix gets its own card showing the full context — what was found, why it m
 Auto-apply all safe fixes without prompting:
 
 ```bash
-mactuner --fix --auto
+macaudit --fix --auto
 ```
 
-MacTuner never modifies anything without `--fix`. Every fix shows what it will do before asking for confirmation. Irreversible fixes are labelled clearly.
+Mac Audit never modifies anything without `--fix`. Every fix shows what it will do before asking for confirmation. Irreversible fixes are labelled clearly.
 
 ---
 
 ## Profiles
 
-MacTuner auto-detects the right profile based on your setup:
+Mac Audit auto-detects the right profile based on your setup:
 
 | Profile | When | Checks |
 |---|---|---|
@@ -236,13 +236,13 @@ Override with `--profile developer/creative/standard`.
 ## JSON Output
 
 ```bash
-mactuner --json | jq '{score, summary: .summary}'
+macaudit --json | jq '{score, summary: .summary}'
 ```
 
 ```json
 {
   "schema_version": 1,
-  "mactuner_version": "1.3.0",
+  "macaudit_version": "1.3.0",
   "scan_time": "2026-02-18T20:00:00+00:00",
   "system": {
     "macos_version": "15.3",

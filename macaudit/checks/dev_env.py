@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import os
 
-from mactuner.checks.base import BaseCheck, CheckResult
+from macaudit.checks.base import BaseCheck, CheckResult
 
 
 # ── Xcode Command Line Tools ──────────────────────────────────────────────────

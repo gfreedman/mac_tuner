@@ -22,7 +22,7 @@ import os
 import re
 from pathlib import Path
 
-from mactuner.checks.base import BaseCheck, CheckResult
+from macaudit.checks.base import BaseCheck, CheckResult
 
 
 # ── Files to scan ─────────────────────────────────────────────────────────────

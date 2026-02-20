@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import pytest
 
-from mactuner.checks.system import (
+from macaudit.checks.system import (
     MacOSVersionCheck,
     _parse_update_lines,
 )
@@ -85,7 +85,7 @@ class TestMacOSVersionCheck:
         assert check.requires_tool is None
 
     def test_execute_returns_checkresult(self):
-        from mactuner.checks.base import CheckResult
+        from macaudit.checks.base import CheckResult
         result = MacOSVersionCheck().execute()
         assert isinstance(result, CheckResult)
         assert result.status in ("pass", "info", "warning", "critical", "skip", "error")

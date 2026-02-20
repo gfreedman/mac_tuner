@@ -10,7 +10,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from mactuner.checks.base import BaseCheck, CheckResult
+from macaudit.checks.base import BaseCheck, CheckResult
 
 HOME = Path.home()
 

@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to MacTuner are documented here.
+All notable changes to Mac Audit are documented here.
 
 ## [1.3.0] — 2026-02-19
 

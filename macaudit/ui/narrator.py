@@ -21,9 +21,9 @@ from rich.padding import Padding
 from rich.spinner import Spinner
 from rich.text import Text
 
-from mactuner.checks.base import BaseCheck, CheckResult
-from mactuner.ui.progress import render_progress
-from mactuner.ui.theme import CATEGORY_ICONS, COLOR_DIM, COLOR_TEXT, STATUS_ICONS, STATUS_STYLES
+from macaudit.checks.base import BaseCheck, CheckResult
+from macaudit.ui.progress import render_progress
+from macaudit.ui.theme import CATEGORY_ICONS, COLOR_DIM, COLOR_TEXT, STATUS_ICONS, STATUS_STYLES
 
 
 class ScanNarrator:

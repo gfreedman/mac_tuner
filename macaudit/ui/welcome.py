@@ -1,13 +1,13 @@
 """
 Welcome screen.
 
-Displayed on first run (before ~/.config/mactuner/.welcomed exists)
+Displayed on first run (before ~/.config/macaudit/.welcomed exists)
 or with --welcome. Mirrors the Claude Code two-column Panel layout:
 
-  ╭─── MacTuner  v1.2.0 ─────────────────────────────────────────────╮
+  ╭─── Mac Audit  v1.2.0 ─────────────────────────────────────────────╮
   │                             │ Quick start                          │
-  │     Welcome back, Geoff!    │   mactuner           Full scan       │
-  │                             │   mactuner --fix     Fix mode        │
+  │     Welcome back, Geoff!    │   macaudit           Full scan       │
+  │                             │   macaudit --fix     Fix mode        │
   │           beagle            │ ──────────────────────────────────── │
   │                             │ Last scan                            │
   │   macOS 26.3 · MacBook Air  │   18 Feb 2026 · 22:06 · Score 94    │
@@ -27,10 +27,10 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from mactuner import __version__
-from mactuner.system_info import get_system_info
-from mactuner.ui.header import _append_beagle
-from mactuner.ui.theme import (
+from macaudit import __version__
+from macaudit.system_info import get_system_info
+from macaudit.ui.header import _append_beagle
+from macaudit.ui.theme import (
     APP_NAME, COLOR_BRAND, COLOR_DIM, COLOR_TEXT,
     COLOR_CRITICAL, COLOR_WARNING, COLOR_PASS,
     COLOR_SCORE_HIGH, COLOR_SCORE_MID, COLOR_SCORE_LOW, COLOR_SCORE_POOR,
@@ -43,7 +43,7 @@ _VBAR = Box("    \n  │ \n    \n  │ \n    \n    \n  │ \n    \n")
 
 # ── Persistent state paths ────────────────────────────────────────────────────
 
-_CONFIG_DIR   = Path.home() / ".config" / "mactuner"
+_CONFIG_DIR   = Path.home() / ".config" / "macaudit"
 _WELCOME_FLAG = _CONFIG_DIR / ".welcomed"
 _LAST_SCAN    = _CONFIG_DIR / "last_scan.json"
 
@@ -51,7 +51,7 @@ _LAST_SCAN    = _CONFIG_DIR / "last_scan.json"
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def is_first_run() -> bool:
-    """True when mactuner has never been run on this machine."""
+    """True when macaudit has never been run on this machine."""
     return not _WELCOME_FLAG.exists()
 
 
@@ -68,7 +68,7 @@ def save_last_scan(score: int, counts: dict) -> None:
     """
     Persist a lightweight scan summary after every run.
 
-    Written to ~/.config/mactuner/last_scan.json.
+    Written to ~/.config/macaudit/last_scan.json.
     """
     record = {
         "date":     datetime.now().isoformat(timespec="seconds"),
@@ -182,13 +182,13 @@ def _build_right(right_w: int = 55) -> Text:
     t.append("Quick start\n", style=f"bold {COLOR_BRAND}")
     t.append("\n")
 
-    _CMD_W = 20   # len("mactuner --explain") = 18, +2 breathing room
+    _CMD_W = 20   # len("macaudit --explain") = 18, +2 breathing room
     cmds = [
-        ("mactuner",           "Full system health scan"),
-        ("mactuner --fix",     "Interactive fix mode"),
-        ("mactuner --only",    "Target specific categories"),
-        ("mactuner --explain", "Verbose context per finding"),
-        ("mactuner --help",    "All options"),
+        ("macaudit",           "Full system health scan"),
+        ("macaudit --fix",     "Interactive fix mode"),
+        ("macaudit --only",    "Target specific categories"),
+        ("macaudit --explain", "Verbose context per finding"),
+        ("macaudit --help",    "All options"),
     ]
     for cmd, desc in cmds:
         t.append("  ")

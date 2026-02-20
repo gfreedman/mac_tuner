@@ -10,7 +10,7 @@ from unittest.mock import patch
 
 import pytest
 
-from mactuner.checks.apps import AppStoreUpdatesCheck, LoginItemsCheck
+from macaudit.checks.apps import AppStoreUpdatesCheck, LoginItemsCheck
 
 
 # ── LoginItemsCheck.run() ─────────────────────────────────────────────────────

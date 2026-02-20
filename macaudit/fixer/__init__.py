@@ -1,5 +1,5 @@
 """
-Fix execution subsystem for MacTuner.
+Fix execution subsystem for Mac Audit.
 
 Modules:
   runner.py   — interactive fix session: questionary checkbox menu,

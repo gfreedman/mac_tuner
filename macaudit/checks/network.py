@@ -16,7 +16,7 @@ from __future__ import annotations
 import re
 import shutil
 
-from mactuner.checks.base import BaseCheck, CheckResult
+from macaudit.checks.base import BaseCheck, CheckResult
 
 
 # ── AirDrop ───────────────────────────────────────────────────────────────────

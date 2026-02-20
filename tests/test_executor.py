@@ -13,8 +13,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from rich.console import Console
 
-from mactuner.checks.base import CheckResult
-from mactuner.fixer.executor import (
+from macaudit.checks.base import CheckResult
+from macaudit.fixer.executor import (
     run_auto_fix,
     run_guided_fix,
     run_instructions_fix,

@@ -1,5 +1,5 @@
 """
-MacTuner — entry point and orchestrator.
+Mac Audit — entry point and orchestrator.
 
 CLI flags, scan loop, result collection, report dispatch.
 """
@@ -12,10 +12,10 @@ from typing import Optional
 import click
 from rich.console import Console
 
-from mactuner import __version__
-from mactuner.checks.base import BaseCheck, CheckResult, calculate_health_score
-from mactuner.ui.header import print_header
-from mactuner.ui.theme import COLOR_DIM, COLOR_TEXT, MACTUNER_THEME
+from macaudit import __version__
+from macaudit.checks.base import BaseCheck, CheckResult, calculate_health_score
+from macaudit.ui.header import print_header
+from macaudit.ui.theme import COLOR_DIM, COLOR_TEXT, MACTUNER_THEME
 
 
 # ── Console (shared across the tool) ─────────────────────────────────────────
@@ -26,13 +26,13 @@ console = Console(theme=MACTUNER_THEME, width=_WIDTH)
 
 # ── MDM flag ─────────────────────────────────────────────────────────────────
 
-_MDM_FLAG = Path.home() / ".config" / "mactuner" / ".mdm_warned"
+_MDM_FLAG = Path.home() / ".config" / "macaudit" / ".mdm_warned"
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
-@click.command(name="mactuner", context_settings={"help_option_names": ["-h", "--help"]})
-@click.version_option(__version__, "-V", "--version", prog_name="mactuner")
+@click.command(name="macaudit", context_settings={"help_option_names": ["-h", "--help"]})
+@click.version_option(__version__, "-V", "--version", prog_name="macaudit")
 # Profiles
 @click.option(
     "--profile",
@@ -131,7 +131,7 @@ def cli(
     # ── Welcome flag ──────────────────────────────────────────────────────────
     if welcome:
         if not quiet and not as_json:
-            from mactuner.ui.welcome import show_welcome
+            from macaudit.ui.welcome import show_welcome
             show_welcome(console, first_run=False)
         return
 
@@ -142,7 +142,7 @@ def cli(
     # ── Header / first-run welcome ────────────────────────────────────────────
     _first_run = False
     if not quiet and not as_json:
-        from mactuner.ui.welcome import is_first_run, show_welcome
+        from macaudit.ui.welcome import is_first_run, show_welcome
         if is_first_run():
             _first_run = True
             ok = show_welcome(console, first_run=True)
@@ -202,7 +202,7 @@ def cli(
 
     # ── Persist last-scan summary for welcome screen ──────────────────────────
     if not as_json:
-        from mactuner.ui.welcome import save_last_scan
+        from macaudit.ui.welcome import save_last_scan
         _counts: dict[str, int] = {}
         for r in results:
             _counts[r.status] = _counts.get(r.status, 0) + 1
@@ -220,13 +220,13 @@ def cli(
         console.print(f"Health score: {score}/100  |  Critical: {criticals}")
         return
 
-    from mactuner.ui.report import print_report
+    from macaudit.ui.report import print_report
     print_report(results, console, issues_only=issues_only, explain=explain,
                  scan_duration=_scan_elapsed, mode=_resolve_mode(fix, only, skip))
 
     # ── Fix mode ──────────────────────────────────────────────────────────────
     if fix:
-        from mactuner.fixer.runner import run_fix_session
+        from macaudit.fixer.runner import run_fix_session
         run_fix_session(results, console, auto=auto)
 
     # ── Exit code contract ────────────────────────────────────────────────────
@@ -253,12 +253,12 @@ def _print_completion_help(console: Console) -> None:
     import os
     from rich.panel import Panel
     from rich.text import Text
-    from mactuner.ui.theme import COLOR_BRAND
+    from macaudit.ui.theme import COLOR_BRAND
 
     shell = os.environ.get("SHELL", "").split("/")[-1]
 
     t = Text()
-    t.append("\n  Shell completion for mactuner\n\n", style=f"bold {COLOR_TEXT}")
+    t.append("\n  Shell completion for macaudit\n\n", style=f"bold {COLOR_TEXT}")
 
     # Primary shell (detected)
     if shell in ("zsh", ""):
@@ -273,12 +273,12 @@ def _print_completion_help(console: Console) -> None:
 
     t.append(f"  Add this to your {primary_rc}:\n", style=COLOR_TEXT)
     t.append(
-        f'    eval "$(_MACTUNER_COMPLETE={primary}_source mactuner)"\n\n',
+        f'    eval "$(_MACAUDIT_COMPLETE={primary}_source macaudit)"\n\n',
         style=COLOR_DIM,
     )
     t.append(f"  For {secondary}, add to {secondary_rc}:\n", style=COLOR_DIM)
     t.append(
-        f'    eval "$(_MACTUNER_COMPLETE={secondary}_source mactuner)"\n\n',
+        f'    eval "$(_MACAUDIT_COMPLETE={secondary}_source macaudit)"\n\n',
         style=COLOR_DIM,
     )
     t.append(f"  Then restart your terminal or run: source {primary_rc}\n", style=COLOR_DIM)
@@ -292,7 +292,7 @@ def _warn_if_mdm_enrolled(console: Console) -> None:
     """
     Detect MDM enrollment and print a brief advisory if the Mac is managed.
 
-    The warning is shown at most once (flagged by ~/.config/mactuner/.mdm_warned).
+    The warning is shown at most once (flagged by ~/.config/macaudit/.mdm_warned).
     """
     if _MDM_FLAG.exists():
         return
@@ -363,16 +363,16 @@ def _collect_checks(
     Category order matches the report sections:
       system → security → homebrew → disk
     """
-    from mactuner.checks.apps import ALL_CHECKS as APPS
-    from mactuner.checks.dev_env import ALL_CHECKS as DEV_ENV
-    from mactuner.checks.disk import ALL_CHECKS as DISK
-    from mactuner.checks.hardware import ALL_CHECKS as HARDWARE
-    from mactuner.checks.homebrew import ALL_CHECKS as HOMEBREW
-    from mactuner.checks.memory import ALL_CHECKS as MEMORY
-    from mactuner.checks.network import ALL_CHECKS as NETWORK
-    from mactuner.checks.privacy import ALL_CHECKS as PRIVACY
-    from mactuner.checks.security import ALL_CHECKS as SECURITY
-    from mactuner.checks.system import ALL_CHECKS as SYSTEM
+    from macaudit.checks.apps import ALL_CHECKS as APPS
+    from macaudit.checks.dev_env import ALL_CHECKS as DEV_ENV
+    from macaudit.checks.disk import ALL_CHECKS as DISK
+    from macaudit.checks.hardware import ALL_CHECKS as HARDWARE
+    from macaudit.checks.homebrew import ALL_CHECKS as HOMEBREW
+    from macaudit.checks.memory import ALL_CHECKS as MEMORY
+    from macaudit.checks.network import ALL_CHECKS as NETWORK
+    from macaudit.checks.privacy import ALL_CHECKS as PRIVACY
+    from macaudit.checks.security import ALL_CHECKS as SECURITY
+    from macaudit.checks.system import ALL_CHECKS as SYSTEM
 
     # Ordered for logical report flow (matches category panel order in report.py)
     all_classes = (
@@ -383,7 +383,7 @@ def _collect_checks(
 
     # Opt-in checks appended after standard suite
     if check_shell_secrets:
-        from mactuner.checks.secrets import ALL_CHECKS as SECRETS
+        from macaudit.checks.secrets import ALL_CHECKS as SECRETS
         all_classes = all_classes + SECRETS
 
     checks = [cls() for cls in all_classes]
@@ -411,7 +411,7 @@ def _run_checks(checks: list, quiet: bool, as_json: bool) -> list[CheckResult]:
 
     In quiet/JSON mode the narrator is bypassed and checks run silently.
     """
-    from mactuner.ui.narrator import ScanNarrator
+    from macaudit.ui.narrator import ScanNarrator
 
     results: list[CheckResult] = []
 
@@ -440,7 +440,7 @@ def _output_json(results: list[CheckResult]) -> None:
     import json
     from datetime import datetime, timezone
 
-    from mactuner.system_info import get_system_info
+    from macaudit.system_info import get_system_info
 
     info = get_system_info()
 
@@ -456,7 +456,7 @@ def _output_json(results: list[CheckResult]) -> None:
 
     payload = {
         "schema_version": 1,
-        "mactuner_version": __version__,
+        "macaudit_version": __version__,
         "scan_time": datetime.now(timezone.utc).isoformat(),
         "system": {
             "macos_version": info["macos_version"],

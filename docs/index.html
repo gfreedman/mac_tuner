@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MacTuner — Mac System Health</title>
-  <meta name="description" content="MacTuner audits your Mac the way you'd want a paranoid sysadmin to — without the lecture.">
+  <title>Mac Audit — Mac System Health</title>
+  <meta name="description" content="Audits your Mac the way you'd want a paranoid sysadmin to — without the lecture.">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -525,13 +525,13 @@
 <body>
 
 <nav>
-  <a class="nav-brand" href="#top">MacTuner</a>
+  <a class="nav-brand" href="#top">Mac Audit</a>
   <a class="hn" href="#start">Quick start</a>
   <a class="hn" href="#commands">Commands</a>
   <a class="hn" href="#fix">Fix mode</a>
   <a class="hn" href="#checks">Checks</a>
   <a class="hn" href="#uninstall">Uninstall</a>
-  <a class="nav-right hn" href="https://github.com/gfreedman/mac_tuner" style="display:inline-flex;align-items:center;gap:5px;">
+  <a class="nav-right hn" href="https://github.com/gfreedman/mac_audit" style="display:inline-flex;align-items:center;gap:5px;">
     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
     GitHub
   </a>
@@ -540,11 +540,11 @@
 <!-- Hero -->
 <section class="hero" id="top">
   <div class="wrap">
-    <h1>MacTuner</h1>
-    <p class="tagline">MacTuner audits your Mac the way you'd want a paranoid sysadmin to — without the lecture.</p>
+    <h1>Mac Audit</h1>
+    <p class="tagline">Audits your Mac the way you'd want a paranoid sysadmin to — without the lecture.</p>
     <div class="install-pill">
       <span class="prompt">$</span>
-      <code>brew install gfreedman/mactuner/mactuner</code>
+      <code>brew install gfreedman/macaudit/macaudit</code>
       <button class="pill-copy" aria-label="Copy install command"></button>
     </div>
   </div>
@@ -559,19 +559,19 @@
         <div class="step-num">Step 1</div>
         <div class="step-title">Install</div>
         <p>Homebrew is the easiest way. Or <a href="#install">build from source</a>.</p>
-        <pre><code>brew install gfreedman/mactuner/mactuner</code></pre>
+        <pre><code>brew install gfreedman/macaudit/macaudit</code></pre>
       </div>
       <div class="step">
         <div class="step-num">Step 2</div>
         <div class="step-title">Scan</div>
         <p>69 checks, ~30 seconds. You get a health score out of 100.</p>
-        <pre><code>mactuner</code></pre>
+        <pre><code>macaudit</code></pre>
       </div>
       <div class="step">
         <div class="step-num">Step 3</div>
         <div class="step-title">Fix</div>
         <p>Each fix shows full context. Approve or skip before anything runs.</p>
-        <pre><code>mactuner --fix</code></pre>
+        <pre><code>macaudit --fix</code></pre>
       </div>
     </div>
   </div>
@@ -584,12 +584,12 @@
     <div class="install-grid" style="grid-template-columns:1fr 1fr">
       <div class="install-opt">
         <div class="install-label">Homebrew <span class="badge">recommended</span></div>
-        <pre><code>brew install gfreedman/mactuner/mactuner</code></pre>
+        <pre><code>brew install gfreedman/macaudit/macaudit</code></pre>
       </div>
       <div class="install-opt">
         <div class="install-label">From source</div>
-        <pre><code>git clone https://github.com/gfreedman/mac_tuner
-cd mac_tuner &amp;&amp; bash install.sh</code></pre>
+        <pre><code>git clone https://github.com/gfreedman/mac_audit
+cd mac_audit &amp;&amp; bash install.sh</code></pre>
         <p class="opt-note">Requires Python 3.10+ and pipx or pip.</p>
       </div>
     </div>
@@ -604,13 +604,13 @@ cd mac_tuner &amp;&amp; bash install.sh</code></pre>
     <div class="install-grid" style="grid-template-columns:1fr 1fr">
       <div class="install-opt">
         <div class="install-label">Homebrew</div>
-        <pre><code>brew uninstall mactuner
-brew untap gfreedman/mactuner</code></pre>
+        <pre><code>brew uninstall macaudit
+brew untap gfreedman/macaudit</code></pre>
         <p class="opt-note">The untap line is optional — removes the tap entirely.</p>
       </div>
       <div class="install-opt">
         <div class="install-label">Remove saved config</div>
-        <pre><code>rm -rf ~/.config/mactuner</code></pre>
+        <pre><code>rm -rf ~/.config/macaudit</code></pre>
         <p class="opt-note">Clears first-run flag, scan history, and MDM notice. Does not affect system settings changed via <code>--fix</code>.</p>
       </div>
     </div>
@@ -642,10 +642,10 @@ brew untap gfreedman/mactuner</code></pre>
         <div class="term-divider">  ──────────────────────────────────────────</div>
         <div class="term-score">  Health Score &nbsp;<span class="t-warn">71</span>&nbsp; <span class="t-dim">[████████████████░░░░░░]  / 100</span></div>
         <div class="term-counts">  <span class="t-crit">🔴 1 Critical</span>&nbsp;&nbsp;&nbsp;<span class="t-warn">⚠️  5 Warnings</span>&nbsp;&nbsp;&nbsp;<span class="t-pass">✅ 17 Passed</span>&nbsp;&nbsp;&nbsp;<span class="t-info">ℹ️  4 Info</span></div>
-        <div class="term-cta">  <span class="t-dim">Run </span><b>mactuner --fix</b><span class="t-dim"> to step through 6 fixable items.</span></div>
+        <div class="term-cta">  <span class="t-dim">Run </span><b>macaudit --fix</b><span class="t-dim"> to step through 6 fixable items.</span></div>
       </div>
     </div>
-    <p class="note">Nothing on your Mac changes until you run <code>mactuner --fix</code>.</p>
+    <p class="note">Nothing on your Mac changes until you run <code>macaudit --fix</code>.</p>
   </div>
 </section>
 
@@ -658,18 +658,18 @@ brew untap gfreedman/mactuner</code></pre>
         <tr><th>Command</th><th>What it does</th></tr>
       </thead>
       <tbody>
-        <tr><td><code>mactuner</code></td><td>Full scan</td></tr>
-        <tr><td><code>mactuner -y</code></td><td>Full scan, no start prompt</td></tr>
-        <tr><td><code>mactuner --issues-only</code></td><td>Show only warnings and criticals</td></tr>
-        <tr><td><code>mactuner --explain</code></td><td>Extra context per finding</td></tr>
-        <tr><td><code>mactuner --only security</code></td><td>Scan one category</td></tr>
-        <tr><td><code>mactuner --only security,disk</code></td><td>Scan multiple categories</td></tr>
-        <tr><td><code>mactuner --skip dev_env</code></td><td>Skip a category</td></tr>
-        <tr><td><code>mactuner --fix</code></td><td>Step through fixable issues after the scan</td></tr>
-        <tr><td><code>mactuner --fix --auto</code></td><td>Apply safe fixes without prompting each time</td></tr>
-        <tr><td><code>mactuner --quiet</code></td><td>Print only the score</td></tr>
-        <tr><td><code>mactuner --json</code></td><td>Output as JSON for scripts</td></tr>
-        <tr><td><code>mactuner --check-shell-secrets</code></td><td>Scan shell configs for hardcoded credentials</td></tr>
+        <tr><td><code>macaudit</code></td><td>Full scan</td></tr>
+        <tr><td><code>macaudit -y</code></td><td>Full scan, no start prompt</td></tr>
+        <tr><td><code>macaudit --issues-only</code></td><td>Show only warnings and criticals</td></tr>
+        <tr><td><code>macaudit --explain</code></td><td>Extra context per finding</td></tr>
+        <tr><td><code>macaudit --only security</code></td><td>Scan one category</td></tr>
+        <tr><td><code>macaudit --only security,disk</code></td><td>Scan multiple categories</td></tr>
+        <tr><td><code>macaudit --skip dev_env</code></td><td>Skip a category</td></tr>
+        <tr><td><code>macaudit --fix</code></td><td>Step through fixable issues after the scan</td></tr>
+        <tr><td><code>macaudit --fix --auto</code></td><td>Apply safe fixes without prompting each time</td></tr>
+        <tr><td><code>macaudit --quiet</code></td><td>Print only the score</td></tr>
+        <tr><td><code>macaudit --json</code></td><td>Output as JSON for scripts</td></tr>
+        <tr><td><code>macaudit --check-shell-secrets</code></td><td>Scan shell configs for hardcoded credentials</td></tr>
       </tbody>
     </table>
     <h3>Category names for --only and --skip</h3>
@@ -681,7 +681,7 @@ brew untap gfreedman/mactuner</code></pre>
 <section id="fix">
   <div class="wrap">
     <h2>Fix mode</h2>
-    <p>Run <code>mactuner --fix</code> after a scan. For each issue, MacTuner shows what it found, why it matters, and what the fix does. You approve or skip before anything runs.</p>
+    <p>Run <code>macaudit --fix</code> after a scan. For each issue, Mac Audit shows what it found, why it matters, and what the fix does. You approve or skip before anything runs.</p>
     <div class="grid-2 r4" style="margin-top:12px">
       <div class="card">
         <span class="card-icon">🤖</span>
@@ -812,8 +812,8 @@ brew untap gfreedman/mactuner</code></pre>
 </section>
 
 <footer>
-  MacTuner &middot; macOS only &middot; MIT license &middot;
-  <a href="https://github.com/gfreedman/mac_tuner">github.com/gfreedman/mac_tuner</a>
+  Mac Audit &middot; macOS only &middot; MIT license &middot;
+  <a href="https://github.com/gfreedman/mac_audit">github.com/gfreedman/mac_audit</a>
 </footer>
 
 <script>

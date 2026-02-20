@@ -23,8 +23,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${{ steps.version.outputs.tag }}" \
-            --repo gfreedman/mac_tuner \
-            --title "MacTuner ${{ steps.version.outputs.tag }}" \
+            --repo gfreedman/mac_audit \
+            --title "Mac Audit ${{ steps.version.outputs.tag }}" \
             --generate-notes
 
       - name: Compute tarball SHA256 and update formula via API
@@ -33,28 +33,28 @@ jobs:
         run: |
           VERSION=${{ steps.version.outputs.tag }}
           BARE="${VERSION#v}"
-          URL="https://github.com/gfreedman/mac_tuner/archive/refs/tags/${VERSION}.tar.gz"
+          URL="https://github.com/gfreedman/mac_audit/archive/refs/tags/${VERSION}.tar.gz"
 
           # Wait for the tarball to be available
           sleep 5
           SHA=$(curl -sL "$URL" | shasum -a 256 | awk '{print $1}')
 
           # Fetch current formula content + blob SHA from the API
-          RESPONSE=$(gh api repos/gfreedman/homebrew-mactuner/contents/Formula/mactuner.rb)
+          RESPONSE=$(gh api repos/gfreedman/homebrew-macaudit/contents/Formula/macaudit.rb)
           FILE_SHA=$(echo "$RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin)['sha'])")
           CURRENT=$(echo "$RESPONSE" | python3 -c "import sys,json,base64; print(base64.b64decode(json.load(sys.stdin)['content']).decode())")
 
           # Patch version URL and main package SHA
           UPDATED=$(echo "$CURRENT" \
-            | sed "s|url \"https://github.com/gfreedman/mac_tuner/archive/refs/tags/v[^\"]*\"|url \"${URL}\"|" \
+            | sed "s|url \"https://github.com/gfreedman/mac_audit/archive/refs/tags/v[^\"]*\"|url \"${URL}\"|" \
             | sed "s|^  sha256 \"[a-f0-9]*\"|  sha256 \"${SHA}\"|")
 
           # Base64-encode for the API
           ENCODED=$(echo "$UPDATED" | base64)
 
           # Push update via Contents API
-          gh api repos/gfreedman/homebrew-mactuner/contents/Formula/mactuner.rb \
+          gh api repos/gfreedman/homebrew-macaudit/contents/Formula/macaudit.rb \
             -X PUT \
-            -f message="mactuner ${BARE}" \
+            -f message="macaudit ${BARE}" \
             -f content="${ENCODED}" \
             -f sha="${FILE_SHA}"

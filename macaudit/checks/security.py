@@ -9,7 +9,7 @@ import plistlib
 import re
 from pathlib import Path
 
-from mactuner.checks.base import BaseCheck, CheckResult
+from macaudit.checks.base import BaseCheck, CheckResult
 
 HOME = Path.home()
 
@@ -787,7 +787,7 @@ class SSHConfigCheck(BaseCheck):
             content = config_path.read_text(errors="replace")
         except PermissionError:
             return self._info(
-                "Could not read /etc/ssh/sshd_config — run mactuner with sudo to check"
+                "Could not read /etc/ssh/sshd_config — run macaudit with sudo to check"
             )
 
         issues: list[str] = []

@@ -1,10 +1,10 @@
-"""MacTuner — Mac System Health Inspector & Tuner"""
+"""Mac Audit — Mac System Health Inspector & Auditor"""
 
 from importlib.metadata import version, PackageNotFoundError
 
 try:
-    __version__ = version("mactuner")
+    __version__ = version("macaudit")
 except PackageNotFoundError:
     __version__ = "dev"
 
-__author__ = "MacTuner"
+__author__ = "Mac Audit"

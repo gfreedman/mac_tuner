@@ -10,8 +10,8 @@ Verifies:
 
 import pytest
 
-from mactuner.checks.dev_env import ALL_CHECKS as DEV_ENV_CHECKS
-from mactuner.checks.system import ALL_CHECKS as SYSTEM_CHECKS
+from macaudit.checks.dev_env import ALL_CHECKS as DEV_ENV_CHECKS
+from macaudit.checks.system import ALL_CHECKS as SYSTEM_CHECKS
 
 
 # ── dev_env profile tags ──────────────────────────────────────────────────────

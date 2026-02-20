@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import os
 
-from mactuner.checks.base import BaseCheck, CheckResult
+from macaudit.checks.base import BaseCheck, CheckResult
 
 
 class TCCPermissionAuditCheck(BaseCheck):
@@ -61,7 +61,7 @@ class TCCPermissionAuditCheck(BaseCheck):
 
     def run(self) -> CheckResult:
         # Check if we can see the TCC database path at all (proxy for FDA state)
-        # We intentionally do NOT read it — just note whether mactuner has FDA.
+        # We intentionally do NOT read it — just note whether macaudit has FDA.
         tcc_path = os.path.expanduser(
             "~/Library/Application Support/com.apple.TCC/TCC.db"
         )
@@ -69,7 +69,7 @@ class TCCPermissionAuditCheck(BaseCheck):
 
         if has_fda:
             return self._info(
-                "mactuner has Full Disk Access — review app permissions in System Settings"
+                "macaudit has Full Disk Access — review app permissions in System Settings"
             )
 
         return self._info(

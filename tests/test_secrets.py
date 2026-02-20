@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest
 
-from mactuner.checks.secrets import ShellSecretsCheck, _redact
+from macaudit.checks.secrets import ShellSecretsCheck, _redact
 
 
 # ── _redact() ─────────────────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ class TestShellSecretsCheck:
             f.write(content)
             tmpfile = f.name
         try:
-            with patch("mactuner.checks.secrets._SHELL_CONFIGS", [tmpfile]):
+            with patch("macaudit.checks.secrets._SHELL_CONFIGS", [tmpfile]):
                 return check.run()
         finally:
             os.unlink(tmpfile)
@@ -184,7 +184,7 @@ class TestShellSecretsCheck:
     def test_nonexistent_file_is_skipped_gracefully(self):
         check = ShellSecretsCheck()
         with patch(
-            "mactuner.checks.secrets._SHELL_CONFIGS",
+            "macaudit.checks.secrets._SHELL_CONFIGS",
             ["/does/not/exist/.mactuner_test_zshrc"],
         ):
             result = check.run()

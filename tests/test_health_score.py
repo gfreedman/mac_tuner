@@ -10,7 +10,7 @@ Verifies the algorithm from CLAUDE.md:
 
 import pytest
 
-from mactuner.checks.base import CheckResult, calculate_health_score
+from macaudit.checks.base import CheckResult, calculate_health_score
 
 
 def _r(status: str, category: str = "disk") -> CheckResult:

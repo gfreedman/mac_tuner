@@ -1,5 +1,5 @@
 """
-Core data model for MacTuner checks.
+Core data model for Mac Audit checks.
 
 CheckResult — the contract every check must return.
 BaseCheck   — abstract base class all checks inherit from.
@@ -15,7 +15,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-from mactuner.system_info import IS_APPLE_SILICON, MACOS_VERSION
+from macaudit.system_info import IS_APPLE_SILICON, MACOS_VERSION
 
 
 # ── Data model ────────────────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ class CheckResult:
 
 class BaseCheck(ABC):
     """
-    Abstract base class for all MacTuner checks.
+    Abstract base class for all Mac Audit checks.
 
     Subclasses must:
       1. Set class attributes (id, name, category, …)

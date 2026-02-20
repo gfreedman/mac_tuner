@@ -9,7 +9,7 @@ Output:  [████████████░░░░░░░░] 62%  · 
 
 from rich.text import Text
 
-from mactuner.ui.theme import COLOR_DIM
+from macaudit.ui.theme import COLOR_DIM
 
 
 BAR_WIDTH = 22
