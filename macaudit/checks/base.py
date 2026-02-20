@@ -40,7 +40,7 @@ class CheckResult:
     # Fix capability
     fix_level: Literal["auto", "auto_sudo", "guided", "instructions", "none"]
     fix_description: str        # Exactly what the fix does
-    fix_command: str | None = None          # Shell command (AUTO fixes)
+    fix_command: list[str] | None = None     # Command as arg list (AUTO fixes)
     fix_url: str | None = None              # Settings URL (GUIDED)
     fix_steps: list[str] | None = None     # Manual steps (INSTRUCTIONS)
     fix_reversible: bool = True             # Can it be undone?
@@ -91,7 +91,7 @@ class BaseCheck(ABC):
 
     fix_level: Literal["auto", "auto_sudo", "guided", "instructions", "none"] = "none"
     fix_description: str = "No fix available"
-    fix_command: str | None = None
+    fix_command: list[str] | None = None
     fix_url: str | None = None
     fix_steps: list[str] | None = None
     fix_reversible: bool = True

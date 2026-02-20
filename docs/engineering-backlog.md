@@ -6,51 +6,18 @@ for future work.
 
 ---
 
-## 1. `shell=True` audit liability in executor.py
+## ~~1. `shell=True` audit liability in executor.py~~ ✅ Fixed
 
-**File:** `macaudit/fixer/executor.py` — `run_auto_fix()`
-
-**Issue:** Fix commands from check metadata (e.g. `"brew autoremove"`, `"brew cleanup -s"`) are
-passed to `subprocess.run()` with `shell=True`. This means the OS shell interprets the command
-string, which creates a command-injection surface if a future check ever derives a command from
-user-supplied or environment data.
-
-**Recommended fix:** Store fix commands as lists (`["brew", "autoremove"]`) in each check's
-metadata. Pass them to `subprocess.run()` as a list with `shell=False`. Where a single string
-is needed for display (the "What this fix does" card), join the list with spaces at render time.
-
-**Priority:** Medium. Current fix commands are all hardcoded literals, so actual risk is low
-today, but the pattern should be corrected before any check derives command parts dynamically.
+Stored fix commands as `list[str]` in all check definitions. `run_auto_fix()` now uses
+`shell=False`. Display strings produced via `shlex.join()` at render time.
 
 ---
 
-## 2. Incomplete `osascript do shell script` escaping in executor.py
+## ~~2. Incomplete `osascript do shell script` escaping in executor.py~~ ✅ Fixed
 
-**File:** `macaudit/fixer/executor.py` — `run_auto_sudo_fix()`
-
-**Issue:** The current escaper only handles `\` and `"` characters:
-
-```python
-safe = cmd.replace("\\", "\\\\").replace('"', '\\"')
-script = f'do shell script "{safe}" with administrator privileges'
-```
-
-This misses: `$()`, backticks (`` ` ``), single quotes, and other shell metacharacters. If a
-future sudo fix command ever includes a `$` variable reference or backtick substitution (even
-unintentionally in a path), the `osascript` shell will interpret it.
-
-**Recommended fix:** Same as item 1 — store commands as lists and use `shlex.join()` to produce
-a properly-quoted string for embedding in the AppleScript:
-
-```python
-import shlex
-safe = shlex.join(cmd_list)
-script = f'do shell script "{safe.replace(chr(34), chr(92)+chr(34))}" with administrator privileges'
-```
-
-Or, better, pass the command via `argv` rather than embedding it in an AppleScript string.
-
-**Priority:** Medium. Same low-risk-today caveat as item 1.
+`run_auto_sudo_fix()` now uses `shlex.join()` to produce a properly-quoted shell string from
+the command list before embedding in AppleScript. This handles all shell metacharacters
+correctly.
 
 ---
 

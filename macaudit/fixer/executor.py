@@ -16,6 +16,7 @@ Fix levels:
 
 from __future__ import annotations
 
+import shlex
 import subprocess
 
 from rich.console import Console
@@ -27,23 +28,23 @@ from macaudit.checks.base import CheckResult
 
 def run_auto_fix(result: CheckResult, console: Console) -> bool:
     """
-    Run result.fix_command in a shell with live output streaming.
+    Run result.fix_command as a subprocess with live output streaming.
 
-    fix_command is always set by us in check definitions (not user input).
-    shell=True is used so that ~ expands and glob patterns (e.g. rm -rf ~/Logs/*)
-    are resolved by the shell before the command runs.
+    fix_command is a list of arguments set by us in check definitions (not user
+    input).  shell=False avoids any command-injection surface.
     """
     if not result.fix_command:
         console.print("  [red]No fix command defined.[/red]\n")
         return False
 
-    console.print(f"  [dim]$[/dim]  [cyan]{result.fix_command}[/cyan]")
+    display_cmd = shlex.join(result.fix_command)
+    console.print(f"  [dim]$[/dim]  [cyan]{display_cmd}[/cyan]")
     console.print()
 
     try:
         proc = subprocess.Popen(
             result.fix_command,
-            shell=True,
+            shell=False,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
@@ -92,14 +93,17 @@ def run_auto_sudo_fix(result: CheckResult, console: Console) -> bool:
         console.print("  [red]No fix command defined.[/red]\n")
         return False
 
-    # Escape double-quotes inside the shell command for embedding in AppleScript
-    escaped = result.fix_command.replace("\\", "\\\\").replace('"', '\\"')
-    osa_script = f'do shell script "{escaped}" with administrator privileges'
+    # shlex.join produces a properly-quoted shell string from the arg list.
+    # Then escape double-quotes for embedding inside the AppleScript string.
+    shell_cmd = shlex.join(result.fix_command)
+    osa_safe = shell_cmd.replace("\\", "\\\\").replace('"', '\\"')
+    osa_script = f'do shell script "{osa_safe}" with administrator privileges'
 
+    display_cmd = shell_cmd
     console.print(
         "  [dim]A macOS password dialog will appear to grant administrator access.[/dim]"
     )
-    console.print(f"  [dim]$[/dim]  [cyan]{result.fix_command}[/cyan]")
+    console.print(f"  [dim]$[/dim]  [cyan]{display_cmd}[/cyan]")
     console.print()
 
     try:

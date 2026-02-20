@@ -43,7 +43,7 @@ class AppStoreUpdatesCheck(BaseCheck):
 
     fix_level = "auto"
     fix_description = "Update all outdated App Store apps via mas upgrade."
-    fix_command = "mas upgrade"
+    fix_command = ["mas", "upgrade"]
     fix_reversible = False
     fix_time_estimate = "~5 minutes"
 

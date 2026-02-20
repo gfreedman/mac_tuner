@@ -58,22 +58,21 @@ class TestRunAutoFix:
 
     def test_successful_command_returns_true(self):
         con, _ = _console()
-        assert run_auto_fix(_result(fix_command="echo hello"), con) is True
+        assert run_auto_fix(_result(fix_command=["echo", "hello"]), con) is True
 
     def test_failing_command_returns_false(self):
         con, _ = _console()
         # `false` is a POSIX command that always exits 1
-        assert run_auto_fix(_result(fix_command="false"), con) is False
+        assert run_auto_fix(_result(fix_command=["false"]), con) is False
 
     def test_output_is_streamed_to_console(self):
         con, buf = _console()
-        run_auto_fix(_result(fix_command="echo mactuner_test_output"), con)
+        run_auto_fix(_result(fix_command=["echo", "mactuner_test_output"]), con)
         assert "mactuner_test_output" in buf.getvalue()
 
-    def test_uses_shell_true(self):
-        """Verify shell=True is used so ~ and glob patterns are expanded."""
+    def test_uses_shell_false(self):
+        """Verify shell=False is used to avoid command-injection surface."""
         con, _ = _console()
-        import subprocess
         with patch("subprocess.Popen") as mock_popen:
             mock_proc = MagicMock()
             mock_proc.stdout = iter(["line1\n"])
@@ -81,15 +80,14 @@ class TestRunAutoFix:
             mock_proc.wait.return_value = 0
             mock_popen.return_value = mock_proc
 
-            run_auto_fix(_result(fix_command="echo hello"), con)
+            run_auto_fix(_result(fix_command=["echo", "hello"]), con)
 
             call_kwargs = mock_popen.call_args
-            assert call_kwargs.kwargs.get("shell") is True
+            assert call_kwargs.kwargs.get("shell") is False
 
-    def test_command_passed_as_string(self):
-        """fix_command is passed as a string (not split) so shell can expand ~ and globs."""
+    def test_command_passed_as_list(self):
+        """fix_command is passed as a list for shell=False execution."""
         con, _ = _console()
-        import subprocess
         with patch("subprocess.Popen") as mock_popen:
             mock_proc = MagicMock()
             mock_proc.stdout = iter([])
@@ -97,11 +95,11 @@ class TestRunAutoFix:
             mock_proc.wait.return_value = 0
             mock_popen.return_value = mock_proc
 
-            run_auto_fix(_result(fix_command="brew cleanup --prune=all"), con)
+            run_auto_fix(_result(fix_command=["brew", "cleanup", "--prune=all"]), con)
 
             call_args = mock_popen.call_args
             cmd = call_args.args[0]  # First positional arg is the command
-            assert isinstance(cmd, str), "Command should be a string when shell=True"
+            assert isinstance(cmd, list), "Command should be a list when shell=False"
             assert "brew" in cmd
 
 

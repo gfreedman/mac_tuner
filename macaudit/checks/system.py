@@ -305,7 +305,7 @@ class FirewallCheck(BaseCheck):
     )
     fix_level = "auto_sudo"
     fix_description = "Enables the application firewall"
-    fix_command = f"{_FIREWALL} --setglobalstate on"
+    fix_command = [_FIREWALL, "--setglobalstate", "on"]
     fix_reversible = True
     fix_time_estimate = "~5 seconds"
     requires_sudo = True
@@ -353,7 +353,7 @@ class FirewallStealthCheck(BaseCheck):
     )
     fix_level = "auto_sudo"
     fix_description = "Enables firewall stealth mode"
-    fix_command = f"{_FIREWALL} --setstealthmode on"
+    fix_command = [_FIREWALL, "--setstealthmode", "on"]
     fix_reversible = True
     fix_time_estimate = "~5 seconds"
     requires_sudo = True
@@ -404,7 +404,7 @@ class GatekeeperCheck(BaseCheck):
     )
     fix_level = "auto_sudo"
     fix_description = "Re-enables Gatekeeper app verification"
-    fix_command = "spctl --master-enable"
+    fix_command = ["spctl", "--master-enable"]
     fix_reversible = True
     fix_time_estimate = "~5 seconds"
     requires_sudo = True
@@ -637,7 +637,7 @@ class RosettaCheck(BaseCheck):
     )
     fix_level = "auto_sudo"
     fix_description = "Installs Rosetta 2 for Intel app compatibility"
-    fix_command = "softwareupdate --install-rosetta --agree-to-license"
+    fix_command = ["softwareupdate", "--install-rosetta", "--agree-to-license"]
     fix_reversible = False
     fix_time_estimate = "~2 minutes"
 

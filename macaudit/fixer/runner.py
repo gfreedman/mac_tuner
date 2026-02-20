@@ -15,6 +15,8 @@ Fix level behaviour:
 
 from __future__ import annotations
 
+import shlex
+
 from rich.console import Console, Group
 from rich.panel import Panel
 from rich.padding import Padding
@@ -240,7 +242,7 @@ def _print_fix_card(
 
     if result.fix_level in ("auto", "auto_sudo") and result.fix_command:
         cmd = Text()
-        cmd.append(f"\n  $ {result.fix_command}", style="dim cyan")
+        cmd.append(f"\n  $ {shlex.join(result.fix_command)}", style="dim cyan")
         parts.append(cmd)
     elif result.fix_level == "instructions" and result.fix_steps:
         steps = Text()

@@ -163,7 +163,7 @@ class CondaCheck(BaseCheck):
 
     fix_level = "instructions"
     fix_description = "Disable conda auto-activation to prevent PATH conflicts."
-    fix_command = "conda config --set auto_activate_base false"
+    fix_command = ["conda", "config", "--set", "auto_activate_base", "false"]
     fix_steps = [
         "Run: conda config --set auto_activate_base false",
         "Restart your terminal",

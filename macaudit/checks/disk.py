@@ -209,7 +209,7 @@ class XcodeDerivedDataCheck(BaseCheck):
     )
     fix_level = "auto"
     fix_description = "Deletes Xcode DerivedData (Xcode will rebuild it automatically)"
-    fix_command = "rm -rf ~/Library/Developer/Xcode/DerivedData"
+    fix_command = ["rm", "-rf", str(HOME / "Library/Developer/Xcode/DerivedData")]
     fix_reversible = False
     fix_time_estimate = "~10 seconds (next Xcode build will be slower)"
 
@@ -265,7 +265,7 @@ class DockerDiskCheck(BaseCheck):
     )
     fix_level = "auto"
     fix_description = "Runs 'docker system prune' to remove unused Docker data"
-    fix_command = "docker system prune -f"
+    fix_command = ["docker", "system", "prune", "-f"]
     fix_reversible = False
     fix_time_estimate = "~30 seconds"
 
@@ -347,7 +347,7 @@ class TrashCheck(BaseCheck):
     recommendation = "Empty the Trash: right-click the Trash icon → Empty Trash."
     fix_level = "auto"
     fix_description = "Empties the Trash"
-    fix_command = "rm -rf ~/.Trash/*"
+    fix_command = ["find", str(HOME / ".Trash"), "-mindepth", "1", "-delete"]
     fix_reversible = False
     fix_time_estimate = "~5 seconds"
 
@@ -468,7 +468,7 @@ class LogFilesCheck(BaseCheck):
     )
     fix_level = "auto"
     fix_description = "Deletes user log files (apps recreate them as needed)"
-    fix_command = "rm -rf ~/Library/Logs/*"
+    fix_command = ["find", str(HOME / "Library/Logs"), "-mindepth", "1", "-delete"]
     fix_reversible = False
     fix_time_estimate = "~5 seconds"
 

@@ -38,7 +38,7 @@ class HomebrewDoctorCheck(_HomebrewBase):
     )
     fix_level = "auto"
     fix_description = "Runs 'brew doctor' and follows its suggestions"
-    fix_command = "brew doctor"
+    fix_command = ["brew", "doctor"]
     fix_reversible = True
     fix_time_estimate = "~30 seconds"
 
@@ -89,7 +89,7 @@ class HomebrewOutdatedCheck(_HomebrewBase):
     )
     fix_level = "auto"
     fix_description = "Runs 'brew upgrade' to update all outdated formulae"
-    fix_command = "brew upgrade"
+    fix_command = ["brew", "upgrade"]
     fix_reversible = False
     fix_time_estimate = "Varies — could be seconds or minutes"
 
@@ -131,7 +131,7 @@ class HomebrewOutdatedCasksCheck(_HomebrewBase):
     )
     fix_level = "auto"
     fix_description = "Runs 'brew upgrade --cask'"
-    fix_command = "brew upgrade --cask"
+    fix_command = ["brew", "upgrade", "--cask"]
     fix_reversible = False
     fix_time_estimate = "Varies — could be minutes"
 
@@ -176,7 +176,7 @@ class HomebrewAutoremoveCheck(_HomebrewBase):
     )
     fix_level = "auto"
     fix_description = "Runs 'brew autoremove' to remove orphaned dependencies"
-    fix_command = "brew autoremove"
+    fix_command = ["brew", "autoremove"]
     fix_reversible = False
     fix_time_estimate = "~30 seconds"
 
@@ -225,7 +225,7 @@ class HomebrewCleanupCheck(_HomebrewBase):
     )
     fix_level = "auto"
     fix_description = "Runs 'brew cleanup' to remove stale package downloads"
-    fix_command = "brew cleanup"
+    fix_command = ["brew", "cleanup"]
     fix_reversible = False
     fix_time_estimate = "~30 seconds"
 
@@ -289,7 +289,7 @@ class HomebrewMissingCheck(_HomebrewBase):
     )
     fix_level = "auto"
     fix_description = "Runs 'brew missing' to identify, then reinstalls broken formulae"
-    fix_command = "brew missing"
+    fix_command = ["brew", "missing"]
     fix_reversible = False
     fix_time_estimate = "~30 seconds"
 
