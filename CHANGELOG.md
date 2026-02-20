@@ -2,6 +2,14 @@
 
 All notable changes to Mac Audit are documented here.
 
+## [1.5.0] — 2026-02-20
+
+### Changed
+- **Parallel check execution:** checks now run concurrently via `ThreadPoolExecutor(max_workers=8)`, cutting scan time from ~35–45s to ~10–15s. Results print in deterministic category order. Serial path preserved for `--quiet`/`--json`.
+- Scan narrator simplified: spinner + progress bar replaces per-check description panels
+
+---
+
 ## [1.3.0] — 2026-02-19
 
 ### Added

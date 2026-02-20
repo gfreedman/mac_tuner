@@ -13,7 +13,7 @@ Runs a full audit of your Mac: security settings, disk health, memory, developer
 │       Scan started: Monday 16 Feb 2026  ·  10:41 AM              │
 ╰──────────────────────────────────────────────────────────────────╯
 
-  Scanning — every check is explained as it runs
+  Scanning — checks run in parallel
 
   ✅  macOS Version              macOS 15.3 — current release
   ⚠️   FileVault                 Disk encryption is OFF
