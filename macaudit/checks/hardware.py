@@ -26,9 +26,11 @@ def _get_power_data() -> str:
     """Run system_profiler SPPowerDataType once and cache."""
     import subprocess
     try:
+        _env = {**os.environ, "LANG": "C", "LC_ALL": "C"}
         r = subprocess.run(
             ["system_profiler", "SPPowerDataType"],
             capture_output=True, text=True, timeout=15, check=False,
+            env=_env,
         )
         return r.stdout
     except Exception:
@@ -106,8 +108,6 @@ class BatteryCheck(BaseCheck):
 
         if condition.lower() in ("service recommended", "replace now", "replace soon"):
             return self._critical(msg)
-        if cycle_count and cycle_count >= 900:
-            return self._warning(msg)
         if max_capacity is not None and max_capacity < 80:
             return self._warning(msg)
         return self._info(msg)
@@ -127,8 +127,9 @@ class SMARTStatusCheck(BaseCheck):
     )
     finding_explanation = (
         "SMART monitors disk health indicators like reallocated sectors and read errors. "
-        "A 'Failing' or 'Not Supported' status on a primary drive is a serious early-warning "
-        "sign that the disk may be about to fail."
+        "A 'Failing' status on a primary drive is a serious early-warning sign that the disk "
+        "may be about to fail. Note: 'Not Supported' is normal on Apple Silicon Macs — "
+        "Apple's proprietary NVMe controllers do not expose the SMART protocol."
     )
     recommendation = (
         "Back up immediately if status is Failing. Replace the drive soon. "
@@ -165,7 +166,10 @@ class SMARTStatusCheck(BaseCheck):
             return self._pass(f"SMART: {smart_status}")
         if "fail" in smart_status.lower():
             return self._critical(f"SMART: {smart_status} — back up immediately")
-        # "Not Supported" is common for external drives / Apple SSDs
+        # "Not Supported" is expected on Apple Silicon — proprietary NVMe controller
+        # never exposes SMART. On Intel, it may indicate an external or unsupported drive.
+        if smart_status.lower() == "not supported" and IS_APPLE_SILICON:
+            return self._pass("SMART: Not Supported (expected on Apple Silicon)")
         return self._info(f"SMART: {smart_status}")
 
 
@@ -296,9 +300,8 @@ class ThermalCheck(BaseCheck):
             if "thermal pressure" in line_lower and "no" not in line_lower:
                 throttled = True
 
-        # Try powermetrics as a fallback (may need sudo — skip if unavailable)
-        if not throttled:
-            # Check sysctl for thermal level on Apple Silicon
+        # machdep.xcpm.cpu_thermal_level is Intel/XCPM-only — does not exist on Apple Silicon
+        if not throttled and not IS_APPLE_SILICON:
             rc2, out2, _ = self.shell(
                 ["sysctl", "-n", "machdep.xcpm.cpu_thermal_level"]
             )
