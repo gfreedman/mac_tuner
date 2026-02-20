@@ -35,23 +35,10 @@ Runs a full audit of your Mac: security settings, disk health, memory, developer
 
 ## Install
 
-**Homebrew (recommended):**
+**Homebrew:**
 
 ```bash
-brew tap gfreedman/mactuner
-brew install mactuner
-```
-
-**[pipx](https://pipx.pypa.io)** (installs globally without affecting system Python):
-
-```bash
-pipx install mactuner
-```
-
-**pip:**
-
-```bash
-pip3 install --user mactuner
+brew install gfreedman/mactuner/mactuner
 ```
 
 **From source:**
@@ -75,19 +62,7 @@ brew uninstall mactuner
 brew untap gfreedman/mactuner   # optional — removes the tap entirely
 ```
 
-**pipx:**
-
-```bash
-pipx uninstall mactuner
-```
-
-**pip:**
-
-```bash
-pip3 uninstall mactuner
-```
-
-**Remove saved config and scan history** (any install method):
+**Remove saved config and scan history**:
 
 ```bash
 rm -rf ~/.config/mactuner

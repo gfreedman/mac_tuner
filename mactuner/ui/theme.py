@@ -17,9 +17,11 @@ from rich.theme import Theme
 
 # ── Brand ─────────────────────────────────────────────────────────────────────
 
+from mactuner import __version__
+
 APP_NAME = "mactuner"
 APP_TAGLINE = "Mac System Health Inspector"
-APP_VERSION = "1.3.1"
+APP_VERSION = __version__
 
 
 # ── Dark/light detection ──────────────────────────────────────────────────────

@@ -558,7 +558,7 @@
       <div class="step">
         <div class="step-num">Step 1</div>
         <div class="step-title">Install</div>
-        <p>Homebrew is the easiest way. Or use <a href="#install">pipx or pip</a>.</p>
+        <p>Homebrew is the easiest way. Or <a href="#install">build from source</a>.</p>
         <pre><code>brew install gfreedman/mactuner/mactuner</code></pre>
       </div>
       <div class="step">
@@ -581,24 +581,19 @@
 <section id="install">
   <div class="wrap">
     <h2>Install</h2>
-    <div class="install-grid">
+    <div class="install-grid" style="grid-template-columns:1fr 1fr">
       <div class="install-opt">
-        <div class="install-label">Homebrew <span class="badge">easiest</span></div>
-        <pre><code>brew tap gfreedman/mactuner
-brew install mactuner</code></pre>
+        <div class="install-label">Homebrew <span class="badge">recommended</span></div>
+        <pre><code>brew install gfreedman/mactuner/mactuner</code></pre>
       </div>
       <div class="install-opt">
-        <div class="install-label">pipx</div>
-        <pre><code>pipx install mactuner</code></pre>
-        <p class="opt-note">Good if you use Python tools. Keeps mactuner isolated.</p>
-      </div>
-      <div class="install-opt">
-        <div class="install-label">pip</div>
-        <pre><code>pip3 install --user mactuner</code></pre>
-        <p class="opt-note">Works wherever Python 3.10+ is installed.</p>
+        <div class="install-label">From source</div>
+        <pre><code>git clone https://github.com/gfreedman/mac_tuner
+cd mac_tuner &amp;&amp; bash install.sh</code></pre>
+        <p class="opt-note">Requires Python 3.10+ and pipx or pip.</p>
       </div>
     </div>
-    <p class="note">Requires macOS 13 Ventura or later · Python 3.10+ · Intel and Apple Silicon</p>
+    <p class="note">Requires macOS 13 Ventura or later · Intel and Apple Silicon</p>
   </div>
 </section>
 
@@ -606,7 +601,7 @@ brew install mactuner</code></pre>
 <section id="uninstall">
   <div class="wrap">
     <h2>Uninstall</h2>
-    <div class="install-grid">
+    <div class="install-grid" style="grid-template-columns:1fr 1fr">
       <div class="install-opt">
         <div class="install-label">Homebrew</div>
         <pre><code>brew uninstall mactuner
@@ -614,17 +609,11 @@ brew untap gfreedman/mactuner</code></pre>
         <p class="opt-note">The untap line is optional — removes the tap entirely.</p>
       </div>
       <div class="install-opt">
-        <div class="install-label">pipx</div>
-        <pre><code>pipx uninstall mactuner</code></pre>
-      </div>
-      <div class="install-opt">
-        <div class="install-label">pip</div>
-        <pre><code>pip3 uninstall mactuner</code></pre>
+        <div class="install-label">Remove saved config</div>
+        <pre><code>rm -rf ~/.config/mactuner</code></pre>
+        <p class="opt-note">Clears first-run flag, scan history, and MDM notice. Does not affect system settings changed via <code>--fix</code>.</p>
       </div>
     </div>
-    <p class="note">To also remove saved config and scan history (any install method):<br>
-    <code style="font-size:.85em;background:var(--bg-inset);padding:2px 6px;border-radius:4px;">rm -rf ~/.config/mactuner</code><br>
-    This clears the first-run flag, last scan summary, and MDM notice history. It does not affect any system settings changed via <code style="font-size:.85em;background:var(--bg-inset);padding:2px 6px;border-radius:4px;">--fix</code>.</p>
   </div>
 </section>
 
