@@ -65,6 +65,12 @@ _MDM_FLAG = Path.home() / ".config" / "macaudit" / ".mdm_warned"
     default=False,
     help="With --fix: automatically apply all safe AUTO fixes without prompting for each one.",
 )
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="With --fix: walk through the fix flow without executing any changes.",
+)
 # Skip prompts
 @click.option("--yes", "-y", is_flag=True, default=False,
               help="Skip the pre-scan confirmation prompt.")
@@ -106,6 +112,7 @@ def cli(
     quiet: bool,
     fix: bool,
     auto: bool,
+    dry_run: bool,
     yes: bool,
     fail_on_critical: bool,
     check_shell_secrets: bool,
@@ -133,6 +140,11 @@ def cli(
             from macaudit.ui.welcome import show_welcome
             show_welcome(console, first_run=False)
         return
+
+    # ── Validate --dry-run requires --fix ─────────────────────────────────────
+    if dry_run and not fix:
+        console.print("[red]Error:[/red] --dry-run requires --fix.")
+        raise SystemExit(1)
 
     # ── Resolve category filters (needed for mode before header) ──────────────
     only_cats = {c.strip().lower() for c in only.split(",")} if only else None
@@ -226,7 +238,7 @@ def cli(
     # ── Fix mode ──────────────────────────────────────────────────────────────
     if fix:
         from macaudit.fixer.runner import run_fix_session
-        run_fix_session(results, console, auto=auto)
+        run_fix_session(results, console, auto=auto, dry_run=dry_run)
 
     # ── Exit code contract ────────────────────────────────────────────────────
     if fail_on_critical:

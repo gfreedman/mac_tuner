@@ -67,6 +67,7 @@ def run_fix_session(
     results: list[CheckResult],
     console: Console,
     auto: bool = False,
+    dry_run: bool = False,
 ) -> None:
     """
     Run the interactive fix session.
@@ -75,6 +76,7 @@ def run_fix_session(
         results: All check results from the scan.
         console: Rich Console (shared with rest of tool).
         auto:    If True, apply reversible AUTO fixes without interactive menu or per-fix prompts.
+        dry_run: If True, walk through the fix flow without executing any changes.
     """
     fixable = _get_fixable(results)
 
@@ -86,17 +88,19 @@ def run_fix_session(
         console.print()
         return
 
-    _print_fix_mode_panel(fixable, console)
+    _print_fix_mode_panel(fixable, console, dry_run=dry_run)
 
     if auto:
-        _run_auto_mode(fixable, console)
+        _run_auto_mode(fixable, console, dry_run=dry_run)
     else:
-        _run_interactive_mode(fixable, console)
+        _run_interactive_mode(fixable, console, dry_run=dry_run)
 
 
 # ── Interactive mode ──────────────────────────────────────────────────────────
 
-def _run_interactive_mode(fixable: list[CheckResult], console: Console) -> None:
+def _run_interactive_mode(
+    fixable: list[CheckResult], console: Console, dry_run: bool = False,
+) -> None:
     """Pure sequential 1:1 loop — full context card, approve inline, run, next."""
     applied = skipped = 0
     total = len(fixable)
@@ -110,7 +114,7 @@ def _run_interactive_mode(fixable: list[CheckResult], console: Console) -> None:
                 answer = input().strip().lower()
             except (KeyboardInterrupt, EOFError):
                 console.print("\n\n  [dim]Fix mode cancelled.[/dim]\n")
-                _print_session_summary(console, applied, skipped, total)
+                _print_session_summary(console, applied, skipped, total, dry_run=dry_run)
                 return
             if answer not in ("y", "yes"):
                 console.print("  [dim]Skipped.[/dim]\n")
@@ -122,24 +126,31 @@ def _run_interactive_mode(fixable: list[CheckResult], console: Console) -> None:
                 answer = input().strip().lower()
             except (KeyboardInterrupt, EOFError):
                 console.print("\n\n  [dim]Fix mode cancelled.[/dim]\n")
-                _print_session_summary(console, applied, skipped, total)
+                _print_session_summary(console, applied, skipped, total, dry_run=dry_run)
                 return
             if answer in ("s", "skip", "n", "no"):
                 console.print("  [dim]Skipped.[/dim]\n")
                 skipped += 1
                 continue
 
+        if dry_run:
+            console.print("  [dim]Skipped (dry run)[/dim]\n")
+            applied += 1
+            continue
+
         console.print()
         success = _dispatch(result, console)
         applied += 1 if success else 0
         skipped += 0 if success else 1
 
-    _print_session_summary(console, applied, skipped, total)
+    _print_session_summary(console, applied, skipped, total, dry_run=dry_run)
 
 
 # ── Auto mode ─────────────────────────────────────────────────────────────────
 
-def _run_auto_mode(fixable: list[CheckResult], console: Console) -> None:
+def _run_auto_mode(
+    fixable: list[CheckResult], console: Console, dry_run: bool = False,
+) -> None:
     """Apply all safe AUTO fixes without interactive menu or per-fix prompts."""
     safe = [
         r for r in fixable
@@ -155,11 +166,19 @@ def _run_auto_mode(fixable: list[CheckResult], console: Console) -> None:
         )
         return
 
+    verb = "Would apply" if dry_run else "Applying"
     console.print(
-        f"  Applying [bold]{len(safe)}[/bold] safe, reversible "
+        f"  {verb} [bold]{len(safe)}[/bold] safe, reversible "
         f"AUTO fix{'es' if len(safe) != 1 else ''}…"
     )
     console.print()
+
+    if dry_run:
+        for result in safe:
+            console.print(f"  [dim]•[/dim] {result.name}")
+        console.print()
+        _print_session_summary(console, len(safe), 0, len(safe), dry_run=True)
+        return
 
     applied = skipped = 0
     for result in safe:
@@ -286,7 +305,9 @@ def _print_fix_card(
     )
 
 
-def _print_fix_mode_panel(fixable: list[CheckResult], console: Console) -> None:
+def _print_fix_mode_panel(
+    fixable: list[CheckResult], console: Console, dry_run: bool = False,
+) -> None:
     """Print the Fix Mode header panel — count, breakdown, one-line instruction."""
     counts: dict[str, int] = {}
     for r in fixable:
@@ -304,6 +325,8 @@ def _print_fix_mode_panel(fixable: list[CheckResult], console: Console) -> None:
     body.append(f"\n  Found {len(fixable)} fixable item{'s' if len(fixable) != 1 else ''}:  ")
     body.append("  ".join(parts))
     body.append("\n\n  Each fix is shown one at a time. Approve or skip before anything runs.\n", style=COLOR_DIM)
+    if dry_run:
+        body.append("  [DRY RUN] No changes will be made.\n", style="bold yellow")
 
     console.print()
     console.print(
@@ -318,11 +341,20 @@ def _print_session_summary(
     applied: int,
     skipped: int,
     total: int,
+    dry_run: bool = False,
 ) -> None:
     """Print a Panel summarising the fix session."""
     body = Text()
 
-    if applied == 0:
+    if dry_run:
+        if applied == 0:
+            body.append("\n  No fixes would be applied.", style=COLOR_DIM)
+        else:
+            s = "es" if applied != 1 else ""
+            body.append(f"\n  {applied} fix{s} would be applied", style="bold bright_green")
+            if skipped:
+                body.append(f"   ·   {skipped} skipped", style=COLOR_DIM)
+    elif applied == 0:
         body.append("\n  No fixes were applied.", style=COLOR_DIM)
     else:
         s = "es" if applied != 1 else ""
@@ -334,7 +366,7 @@ def _print_session_summary(
     body.append("macaudit", style=f"bold {COLOR_TEXT}")
     body.append("  again to rescan and confirm changes took effect.\n", style=COLOR_DIM)
 
-    border = "bright_green" if applied > 0 else "dim"
+    border = "bright_green" if applied > 0 and not dry_run else "dim"
 
     console.print()
     console.print(
