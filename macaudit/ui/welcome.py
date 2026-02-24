@@ -106,7 +106,7 @@ def show_welcome(console: Console, first_run: bool = False) -> bool:
 
     if first_run:
         console.print(
-            "  [dim]Press [bold text]↵[/bold text] to start your first scan  "
+            "  [dim]Press [bold text]↵ \\[ENTER][/bold text] to start your first scan  "
             "·  [bold text]Ctrl-C[/bold text] to exit[/dim]"
         )
         try:

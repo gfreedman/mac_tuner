@@ -4,6 +4,7 @@ Mac Audit — entry point and orchestrator.
 CLI flags, scan loop, result collection, report dispatch.
 """
 
+import shutil
 import time
 from pathlib import Path
 from typing import Optional
@@ -183,7 +184,7 @@ def cli(
         console.print(f"  [dim]Ready to run [bold text]{n}[/bold text] checks — ~10–15 seconds.[/dim]")
         console.print()
         console.print(
-            "  [dim]Press [bold text]↵[/bold text] to begin  "
+            "  [dim]Press [bold text]↵ \\[ENTER][/bold text] to begin  "
             "·  [bold text]Ctrl-C[/bold text] to cancel[/dim]"
         )
         try:
