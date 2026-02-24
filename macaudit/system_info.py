@@ -84,6 +84,7 @@ _MACOS_NAMES: dict[int, str] = {
 
 
 def _macos_name(major: int) -> str:
+    """Map a macOS major version number to its marketing name (e.g. 15 → 'Sequoia')."""
     # Known names first; for future versions fall back gracefully
     name = _MACOS_NAMES.get(major)
     if name:

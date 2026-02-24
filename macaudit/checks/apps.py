@@ -17,6 +17,8 @@ from macaudit.checks.base import BaseCheck, CheckResult
 # ── App Store updates ─────────────────────────────────────────────────────────
 
 class AppStoreUpdatesCheck(BaseCheck):
+    """Check for pending Mac App Store updates via the mas CLI tool."""
+
     id = "app_store_updates"
     name = "App Store Updates"
     category = "apps"
@@ -48,6 +50,7 @@ class AppStoreUpdatesCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Run `mas outdated` and count lines; each line is an app with a pending update."""
         rc, out, err = self.shell(["mas", "outdated"], timeout=30)
 
         # mas exits 0 whether or not there are updates
@@ -76,6 +79,8 @@ class AppStoreUpdatesCheck(BaseCheck):
 # ── iCloud status ─────────────────────────────────────────────────────────────
 
 class iCloudStatusCheck(BaseCheck):
+    """Verify iCloud account is signed in and Drive is syncing."""
+
     id = "icloud_status"
     name = "iCloud Sign-in"
     category = "apps"
@@ -105,6 +110,7 @@ class iCloudStatusCheck(BaseCheck):
     fix_time_estimate = "~2 minutes"
 
     def run(self) -> CheckResult:
+        """Read MobileMeAccounts plist for account presence and check ~/Library/Mobile Documents for active sync."""
         # Check MobileMeAccounts preferences — present when iCloud account is configured
         rc, out, _ = self.shell(
             ["defaults", "read", "MobileMeAccounts", "Accounts"]
@@ -128,6 +134,8 @@ class iCloudStatusCheck(BaseCheck):
 # ── Login items (startup apps) ────────────────────────────────────────────────
 
 class LoginItemsCheck(BaseCheck):
+    """Count startup login items via System Events AppleScript and flag excessive counts."""
+
     id = "login_items"
     name = "Login Items"
     category = "apps"
@@ -156,6 +164,7 @@ class LoginItemsCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Query login items via osascript/System Events; warn if count exceeds 15."""
         # Query actual Login Items via System Events — the same list shown in
         # System Settings → General → Login Items. This is far more accurate
         # than launchctl list, which over-counts by including all launchd session

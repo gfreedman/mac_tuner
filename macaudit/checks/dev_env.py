@@ -24,6 +24,8 @@ from macaudit.checks.base import BaseCheck, CheckResult
 # ── Xcode Command Line Tools ──────────────────────────────────────────────────
 
 class XcodeToolsCheck(BaseCheck):
+    """Verify Xcode Command Line Tools are installed and current."""
+
     id = "xcode_cli_tools"
     name = "Xcode CLI Tools"
     category = "dev_env"
@@ -81,6 +83,8 @@ class XcodeToolsCheck(BaseCheck):
 # ── Python PATH conflicts ─────────────────────────────────────────────────────
 
 class PythonConflictsCheck(BaseCheck):
+    """Detect multiple python3 binaries in PATH that could cause version and pip conflicts."""
+
     id = "python_conflicts"
     name = "Python PATH Conflicts"
     category = "dev_env"
@@ -117,6 +121,7 @@ class PythonConflictsCheck(BaseCheck):
     fix_time_estimate = "~10 minutes"
 
     def run(self) -> CheckResult:
+        """Run `which -a python3` and warn if more than one unique path is found."""
         rc, out, _ = self.shell(["which", "-a", "python3"])
         if rc != 0 or not out.strip():
             return self._info("python3 not found in PATH")
@@ -140,6 +145,8 @@ class PythonConflictsCheck(BaseCheck):
 # ── Conda ─────────────────────────────────────────────────────────────────────
 
 class CondaCheck(BaseCheck):
+    """Detect conda installations and warn if auto_activate_base is enabled."""
+
     id = "conda_detected"
     name = "Conda / Anaconda"
     category = "dev_env"
@@ -182,6 +189,7 @@ class CondaCheck(BaseCheck):
     ]
 
     def run(self) -> CheckResult:
+        """Scan well-known conda directories and PATH; check auto_activate_base config if present."""
         home = os.path.expanduser("~")
         found_paths = []
 
@@ -225,6 +233,8 @@ class CondaCheck(BaseCheck):
 # ── Node version managers ─────────────────────────────────────────────────────
 
 class NodeManagerCheck(BaseCheck):
+    """Detect Node.js version managers (nvm, volta, fnm, n) and warn if multiple are installed."""
+
     id = "node_managers"
     name = "Node Version Manager"
     category = "dev_env"
@@ -257,6 +267,7 @@ class NodeManagerCheck(BaseCheck):
     fix_time_estimate = "~10 minutes"
 
     def run(self) -> CheckResult:
+        """Check ~/.nvm, ~/.volta directories and PATH for fnm/n; report current Node version."""
         home = os.path.expanduser("~")
         found = []
 
@@ -302,6 +313,8 @@ class NodeManagerCheck(BaseCheck):
 # ── Ruby PATH conflicts ───────────────────────────────────────────────────────
 
 class RubyConflictsCheck(BaseCheck):
+    """Check whether system Ruby (/usr/bin/ruby) is first in PATH, causing gem install issues."""
+
     id = "ruby_conflicts"
     name = "Ruby PATH"
     category = "dev_env"
@@ -338,6 +351,7 @@ class RubyConflictsCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Run `which -a ruby` and warn if /usr/bin/ruby precedes Homebrew or rbenv ruby."""
         rc, out, _ = self.shell(["which", "-a", "ruby"])
         if rc != 0 or not out.strip():
             return self._info("ruby not found in PATH")
@@ -376,6 +390,8 @@ class RubyConflictsCheck(BaseCheck):
 # ── Git config ────────────────────────────────────────────────────────────────
 
 class GitConfigCheck(BaseCheck):
+    """Verify git global config has user identity set and credential.helper is not 'store' (plaintext)."""
+
     id = "git_config"
     name = "Git Global Config"
     category = "dev_env"
@@ -410,6 +426,7 @@ class GitConfigCheck(BaseCheck):
     fix_time_estimate = "~2 minutes"
 
     def run(self) -> CheckResult:
+        """Parse `git config --global -l` for user.name, user.email, and credential.helper."""
         if not self.has_tool("git"):
             return self._skip("git not installed")
 

@@ -18,6 +18,8 @@ from macaudit.checks.base import BaseCheck, CheckResult
 # ── Memory pressure ───────────────────────────────────────────────────────────
 
 class MemoryPressureCheck(BaseCheck):
+    """Report macOS memory pressure level (green/yellow/red) via the memory_pressure CLI."""
+
     id = "memory_pressure"
     name = "Memory Pressure"
     category = "memory"
@@ -50,6 +52,7 @@ class MemoryPressureCheck(BaseCheck):
     fix_time_estimate = "~2 minutes"
 
     def run(self) -> CheckResult:
+        """Run `memory_pressure` and parse the output for Normal/Warning/Critical level."""
         rc, out, _ = self.shell(["memory_pressure"])
         if rc != 0 or not out:
             return self._info("Could not read memory pressure")
@@ -93,6 +96,8 @@ class MemoryPressureCheck(BaseCheck):
 # ── Swap usage ────────────────────────────────────────────────────────────────
 
 class SwapUsageCheck(BaseCheck):
+    """Check virtual memory swap usage via sysctl vm.swapusage."""
+
     id = "swap_usage"
     name = "Swap Usage"
     category = "memory"
@@ -119,6 +124,7 @@ class SwapUsageCheck(BaseCheck):
     fix_time_estimate = "~1 minute"
 
     def run(self) -> CheckResult:
+        """Parse `sysctl vm.swapusage` for the 'used' value; threshold at 1/4/8 GB."""
         rc, out, _ = self.shell(["sysctl", "-n", "vm.swapusage"])
         if rc != 0 or not out:
             return self._info("Could not read swap usage")
@@ -145,6 +151,8 @@ class SwapUsageCheck(BaseCheck):
 # ── Top CPU consumers ─────────────────────────────────────────────────────────
 
 class TopCPUCheck(BaseCheck):
+    """List the top 5 CPU-consuming processes and flag any above 90%."""
+
     id = "top_cpu"
     name = "Top CPU Consumers"
     category = "memory"
@@ -176,6 +184,7 @@ class TopCPUCheck(BaseCheck):
     fix_time_estimate = "~2 minutes"
 
     def run(self) -> CheckResult:
+        """Run `ps -eo pid,pcpu,pmem,comm`, sort by CPU%, and warn if top process >=90%."""
         rc, out, _ = self.shell(
             ["ps", "-eo", "pid,pcpu,pmem,comm"],
             timeout=10,
@@ -211,6 +220,8 @@ class TopCPUCheck(BaseCheck):
 # ── Top memory consumers ──────────────────────────────────────────────────────
 
 class TopMemoryCheck(BaseCheck):
+    """List the top 5 memory-consuming processes for visibility into RAM usage."""
+
     id = "top_memory"
     name = "Top Memory Consumers"
     category = "memory"
@@ -242,6 +253,7 @@ class TopMemoryCheck(BaseCheck):
     fix_time_estimate = "~2 minutes"
 
     def run(self) -> CheckResult:
+        """Run `ps -eo pid,pcpu,pmem,comm`, sort by memory%, and report the top 3."""
         rc, out, _ = self.shell(
             ["ps", "-eo", "pid,pcpu,pmem,comm"],
             timeout=10,

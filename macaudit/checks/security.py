@@ -36,6 +36,8 @@ _AUTHORIZED_KEYS = _SSH_DIR / "authorized_keys"
 # ── Checks ────────────────────────────────────────────────────────────────────
 
 class AutoLoginCheck(BaseCheck):
+    """Detect if auto-login is enabled, bypassing the login screen."""
+
     id = "auto_login"
     name = "Auto-Login"
     category = "security"
@@ -61,6 +63,7 @@ class AutoLoginCheck(BaseCheck):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Read com.apple.loginwindow autoLoginUser via defaults; missing key means disabled."""
         rc, stdout, _ = self.shell(
             [
                 "defaults",
@@ -85,6 +88,8 @@ class AutoLoginCheck(BaseCheck):
 
 
 class SSHAuthorizedKeysCheck(BaseCheck):
+    """Check for SSH authorized keys that grant passwordless remote access."""
+
     id = "ssh_authorized_keys"
     name = "SSH Authorized Keys"
     category = "security"
@@ -115,6 +120,11 @@ class SSHAuthorizedKeysCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Query systemsetup for SSH status, then read ~/.ssh/authorized_keys.
+
+        Counts non-comment key lines; warns if more than 5 keys are present.
+        Returns pass if the file is missing or empty.
+        """
         # Also check if Remote Login (SSH server) is even running
         rc_ssh, ssh_out, _ = self.shell(
             ["systemsetup", "-getremotelogin"], timeout=5
@@ -158,6 +168,8 @@ class SSHAuthorizedKeysCheck(BaseCheck):
 
 
 class SSHKeyStrengthCheck(BaseCheck):
+    """Verify that local SSH keys use strong algorithms (Ed25519/ECDSA, not DSA)."""
+
     id = "ssh_key_strength"
     name = "SSH Key Strength"
     category = "security"
@@ -187,6 +199,7 @@ class SSHKeyStrengthCheck(BaseCheck):
     fix_time_estimate = "~10 minutes"
 
     def run(self) -> CheckResult:
+        """Scan ~/.ssh/*.pub and authorized_keys for DSA keys; flag RSA as upgrade candidates."""
         if not _SSH_DIR.exists():
             return self._skip("No ~/.ssh directory found")
 
@@ -241,6 +254,8 @@ class SSHKeyStrengthCheck(BaseCheck):
 
 
 class LaunchAgentsCheck(BaseCheck):
+    """Scan launch agent directories for non-Apple and suspicious persistence entries."""
+
     id = "launch_agents"
     name = "Launch Agents & Daemons"
     category = "security"
@@ -272,6 +287,7 @@ class LaunchAgentsCheck(BaseCheck):
     fix_time_estimate = "10–30 minutes"
 
     def run(self) -> CheckResult:
+        """Glob *.plist in user and system LaunchAgent/Daemon dirs; flag non-Apple entries."""
         non_apple: list[str] = []
         suspicious: list[str] = []  # in places they shouldn't be
 
@@ -318,6 +334,8 @@ class LaunchAgentsCheck(BaseCheck):
 
 
 class EtcHostsCheck(BaseCheck):
+    """Check /etc/hosts for non-standard entries that could redirect traffic."""
+
     id = "etc_hosts"
     name = "/etc/hosts Entries"
     category = "security"
@@ -348,6 +366,7 @@ class EtcHostsCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Parse /etc/hosts; flag entries with non-loopback IPs pointing to non-standard hostnames."""
         hosts_path = Path("/etc/hosts")
         if not hosts_path.exists():
             return self._info("/etc/hosts not found")
@@ -391,6 +410,8 @@ class EtcHostsCheck(BaseCheck):
 
 
 class SharingServicesCheck(BaseCheck):
+    """Detect active sharing services (SSH, Screen Sharing, File Sharing)."""
+
     id = "sharing_services"
     name = "Sharing Services"
     category = "security"
@@ -415,6 +436,7 @@ class SharingServicesCheck(BaseCheck):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Query systemsetup and launchctl to detect SSH, Screen Sharing, and SMB services."""
         active: list[str] = []
 
         # Remote Login (SSH)
@@ -447,6 +469,8 @@ class SharingServicesCheck(BaseCheck):
 
 
 class ActivationLockCheck(BaseCheck):
+    """Check whether Find My / Activation Lock is configured via NVRAM token."""
+
     id = "activation_lock"
     name = "Activation Lock"
     category = "security"
@@ -478,6 +502,7 @@ class ActivationLockCheck(BaseCheck):
     fix_time_estimate = "Varies"
 
     def run(self) -> CheckResult:
+        """Read nvram fmm-mobileme-token-FMM; a long token indicates Find My is active."""
         # nvram fmm-mobileme-token-FMM — non-empty = Find My is configured
         rc, stdout, _ = self.shell(
             ["nvram", "fmm-mobileme-token-FMM"], timeout=5
@@ -505,6 +530,8 @@ class ActivationLockCheck(BaseCheck):
 
 
 class MDMProfilesCheck(BaseCheck):
+    """Detect installed MDM and configuration profiles that may alter security settings."""
+
     id = "mdm_profiles"
     name = "MDM / Configuration Profiles"
     category = "security"
@@ -532,6 +559,7 @@ class MDMProfilesCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Run profiles list; count profile entries and warn if any are installed."""
         rc, stdout, stderr = self.shell(["profiles", "list"], timeout=8)
 
         if rc != 0:
@@ -560,6 +588,8 @@ class MDMProfilesCheck(BaseCheck):
 
 
 class SystemRootCACheck(BaseCheck):
+    """Audit System keychain for unexpected root CAs or traffic-inspection certificates."""
+
     id = "system_root_cas"
     name = "System Root Certificates"
     category = "security"
@@ -599,6 +629,7 @@ class SystemRootCACheck(BaseCheck):
     ]
 
     def run(self) -> CheckResult:
+        """Run security find-certificate on System.keychain; match cert names against known MITM indicators."""
         rc, out, _ = self.shell(
             ["security", "find-certificate", "-a", "/Library/Keychains/System.keychain"]
         )
@@ -657,6 +688,8 @@ class SystemRootCACheck(BaseCheck):
 
 
 class GuestAccountCheck(BaseCheck):
+    """Detect if the macOS Guest account is enabled."""
+
     id = "guest_account"
     name = "Guest Account"
     category = "security"
@@ -682,6 +715,7 @@ class GuestAccountCheck(BaseCheck):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Read GuestEnabled from com.apple.loginwindow via defaults."""
         rc, out, _ = self.shell(
             ["defaults", "read", "/Library/Preferences/com.apple.loginwindow", "GuestEnabled"]
         )
@@ -694,6 +728,8 @@ class GuestAccountCheck(BaseCheck):
 
 
 class LoginHooksCheck(BaseCheck):
+    """Detect legacy login/logout hooks that run scripts as root at session events."""
+
     id = "login_hooks"
     name = "Login/Logout Hooks"
     category = "security"
@@ -725,6 +761,7 @@ class LoginHooksCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Read LoginHook and LogoutHook from com.apple.loginwindow via defaults."""
         found: list[str] = []
         for key in ("LoginHook", "LogoutHook"):
             rc, out, _ = self.shell(
@@ -743,6 +780,8 @@ class LoginHooksCheck(BaseCheck):
 
 
 class SSHConfigCheck(BaseCheck):
+    """Check sshd_config for risky settings like password auth and root login."""
+
     id = "ssh_config"
     name = "SSH Server Config"
     category = "security"
@@ -774,6 +813,7 @@ class SSHConfigCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Parse /etc/ssh/sshd_config for PasswordAuthentication yes and PermitRootLogin; skip if SSH is off."""
         config_path = Path("/etc/ssh/sshd_config")
         if not config_path.exists():
             return self._skip("sshd_config not found")
@@ -809,6 +849,8 @@ class SSHConfigCheck(BaseCheck):
 
 
 class SystemExtensionsCheck(BaseCheck):
+    """List active system extensions and flag for review."""
+
     id = "system_extensions"
     name = "System Extensions"
     category = "security"
@@ -836,6 +878,7 @@ class SystemExtensionsCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Run systemextensionsctl list; count active/enabled extensions."""
         rc, out, _ = self.shell(["systemextensionsctl", "list"], timeout=10)
         if rc != 0 or not out.strip():
             return self._info("Could not list system extensions")
@@ -858,6 +901,8 @@ class SystemExtensionsCheck(BaseCheck):
 
 
 class CronJobsCheck(BaseCheck):
+    """Detect user cron jobs that could indicate unwanted persistence."""
+
     id = "cron_jobs"
     name = "Cron Jobs"
     category = "security"
@@ -889,6 +934,7 @@ class CronJobsCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Run crontab -l and count non-comment job lines."""
         rc, out, _ = self.shell(["crontab", "-l"])
         if rc != 0 or not out.strip():
             return self._pass("No cron jobs configured for this user")
@@ -909,6 +955,8 @@ class CronJobsCheck(BaseCheck):
 
 
 class XProtectCheck(BaseCheck):
+    """Check that XProtect malware signatures are recent (updated within 30 days)."""
+
     id = "xprotect_freshness"
     name = "XProtect Signatures"
     category = "security"
@@ -935,6 +983,7 @@ class XProtectCheck(BaseCheck):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Query pkgutil for XProtect package install date; warn if older than 30 days."""
         import time as _time
 
         rc, out, _ = self.shell(

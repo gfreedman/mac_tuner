@@ -237,6 +237,7 @@ def cli(
 # ── Mode resolution ───────────────────────────────────────────────────────────
 
 def _resolve_mode(fix: bool, only: Optional[str], skip: Optional[str]) -> str:
+    """Return the active mode string ('fix', 'targeted', or 'scan') based on CLI flags."""
     if fix:
         return "fix"
     if only or skip:
@@ -445,6 +446,7 @@ def _run_checks(checks: list, quiet: bool, as_json: bool) -> list[CheckResult]:
 # ── JSON output ───────────────────────────────────────────────────────────────
 
 def _output_json(results: list[CheckResult]) -> None:
+    """Serialize all CheckResults plus system info and health score to JSON on stdout."""
     import dataclasses
     import json
     from datetime import datetime, timezone

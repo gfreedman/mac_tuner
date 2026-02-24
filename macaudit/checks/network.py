@@ -22,6 +22,8 @@ from macaudit.checks.base import BaseCheck, CheckResult
 # ── AirDrop ───────────────────────────────────────────────────────────────────
 
 class AirDropCheck(BaseCheck):
+    """Check AirDrop discoverability setting and warn if set to Everyone."""
+
     id = "airdrop_visibility"
     name = "AirDrop Visibility"
     category = "network"
@@ -48,6 +50,7 @@ class AirDropCheck(BaseCheck):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Read com.apple.sharingd DiscoverableMode; warn if 'Everyone', pass if 'Contacts Only' or 'Off'."""
         rc, out, _ = self.shell(
             ["defaults", "read", "com.apple.sharingd", "DiscoverableMode"]
         )
@@ -69,6 +72,8 @@ class AirDropCheck(BaseCheck):
 # ── Remote Login (SSH) ────────────────────────────────────────────────────────
 
 class RemoteLoginCheck(BaseCheck):
+    """Check whether SSH remote login is enabled via systemsetup or launchctl."""
+
     id = "remote_login"
     name = "Remote Login (SSH)"
     category = "network"
@@ -95,6 +100,7 @@ class RemoteLoginCheck(BaseCheck):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Try `systemsetup -getremotelogin`; fall back to checking launchctl for sshd."""
         rc, out, _ = self.shell(["systemsetup", "-getremotelogin"])
         if rc != 0:
             # systemsetup may require sudo — try launchctl
@@ -116,6 +122,8 @@ class RemoteLoginCheck(BaseCheck):
 # ── Screen Sharing ────────────────────────────────────────────────────────────
 
 class ScreenSharingCheck(BaseCheck):
+    """Check whether Screen Sharing (VNC) is enabled via launchctl."""
+
     id = "screen_sharing"
     name = "Screen Sharing"
     category = "network"
@@ -141,6 +149,7 @@ class ScreenSharingCheck(BaseCheck):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Check launchctl for com.apple.screensharing; also probe `sharing -l` as fallback."""
         rc, out, _ = self.shell(
             ["launchctl", "list", "com.apple.screensharing"]
         )
@@ -158,6 +167,8 @@ class ScreenSharingCheck(BaseCheck):
 # ── File Sharing ──────────────────────────────────────────────────────────────
 
 class FileSharingCheck(BaseCheck):
+    """Check whether SMB or AFP file sharing daemons are running via launchctl."""
+
     id = "file_sharing"
     name = "File Sharing"
     category = "network"
@@ -184,6 +195,7 @@ class FileSharingCheck(BaseCheck):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Check launchctl for com.apple.smbd (SMB) and com.apple.AppleFileServer (AFP)."""
         # Check if smbd is running
         rc, out, _ = self.shell(["launchctl", "list", "com.apple.smbd"])
         if rc == 0:
@@ -217,6 +229,8 @@ _PRIVATE_PREFIXES = ("192.168.", "10.", "172.16.", "172.17.", "172.18.",
 
 
 class DNSCheck(BaseCheck):
+    """Parse scutil --dns for configured nameservers and flag unfamiliar public IPv4 addresses."""
+
     id = "dns_settings"
     name = "DNS Configuration"
     category = "network"
@@ -245,6 +259,7 @@ class DNSCheck(BaseCheck):
     fix_time_estimate = "~2 minutes"
 
     def run(self) -> CheckResult:
+        """Run `scutil --dns`, extract nameservers, and warn if any IPv4 address is not in the known-good list."""
         rc, out, _ = self.shell(["scutil", "--dns"])
         if rc != 0 or not out:
             return self._info("Could not read DNS configuration")
@@ -281,6 +296,8 @@ class DNSCheck(BaseCheck):
 # ── Proxy check ───────────────────────────────────────────────────────────────
 
 class ProxyCheck(BaseCheck):
+    """Detect active HTTP/HTTPS proxies on the default network interface."""
+
     id = "proxy_settings"
     name = "HTTP/HTTPS Proxy"
     category = "network"
@@ -308,6 +325,7 @@ class ProxyCheck(BaseCheck):
     fix_time_estimate = "~2 minutes"
 
     def run(self) -> CheckResult:
+        """Detect default interface via `route get default`, then query networksetup for web proxy settings."""
         # Detect active network interface
         rc, route_out, _ = self.shell(["route", "get", "default"])
         iface = "Wi-Fi"  # Default fallback
@@ -357,6 +375,8 @@ class ProxyCheck(BaseCheck):
 # ── Saved Wi-Fi networks ──────────────────────────────────────────────────────
 
 class SavedWifiCheck(BaseCheck):
+    """Count saved Wi-Fi networks and warn if the list is large enough to risk auto-join attacks."""
+
     id = "saved_wifi"
     name = "Saved Wi-Fi Networks"
     category = "network"
@@ -383,6 +403,7 @@ class SavedWifiCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Discover Wi-Fi interface via networksetup, list preferred networks, and warn if count >20/30."""
         # Find the actual Wi-Fi interface name rather than assuming en0/en1.
         # 'networksetup -listallhardwareports' reliably maps human names to BSDs.
         wifi_iface: str | None = None
@@ -436,6 +457,8 @@ class SavedWifiCheck(BaseCheck):
 # ── Bluetooth ─────────────────────────────────────────────────────────────────
 
 class BluetoothCheck(BaseCheck):
+    """Check Bluetooth power state and whether Always Discoverable mode is enabled."""
+
     id = "bluetooth"
     name = "Bluetooth"
     category = "network"
@@ -461,6 +484,7 @@ class BluetoothCheck(BaseCheck):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Read ControllerPowerState from Bluetooth plist; if on, check SPBluetoothDataType for discoverable mode."""
         # ControllerPowerState: 1 = on, 0 = off
         rc, out, _ = self.shell(
             ["defaults", "read", "/Library/Preferences/com.apple.Bluetooth",
@@ -490,6 +514,8 @@ class BluetoothCheck(BaseCheck):
 # ── Listening ports ───────────────────────────────────────────────────────────
 
 class ListeningPortsCheck(BaseCheck):
+    """Enumerate TCP and UDP listening ports via lsof and flag unexpected non-system listeners."""
+
     id = "listening_ports"
     name = "Listening Network Ports"
     category = "network"
@@ -582,6 +608,7 @@ class ListeningPortsCheck(BaseCheck):
         return listeners
 
     def run(self) -> CheckResult:
+        """Run lsof for TCP LISTEN and UDP sockets; compare ports against expected system set."""
         # TCP listeners
         rc_tcp, out_tcp, _ = self.shell(
             ["lsof", "-i", "TCP", "-sTCP:LISTEN", "-n", "-P"], timeout=12
@@ -635,6 +662,8 @@ class ListeningPortsCheck(BaseCheck):
 # ── Internet Sharing ──────────────────────────────────────────────────────────
 
 class InternetSharingCheck(BaseCheck):
+    """Check whether Internet Sharing (NAT hotspot) is enabled via the com.apple.nat plist."""
+
     id = "internet_sharing"
     name = "Internet Sharing"
     category = "network"
@@ -660,6 +689,7 @@ class InternetSharingCheck(BaseCheck):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Read com.apple.nat plist for 'Enabled = 1'; also check kextstat for the NAT kernel extension."""
         # Internet Sharing is controlled via the NAT plist
         rc, out, _ = self.shell(
             [

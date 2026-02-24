@@ -53,6 +53,8 @@ def _parse_update_lines(output: str) -> list[str]:
 # ── Checks ────────────────────────────────────────────────────────────────────
 
 class MacOSVersionCheck(BaseCheck):
+    """Verify macOS is on a supported, current version."""
+
     id = "macos_version"
     name = "macOS Version"
     category = "system"
@@ -78,6 +80,7 @@ class MacOSVersionCheck(BaseCheck):
     fix_time_estimate = "20–60 minutes"
 
     def run(self) -> CheckResult:
+        """Use cached softwareupdate -l output to detect pending macOS updates; flag major versions below 13 as unsupported."""
         from macaudit.system_info import MACOS_VERSION_STRING
 
         rc, output = _fetch_software_updates()
@@ -116,6 +119,8 @@ class MacOSVersionCheck(BaseCheck):
 
 
 class PendingUpdatesCheck(BaseCheck):
+    """Check whether any software updates are waiting to be installed."""
+
     id = "pending_updates"
     name = "Pending Software Updates"
     category = "system"
@@ -139,6 +144,10 @@ class PendingUpdatesCheck(BaseCheck):
     fix_time_estimate = "5–60 minutes depending on updates"
 
     def run(self) -> CheckResult:
+        """Parse cached softwareupdate -l output for update item lines.
+
+        Counts pending updates and flags when security/recommended updates are present.
+        """
         rc, output = _fetch_software_updates()
 
         if rc == -1:
@@ -170,6 +179,8 @@ class PendingUpdatesCheck(BaseCheck):
 
 
 class SIPCheck(BaseCheck):
+    """Verify that System Integrity Protection is fully enabled."""
+
     id = "sip_status"
     name = "System Integrity Protection (SIP)"
     category = "system"
@@ -202,6 +213,7 @@ class SIPCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Run csrutil status and parse output for enabled, disabled, or custom configuration states."""
         rc, stdout, stderr = self.shell(["csrutil", "status"])
 
         if rc != 0 or not stdout:
@@ -231,6 +243,8 @@ class SIPCheck(BaseCheck):
 
 
 class FileVaultCheck(BaseCheck):
+    """Verify that FileVault full-disk encryption is enabled."""
+
     id = "filevault"
     name = "FileVault Disk Encryption"
     category = "system"
@@ -257,6 +271,7 @@ class FileVaultCheck(BaseCheck):
     fix_time_estimate = "Hours to encrypt (runs in background)"
 
     def run(self) -> CheckResult:
+        """Run fdesetup status to check encryption state; detect in-progress conversions."""
         rc, stdout, stderr = self.shell(["fdesetup", "status"])
 
         if rc != 0:
@@ -282,6 +297,8 @@ class FileVaultCheck(BaseCheck):
 
 
 class FirewallCheck(BaseCheck):
+    """Verify that the macOS application firewall (ALF) is enabled."""
+
     id = "firewall"
     name = "Application Firewall"
     category = "system"
@@ -311,6 +328,10 @@ class FirewallCheck(BaseCheck):
     requires_sudo = True
 
     def run(self) -> CheckResult:
+        """Call socketfilterfw --getglobalstate to read firewall status.
+
+        Skips gracefully if the socketfilterfw binary is not present.
+        """
         if not Path(_FIREWALL).exists():
             return self._skip("socketfilterfw not found")
 
@@ -334,6 +355,8 @@ class FirewallCheck(BaseCheck):
 
 
 class FirewallStealthCheck(BaseCheck):
+    """Verify that the firewall stealth mode is enabled to hide from network probes."""
+
     id = "firewall_stealth"
     name = "Firewall Stealth Mode"
     category = "system"
@@ -359,6 +382,10 @@ class FirewallStealthCheck(BaseCheck):
     requires_sudo = True
 
     def run(self) -> CheckResult:
+        """Call socketfilterfw --getstealthmode to check stealth status.
+
+        Handles both modern ('is on/off') and older ('enabled/disabled') output formats.
+        """
         if not Path(_FIREWALL).exists():
             return self._skip("socketfilterfw not found")
 
@@ -384,6 +411,8 @@ class FirewallStealthCheck(BaseCheck):
 
 
 class GatekeeperCheck(BaseCheck):
+    """Verify that Gatekeeper app signature verification is enabled."""
+
     id = "gatekeeper"
     name = "Gatekeeper"
     category = "system"
@@ -410,6 +439,7 @@ class GatekeeperCheck(BaseCheck):
     requires_sudo = True
 
     def run(self) -> CheckResult:
+        """Run spctl --status to determine if Gatekeeper assessments are enabled or disabled."""
         rc, stdout, stderr = self.shell(["spctl", "--status"])
 
         if rc != 0 and not stdout:
@@ -430,6 +460,8 @@ class GatekeeperCheck(BaseCheck):
 
 
 class TimeMachineCheck(BaseCheck):
+    """Check that Time Machine backups are recent and active."""
+
     id = "time_machine"
     name = "Time Machine Backup"
     category = "system"
@@ -455,6 +487,10 @@ class TimeMachineCheck(BaseCheck):
     fix_time_estimate = "Varies — depends on backup size"
 
     def run(self) -> CheckResult:
+        """Run tmutil latestbackup and parse the backup folder timestamp to compute age in days.
+
+        Warns if no backup exists or last backup is older than 7 days.
+        """
         rc, stdout, stderr = self.shell(["tmutil", "latestbackup"])
 
         if rc != 0 or not stdout.strip():
@@ -498,6 +534,8 @@ class TimeMachineCheck(BaseCheck):
 
 
 class AutoUpdateCheck(BaseCheck):
+    """Verify that automatic security and system update settings are enabled."""
+
     id = "auto_update"
     name = "Automatic Security Updates"
     category = "system"
@@ -525,6 +563,10 @@ class AutoUpdateCheck(BaseCheck):
     _PREF_DOMAIN = "/Library/Preferences/com.apple.SoftwareUpdate"
 
     def run(self) -> CheckResult:
+        """Read three keys from com.apple.SoftwareUpdate via defaults read.
+
+        A missing key means the system default (on), so only an explicit '0' is flagged.
+        """
         issues = []
 
         for key, label in [
@@ -549,6 +591,8 @@ class AutoUpdateCheck(BaseCheck):
 
 
 class ScreenLockCheck(BaseCheck):
+    """Verify that a password is required promptly after sleep or screensaver."""
+
     id = "screen_lock"
     name = "Screen Lock After Sleep"
     category = "system"
@@ -574,6 +618,10 @@ class ScreenLockCheck(BaseCheck):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Read askForPassword and askForPasswordDelay from com.apple.screensaver via defaults.
+
+        Delays over 5s trigger a warning; missing keys assume secure system defaults.
+        """
         # Check if password is required at all
         rc_req, req_out, _ = self.shell(
             ["defaults", "read", "com.apple.screensaver", "askForPassword"]
@@ -617,6 +665,8 @@ class ScreenLockCheck(BaseCheck):
 
 
 class RosettaCheck(BaseCheck):
+    """Check that Rosetta 2 is installed on Apple Silicon Macs for Intel app compatibility."""
+
     id = "rosetta"
     name = "Rosetta 2"
     category = "system"
@@ -642,6 +692,7 @@ class RosettaCheck(BaseCheck):
     fix_time_estimate = "~2 minutes"
 
     def run(self) -> CheckResult:
+        """Check for Rosetta runtime binaries on disk; fall back to arch -arch x86_64 test."""
         if not IS_APPLE_SILICON:
             return self._skip("Rosetta 2 only applies to Apple Silicon Macs")
 
@@ -664,6 +715,8 @@ class RosettaCheck(BaseCheck):
 
 
 class SecureBootCheck(BaseCheck):
+    """Verify Secure Boot is set to Full Security on T2 or Apple Silicon Macs."""
+
     id = "secure_boot"
     name = "Secure Boot"
     category = "system"
@@ -694,6 +747,7 @@ class SecureBootCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Read nvram AppleSecureBootPolicy on Apple Silicon; SPiBridgeDataType on Intel T2."""
         if not IS_APPLE_SILICON:
             # For Intel with T2: system_profiler SPiBridgeDataType
             rc, stdout, _ = self.shell(

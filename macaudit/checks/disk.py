@@ -72,6 +72,8 @@ def _df_free_bytes(path: str = "/") -> int:
 # ── Checks ────────────────────────────────────────────────────────────────────
 
 class DiskSpaceCheck(BaseCheck):
+    """Check free disk space on the boot volume."""
+
     id = "disk_space"
     name = "Free Disk Space"
     category = "disk"
@@ -99,6 +101,7 @@ class DiskSpaceCheck(BaseCheck):
     fix_time_estimate = "Varies"
 
     def run(self) -> CheckResult:
+        """Run df -k / to get free bytes; warn below 10 GB, critical below 5 GB."""
         free = _df_free_bytes("/")
 
         if free < 0:
@@ -130,6 +133,8 @@ class DiskSpaceCheck(BaseCheck):
 
 
 class APFSSnapshotsCheck(BaseCheck):
+    """Count local APFS snapshots managed by Time Machine."""
+
     id = "apfs_snapshots"
     name = "APFS Local Snapshots"
     category = "disk"
@@ -163,6 +168,7 @@ class APFSSnapshotsCheck(BaseCheck):
     fix_time_estimate = "~1 minute"
 
     def run(self) -> CheckResult:
+        """Run tmutil listlocalsnapshots / to count snapshots; measure /.MobileBackups size."""
         rc, stdout, _ = self.shell(
             ["tmutil", "listlocalsnapshots", "/"], timeout=8
         )
@@ -186,6 +192,8 @@ class APFSSnapshotsCheck(BaseCheck):
 
 
 class XcodeDerivedDataCheck(BaseCheck):
+    """Measure Xcode DerivedData folder size; flag when large."""
+
     id = "xcode_derived_data"
     name = "Xcode DerivedData"
     category = "disk"
@@ -214,6 +222,7 @@ class XcodeDerivedDataCheck(BaseCheck):
     fix_time_estimate = "~10 seconds (next Xcode build will be slower)"
 
     def run(self) -> CheckResult:
+        """Measure ~/Library/Developer/Xcode/DerivedData via du -sk; warn above 10 GB."""
         path = HOME / "Library" / "Developer" / "Xcode" / "DerivedData"
 
         if not path.exists():
@@ -245,6 +254,8 @@ class XcodeDerivedDataCheck(BaseCheck):
 
 
 class DockerDiskCheck(BaseCheck):
+    """Measure disk usage across container runtimes (Docker, Colima, OrbStack, Podman)."""
+
     id = "docker_disk"
     name = "Docker / Container Runtime"
     category = "disk"
@@ -270,6 +281,7 @@ class DockerDiskCheck(BaseCheck):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Measure data dirs for Docker Desktop, Colima, OrbStack, and Podman via du -sk."""
         runtimes: dict[str, int] = {}
 
         # Docker Desktop
@@ -331,6 +343,8 @@ class DockerDiskCheck(BaseCheck):
 
 
 class TrashCheck(BaseCheck):
+    """Measure Trash folder size and flag when large."""
+
     id = "trash"
     name = "Trash"
     category = "disk"
@@ -352,6 +366,7 @@ class TrashCheck(BaseCheck):
     fix_time_estimate = "~5 seconds"
 
     def run(self) -> CheckResult:
+        """Measure ~/.Trash via du -sk; warn above 500 MB."""
         trash = HOME / ".Trash"
 
         if not trash.exists():
@@ -385,6 +400,8 @@ class TrashCheck(BaseCheck):
 
 
 class AppCachesCheck(BaseCheck):
+    """Measure ~/Library/Caches size and flag when oversized."""
+
     id = "app_caches"
     name = "Application Caches"
     category = "disk"
@@ -416,6 +433,7 @@ class AppCachesCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Measure ~/Library/Caches via du -sk; warn above 10 GB."""
         caches = HOME / "Library" / "Caches"
 
         if not caches.exists():
@@ -447,6 +465,8 @@ class AppCachesCheck(BaseCheck):
 
 
 class LogFilesCheck(BaseCheck):
+    """Measure ~/Library/Logs size and flag when oversized."""
+
     id = "log_files"
     name = "Log Files"
     category = "disk"
@@ -473,6 +493,7 @@ class LogFilesCheck(BaseCheck):
     fix_time_estimate = "~5 seconds"
 
     def run(self) -> CheckResult:
+        """Measure ~/Library/Logs via du -sk; warn above 1 GB."""
         logs = HOME / "Library" / "Logs"
 
         if not logs.exists():
@@ -504,6 +525,8 @@ class LogFilesCheck(BaseCheck):
 
 
 class iOSBackupsCheck(BaseCheck):
+    """Check for old iOS/iPadOS device backups consuming disk space."""
+
     id = "ios_backups"
     name = "iOS Device Backups"
     category = "disk"
@@ -535,6 +558,7 @@ class iOSBackupsCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Count and measure device backup dirs in ~/Library/Application Support/MobileSync/Backup."""
         backup_dir = (
             HOME / "Library" / "Application Support" / "MobileSync" / "Backup"
         )

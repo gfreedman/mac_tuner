@@ -60,6 +60,7 @@ class TCCPermissionAuditCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Check for TCC.db visibility as a proxy for Full Disk Access; always returns info."""
         # Check if we can see the TCC database path at all (proxy for FDA state)
         # We intentionally do NOT read it — just note whether macaudit has FDA.
         tcc_path = os.path.expanduser(

@@ -20,6 +20,8 @@ class _HomebrewBase(BaseCheck):
 
 
 class HomebrewDoctorCheck(_HomebrewBase):
+    """Verify Homebrew installation health via brew doctor."""
+
     id = "homebrew_doctor"
     name = "Homebrew Health (brew doctor)"
 
@@ -43,6 +45,7 @@ class HomebrewDoctorCheck(_HomebrewBase):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Run 'brew doctor' and count Warning: lines; pass if 'ready to brew'."""
         rc, stdout, stderr = self.shell(["brew", "doctor"], timeout=30)
 
         output = (stdout + stderr).strip()
@@ -71,6 +74,8 @@ class HomebrewDoctorCheck(_HomebrewBase):
 
 
 class HomebrewOutdatedCheck(_HomebrewBase):
+    """Check for outdated Homebrew formulae with known updates available."""
+
     id = "homebrew_outdated"
     name = "Outdated Homebrew Formulae"
 
@@ -94,6 +99,7 @@ class HomebrewOutdatedCheck(_HomebrewBase):
     fix_time_estimate = "Varies — could be seconds or minutes"
 
     def run(self) -> CheckResult:
+        """Run 'brew outdated' and count output lines; each line is an outdated formula."""
         rc, stdout, stderr = self.shell(["brew", "outdated"], timeout=30)
 
         if rc != 0:
@@ -114,6 +120,8 @@ class HomebrewOutdatedCheck(_HomebrewBase):
 
 
 class HomebrewOutdatedCasksCheck(_HomebrewBase):
+    """Check for outdated Homebrew casks (GUI applications)."""
+
     id = "homebrew_outdated_casks"
     name = "Outdated Homebrew Casks"
 
@@ -136,6 +144,7 @@ class HomebrewOutdatedCasksCheck(_HomebrewBase):
     fix_time_estimate = "Varies — could be minutes"
 
     def run(self) -> CheckResult:
+        """Run 'brew outdated --cask' and count output lines."""
         rc, stdout, stderr = self.shell(
             ["brew", "outdated", "--cask"], timeout=30
         )
@@ -158,6 +167,8 @@ class HomebrewOutdatedCasksCheck(_HomebrewBase):
 
 
 class HomebrewAutoremoveCheck(_HomebrewBase):
+    """Check for orphaned Homebrew dependencies that can be safely removed."""
+
     id = "homebrew_autoremove"
     name = "Homebrew Orphaned Dependencies"
 
@@ -181,6 +192,7 @@ class HomebrewAutoremoveCheck(_HomebrewBase):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Run 'brew autoremove --dry-run' and count packages that would be removed."""
         rc, stdout, stderr = self.shell(
             ["brew", "autoremove", "--dry-run"], timeout=20
         )
@@ -207,6 +219,8 @@ class HomebrewAutoremoveCheck(_HomebrewBase):
 
 
 class HomebrewCleanupCheck(_HomebrewBase):
+    """Measure reclaimable disk space from stale Homebrew package downloads."""
+
     id = "homebrew_cleanup"
     name = "Homebrew Cache Cleanup"
 
@@ -230,6 +244,7 @@ class HomebrewCleanupCheck(_HomebrewBase):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Run 'brew cleanup --dry-run' and parse the 'would free' size from output."""
         rc, stdout, stderr = self.shell(
             ["brew", "cleanup", "--dry-run"], timeout=20
         )
@@ -271,6 +286,8 @@ class HomebrewCleanupCheck(_HomebrewBase):
 
 
 class HomebrewMissingCheck(_HomebrewBase):
+    """Check for Homebrew formulae with missing dependencies."""
+
     id = "homebrew_missing"
     name = "Homebrew Missing Dependencies"
 
@@ -294,6 +311,7 @@ class HomebrewMissingCheck(_HomebrewBase):
     fix_time_estimate = "~30 seconds"
 
     def run(self) -> CheckResult:
+        """Run 'brew missing' and count formulae with unresolved dependencies."""
         rc, stdout, stderr = self.shell(["brew", "missing"], timeout=30)
 
         if rc != 0 and not stdout.strip():

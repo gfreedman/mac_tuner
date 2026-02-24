@@ -465,6 +465,7 @@ def _compact_table(results: list[CheckResult], explain: bool = False) -> Table:
 # ── Verdict copy ──────────────────────────────────────────────────────────────
 
 def _score_verdict(score: int, critical: int, warnings: int) -> str:
+    """Return an emoji + one-line verdict string based on health score and critical/warning counts."""
     if critical >= 3:
         return f"🚨  {critical} critical issues detected — review the red items immediately."
     if critical > 0:

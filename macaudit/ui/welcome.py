@@ -124,6 +124,7 @@ def show_welcome(console: Console, first_run: bool = False) -> bool:
 # ── Renderer ──────────────────────────────────────────────────────────────────
 
 def _render(console: Console, info: dict, display_name: str) -> None:
+    """Build and print the two-column welcome Panel with beagle art, system info, and quick start."""
     table = Table(
         box=_VBAR, show_header=False, show_edge=False, show_lines=False,
         border_style=COLOR_BRAND, padding=(0, 2), expand=True,
@@ -145,6 +146,7 @@ def _render(console: Console, info: dict, display_name: str) -> None:
 # ── Left column ───────────────────────────────────────────────────────────────
 
 def _build_left(info: dict, display_name: str) -> Text:
+    """Left column: greeting, beagle art, macOS version, CPU/RAM, model, and working directory."""
     macos_name = info.get("macos_name", "")
     macos_ver  = info.get("macos_version", "")
     macos_display = (
@@ -177,6 +179,7 @@ def _build_left(info: dict, display_name: str) -> Text:
 # ── Right column ──────────────────────────────────────────────────────────────
 
 def _build_right(right_w: int = 55) -> Text:
+    """Right column: quick-start command list, divider, and last scan summary (if available)."""
     t = Text(justify="left")
     t.append("\n")
     t.append("Quick start\n", style=f"bold {COLOR_BRAND}")
@@ -213,6 +216,7 @@ def _build_right(right_w: int = 55) -> Text:
 # ── Last scan helpers ─────────────────────────────────────────────────────────
 
 def _load_last_scan() -> Optional[dict]:
+    """Read ~/.config/macaudit/last_scan.json and return the dict, or None on any error."""
     try:
         data = json.loads(_LAST_SCAN.read_text())
         if "score" in data and "date" in data:
@@ -223,6 +227,7 @@ def _load_last_scan() -> Optional[dict]:
 
 
 def _append_last_scan(t: Text, data: dict) -> None:
+    """Append the last scan date, score, and status badges to a Rich Text object."""
     try:
         dt = datetime.fromisoformat(data["date"])
         date_str = f"{dt.day} {dt.strftime('%b %Y')}  ·  {dt.strftime('%H:%M')}"

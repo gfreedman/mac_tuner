@@ -96,6 +96,8 @@ _SAFE_VALUE_RE = re.compile(
 # ── Check ─────────────────────────────────────────────────────────────────────
 
 class ShellSecretsCheck(BaseCheck):
+    """Scan shell config files (~/.zshrc, ~/.bashrc, etc.) for hardcoded credentials."""
+
     id = "shell_secrets"
     name = "Shell Config Secrets"
     category = "security"
@@ -134,6 +136,7 @@ class ShellSecretsCheck(BaseCheck):
     fix_time_estimate = "~10 minutes"
 
     def run(self) -> CheckResult:
+        """Iterate shell config files, match _CRED_RE patterns, filter false positives, and report redacted findings."""
         findings: list[dict] = []
         files_scanned: list[str] = []
 

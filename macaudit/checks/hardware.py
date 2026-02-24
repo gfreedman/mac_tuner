@@ -40,6 +40,8 @@ def _get_power_data() -> str:
 # ── Battery ───────────────────────────────────────────────────────────────────
 
 class BatteryCheck(BaseCheck):
+    """Check battery cycle count, maximum capacity, and condition status."""
+
     id = "battery_health"
     name = "Battery Health"
     category = "hardware"
@@ -71,6 +73,7 @@ class BatteryCheck(BaseCheck):
     fix_time_estimate = "N/A"
 
     def run(self) -> CheckResult:
+        """Parse cached SPPowerDataType output for Condition, Cycle Count, and Maximum Capacity."""
         raw = _get_power_data()
         if not raw:
             return self._info("Could not read power data")
@@ -116,6 +119,8 @@ class BatteryCheck(BaseCheck):
 # ── SMART status ──────────────────────────────────────────────────────────────
 
 class SMARTStatusCheck(BaseCheck):
+    """Check SMART disk health status on the boot volume."""
+
     id = "smart_status"
     name = "Disk SMART Status"
     category = "hardware"
@@ -147,6 +152,7 @@ class SMARTStatusCheck(BaseCheck):
     fix_time_estimate = "N/A"
 
     def run(self) -> CheckResult:
+        """Run diskutil info / and extract SMART Status; handle 'Not Supported' on Apple Silicon."""
         # Use "/" to resolve the boot volume dynamically — avoids hardcoding
         # disk0 which breaks on external boot drives and Fusion Drive setups.
         rc, out, _ = self.shell(["diskutil", "info", "/"])
@@ -176,6 +182,8 @@ class SMARTStatusCheck(BaseCheck):
 # ── Kernel panics ─────────────────────────────────────────────────────────────
 
 class KernelPanicCheck(BaseCheck):
+    """Count kernel panic reports from the last 7 days."""
+
     id = "kernel_panics"
     name = "Kernel Panics (7 days)"
     category = "hardware"
@@ -210,6 +218,7 @@ class KernelPanicCheck(BaseCheck):
     _PANIC_DIR = "/Library/Logs/DiagnosticReports"
 
     def run(self) -> CheckResult:
+        """Scan /Library/Logs/DiagnosticReports for *Panic* files modified in the last 7 days."""
         try:
             cutoff = datetime.now() - timedelta(days=7)
             panic_files = []
@@ -248,6 +257,8 @@ class KernelPanicCheck(BaseCheck):
 # ── Thermal throttling ────────────────────────────────────────────────────────
 
 class ThermalCheck(BaseCheck):
+    """Detect active CPU thermal throttling."""
+
     id = "thermal_state"
     name = "CPU Thermal State"
     category = "hardware"
@@ -280,6 +291,7 @@ class ThermalCheck(BaseCheck):
     fix_time_estimate = "~5 minutes"
 
     def run(self) -> CheckResult:
+        """Run pmset -g thermlog; also check sysctl machdep.xcpm.cpu_thermal_level on Intel."""
         # pmset -g thermlog shows current thermal state
         rc, out, _ = self.shell(["pmset", "-g", "thermlog"])
         if rc != 0 or not out:
