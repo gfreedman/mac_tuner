@@ -19,6 +19,7 @@ classifiers = [
 dependencies = [
     "rich>=13.7.0",
     "click>=8.1.7",
+    "simple-term-menu>=1.6.0",
 ]
 
 [project.scripts]

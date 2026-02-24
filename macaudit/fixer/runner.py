@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import shlex
 
+from simple_term_menu import TerminalMenu
 from rich.console import Console, Group
 from rich.panel import Panel
 from rich.padding import Padding
@@ -109,26 +110,38 @@ def _run_interactive_mode(
         _print_fix_card(console, result, idx, total)
 
         if result.fix_level in ("auto", "auto_sudo"):
-            try:
-                console.print("  [bold text]Apply?[/bold text] [dim][y/N] › [/dim]", end="")
-                answer = input().strip().lower()
-            except (KeyboardInterrupt, EOFError):
-                console.print("\n\n  [dim]Fix mode cancelled.[/dim]\n")
+            menu = TerminalMenu(
+                ["No, skip", "Yes, apply", "Quit"],
+                title="  \033[1mApply this fix?\033[0m",
+                menu_cursor="› ",
+                menu_cursor_style=("fg_cyan", "bold"),
+                menu_highlight_style=("fg_cyan", "bold"),
+                cursor_index=0,
+            )
+            idx = menu.show()
+            if idx is None or idx == 2:
+                console.print("\n  [dim]Fix mode cancelled.[/dim]\n")
                 _print_session_summary(console, applied, skipped, total, dry_run=dry_run)
                 return
-            if answer not in ("y", "yes"):
+            if idx == 0:  # No, skip
                 console.print("  [dim]Skipped.[/dim]\n")
                 skipped += 1
                 continue
         else:  # guided / instructions
-            try:
-                console.print("  [dim]↵ to continue  ·  s to skip[/dim]  ", end="")
-                answer = input().strip().lower()
-            except (KeyboardInterrupt, EOFError):
-                console.print("\n\n  [dim]Fix mode cancelled.[/dim]\n")
+            menu = TerminalMenu(
+                ["Continue", "Skip", "Quit"],
+                title="  \033[1mContinue with this fix?\033[0m",
+                menu_cursor="› ",
+                menu_cursor_style=("fg_cyan", "bold"),
+                menu_highlight_style=("fg_cyan", "bold"),
+                cursor_index=0,
+            )
+            idx = menu.show()
+            if idx is None or idx == 2:
+                console.print("\n  [dim]Fix mode cancelled.[/dim]\n")
                 _print_session_summary(console, applied, skipped, total, dry_run=dry_run)
                 return
-            if answer in ("s", "skip", "n", "no"):
+            if idx == 1:  # Skip
                 console.print("  [dim]Skipped.[/dim]\n")
                 skipped += 1
                 continue
