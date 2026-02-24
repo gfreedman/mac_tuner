@@ -113,11 +113,14 @@ STYLE_SPINNER  = Style(color=COLOR_BRAND)
 
 # ── Status icons ──────────────────────────────────────────────────────────────
 
+# All icons are naturally 2-cell-wide emojis (no variation selectors).
+# Emojis with VS16 (⚠️, ℹ️, ⏭️) cause terminal width mismatches that
+# break table column alignment — Rich and the terminal disagree on width.
 ICON_PASS = "✅"
-ICON_WARNING = "⚠️ "
+ICON_WARNING = "🟡"
 ICON_CRITICAL = "🔴"
-ICON_INFO = "ℹ️ "
-ICON_SKIP = "⏭️ "
+ICON_INFO = "🔵"
+ICON_SKIP = "⏩"
 ICON_ERROR = "❌"
 ICON_FIX = "🔧"
 ICON_LOCK = "🔐"
@@ -146,15 +149,15 @@ STATUS_STYLES: dict[str, Style] = {
 # ── Category icons ────────────────────────────────────────────────────────────
 
 CATEGORY_ICONS: dict[str, str] = {
-    "system": "🖥️ ",
+    "system": "💻",
     "privacy": "🔏",
-    "security": "🛡️ ",
+    "security": "🔒",
     "homebrew": "🍺",
     "disk": "💽",
     "hardware": "🔋",
     "memory": "🧠",
     "network": "🌐",
-    "dev_env": "🧑‍💻",
+    "dev_env": "🧰",
     "apps": "📱",
 }
 
