@@ -110,38 +110,38 @@ def _run_interactive_mode(
         _print_fix_card(console, result, idx, total)
 
         if result.fix_level in ("auto", "auto_sudo"):
+            console.print("  [bold]Apply this fix?[/bold]")
             menu = TerminalMenu(
                 ["No, skip", "Yes, apply", "Quit"],
-                title="  \033[1mApply this fix?\033[0m",
                 menu_cursor="› ",
                 menu_cursor_style=("fg_cyan", "bold"),
                 menu_highlight_style=("fg_cyan", "bold"),
                 cursor_index=0,
             )
-            idx = menu.show()
-            if idx is None or idx == 2:
+            choice = menu.show()
+            if choice is None or choice == 2:
                 console.print("\n  [dim]Fix mode cancelled.[/dim]\n")
                 _print_session_summary(console, applied, skipped, total, dry_run=dry_run)
                 return
-            if idx == 0:  # No, skip
+            if choice == 0:  # No, skip
                 console.print("  [dim]Skipped.[/dim]\n")
                 skipped += 1
                 continue
         else:  # guided / instructions
+            console.print("  [bold]Continue with this fix?[/bold]")
             menu = TerminalMenu(
                 ["Continue", "Skip", "Quit"],
-                title="  \033[1mContinue with this fix?\033[0m",
                 menu_cursor="› ",
                 menu_cursor_style=("fg_cyan", "bold"),
                 menu_highlight_style=("fg_cyan", "bold"),
                 cursor_index=0,
             )
-            idx = menu.show()
-            if idx is None or idx == 2:
+            choice = menu.show()
+            if choice is None or choice == 2:
                 console.print("\n  [dim]Fix mode cancelled.[/dim]\n")
                 _print_session_summary(console, applied, skipped, total, dry_run=dry_run)
                 return
-            if idx == 1:  # Skip
+            if choice == 1:  # Skip
                 console.print("  [dim]Skipped.[/dim]\n")
                 skipped += 1
                 continue
