@@ -142,12 +142,12 @@ def build_summary_panel(results: list[CheckResult], scan_duration: float = 0.0) 
         counts_line.append(f"{n}  {label}", style=style)
         counts_line.append("    ")
 
-    _count_chip("🔴", critical, "Critical", "bold bright_red")
-    _count_chip("⚠️ ", warnings, "Warnings", "bold yellow")
-    _count_chip("✅", passed,   "Passed",   "bold bright_green")
-    _count_chip("ℹ️ ", info,    "Info",     "cyan")
+    _count_chip(STATUS_ICONS["critical"], critical, "Critical", "bold bright_red")
+    _count_chip(STATUS_ICONS["warning"], warnings, "Warnings", "bold yellow")
+    _count_chip(STATUS_ICONS["pass"],    passed,   "Passed",   "bold bright_green")
+    _count_chip(STATUS_ICONS["info"],    info,     "Info",     "cyan")
     if errors:
-        _count_chip("❌", errors, "Errors", "bold bright_red")
+        _count_chip(STATUS_ICONS["error"], errors, "Errors", "bold bright_red")
 
     # ── Line 3: verdict ───────────────────────────────────────────────────────
     verdict_line = Text()

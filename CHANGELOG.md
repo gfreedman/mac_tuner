@@ -2,6 +2,16 @@
 
 All notable changes to Mac Audit are documented here.
 
+## [1.7.1] — 2026-02-24
+
+### Fixed
+- Summary panel emoji alignment — status counts line (`Critical / Warnings / Passed / Info`) now uses consistent 2-cell-wide icons from the theme instead of hardcoded `⚠️` and `ℹ️` which have variation selectors that render at inconsistent widths across terminals
+
+### Added
+- **CONTRIBUTING.md** — dev setup, project structure, check contract, testing patterns, profile system, release process, and style guide for new contributors
+
+---
+
 ## [1.7.0] — 2026-02-24
 
 ### Added
