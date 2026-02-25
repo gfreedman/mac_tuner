@@ -35,10 +35,16 @@ Runs a full audit of your Mac: security settings, disk health, memory, developer
 
 ## Install
 
-**Homebrew:**
+**Homebrew** (recommended):
 
 ```bash
 brew install gfreedman/macaudit/macaudit
+```
+
+Don't have Homebrew? Install it first:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
 **From source:**
@@ -177,7 +183,10 @@ Each fix gets its own card showing the full context — what was found, why it m
 │                                                                       │
 │  ⏱ ~10s  ·  reversible  ·                                            │
 ╰───────────────────────────────────────────────────────────────────────╯
-  Apply? [y/N] ›
+  Apply this fix?
+  › No, skip
+    Yes, apply
+    Quit
 ```
 
 - **🤖 Automatic** — runs a shell command, streams output live
