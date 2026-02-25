@@ -18,14 +18,19 @@ jobs:
         run: echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
         # e.g. tag = v1.4.0
 
-      - name: Create GitHub Release
+      - name: Create GitHub Release (skip if exists)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ steps.version.outputs.tag }}" \
-            --repo gfreedman/mac_audit \
-            --title "Mac Audit ${{ steps.version.outputs.tag }}" \
-            --generate-notes
+          TAG="${{ steps.version.outputs.tag }}"
+          if gh release view "$TAG" --repo gfreedman/mac_audit >/dev/null 2>&1; then
+            echo "Release $TAG already exists — skipping."
+          else
+            gh release create "$TAG" \
+              --repo gfreedman/mac_audit \
+              --title "Mac Audit $TAG" \
+              --generate-notes
+          fi
 
       - name: Compute tarball SHA256 and update formula via API
         env:
