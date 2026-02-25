@@ -2,6 +2,13 @@
 
 All notable changes to Mac Audit are documented here.
 
+## [1.7.0] — 2026-02-24
+
+### Added
+- **`release.sh` — single-command release script:** `./release.sh X.Y.Z` handles version bump, changelog validation, commit/tag/push, GitHub release with human-written notes, and full Homebrew formula regeneration (BFS-resolved dependency tree from PyPI) in one idempotent command
+
+---
+
 ## [1.6.0] — 2026-02-24
 
 ### Added
