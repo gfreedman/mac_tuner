@@ -2,6 +2,24 @@
 
 All notable changes to Mac Audit are documented here.
 
+## [1.6.0] — 2026-02-24
+
+### Added
+- **Arrow-key fix prompts:** replaced raw `input()` with interactive arrow-key menus powered by `simple-term-menu` — highlight follows cursor properly
+- **Quit option:** every fix prompt now has a Quit choice to bail out of the session
+- **`--dry-run` flag:** walk through the entire fix flow without executing any changes
+- **Homebrew install docs:** README and docs site now include Homebrew install instructions for new users
+
+### Fixed
+- Menu title no longer duplicates when holding down arrow keys (moved title out of `TerminalMenu` redraw loop)
+- Loop variable `idx` no longer shadowed by `menu.show()` return value, fixing card numbering on subsequent fixes
+- Release workflow now skips gracefully if the GitHub Release already exists
+
+### Changed
+- Replaced `questionary` dependency with `simple-term-menu` (no `prompt_toolkit` conflict with Rich)
+
+---
+
 ## [1.5.0] — 2026-02-20
 
 ### Changed
