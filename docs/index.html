@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mac Audit — Mac System Health</title>
-  <meta name="description" content="Audits your Mac the way you'd want a paranoid sysadmin to — without the lecture.">
+  <meta name="description" content="Free, open-source Mac system audit. Read-only by default, explains every finding, fixes nothing without your say-so.">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -541,12 +541,13 @@
 <section class="hero" id="top">
   <div class="wrap">
     <h1>Mac Audit</h1>
-    <p class="tagline">Read-only by default. Explains everything it finds. Fixes nothing without your say-so.</p>
+    <p class="tagline">For anyone who's ever wondered "is my Mac configured well?" but doesn't want to wade through System Settings panels one by one.</p>
     <div class="install-pill">
       <span class="prompt">$</span>
       <code>brew install gfreedman/macaudit/macaudit</code>
       <button class="pill-copy" aria-label="Copy install command"></button>
     </div>
+    <p class="note" style="margin-top:16px">Free and open source. Read-only by default. Runs entirely offline.</p>
   </div>
 </section>
 
@@ -564,13 +565,13 @@
       <div class="step">
         <div class="step-num">Step 2</div>
         <div class="step-title">Scan</div>
-        <p>69 checks across 10 categories. Every finding explained, not just flagged.</p>
+        <p>FileVault, Gatekeeper, SIP, Homebrew, login items, the works. 69 checks, narrated results, health score out of 100.</p>
         <pre><code>macaudit</code></pre>
       </div>
       <div class="step">
         <div class="step-num">Step 3</div>
         <div class="step-title">Fix</div>
-        <p>Each fix shows full context. Approve or skip before anything runs.</p>
+        <p>Shows what it found, why it matters, and what it would do. Then waits. Skip is the default.</p>
         <pre><code>macaudit --fix</code></pre>
       </div>
     </div>
@@ -621,7 +622,7 @@ brew untap gfreedman/macaudit</code></pre>
 <section id="first-run">
   <div class="wrap">
     <h2>What a scan looks like</h2>
-    <p>Each check prints a result inline. At the end you get a score and a list of what to fix.</p>
+    <p>Run it and you get a narrated audit of your Mac's security and system hygiene. Color-coded results stream in, and at the end you get a health score and a list of what to fix. Nothing changes on your Mac until you say so.</p>
     <div class="terminal">
       <div class="tbar">
         <div class="dot dr"></div>
@@ -681,7 +682,7 @@ brew untap gfreedman/macaudit</code></pre>
 <section id="fix">
   <div class="wrap">
     <h2>Fix mode</h2>
-    <p>Run <code>macaudit --fix</code> after a scan. Each fix shows what it found, why it matters, and exactly what will change. Skip is always the default — nothing runs unless you approve it.</p>
+    <p>Too many "system optimizer" tools assume they know better than you and start flipping switches. Mac Audit does the opposite: for each issue, it shows what it found, why it matters, and exactly what the fix would do — then waits. The safe default is always Skip.</p>
     <div class="grid-2 r4" style="margin-top:12px">
       <div class="card">
         <span class="card-icon">🤖</span>
@@ -704,7 +705,7 @@ brew untap gfreedman/macaudit</code></pre>
         <div class="card-body">Prints instructions for things needing a human call.</div>
       </div>
     </div>
-    <p class="note">Fixes that cannot be undone are labelled before you confirm.</p>
+    <p class="note">Irreversible fixes are always labelled. Every command is shown before it runs.</p>
   </div>
 </section>
 
@@ -712,7 +713,7 @@ brew untap gfreedman/macaudit</code></pre>
 <section id="checks">
   <div class="wrap">
     <h2>What it checks</h2>
-    <p>69 checks across 10 categories.</p>
+    <p>69 checks across 10 categories. Every finding is explained — not just flagged — so you understand what it means before deciding what to do about it.</p>
     <div class="grid-2 r10" style="margin-top:12px">
       <div class="card">
         <span class="card-icon">🛡️</span>
@@ -798,6 +799,7 @@ brew untap gfreedman/macaudit</code></pre>
 <section id="safety">
   <div class="wrap">
     <h2>Safety</h2>
+    <p>A non-creepy, open-source system audit that respects the principle of least surprise. The terminal UI is themed for both dark and light mode with proper alignment — someone actually cared about the details.</p>
     <ul class="safety-list">
       <li>Read-only by default</li>
       <li>Runs entirely offline</li>
