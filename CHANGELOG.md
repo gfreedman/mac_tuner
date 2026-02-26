@@ -2,6 +2,13 @@
 
 All notable changes to Mac Audit are documented here.
 
+## [1.7.2] — 2026-02-25
+
+### Added
+- **Category headers in live scan** — bold icon + name header with thin underline and spacing between each category section, so checks are no longer one flat list
+
+---
+
 ## [1.7.1] — 2026-02-24
 
 ### Fixed
