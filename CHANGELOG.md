@@ -2,6 +2,21 @@
 
 All notable changes to Mac Audit are documented here.
 
+## [1.7.3] — 2026-02-25
+
+### Improved
+- **Theme consolidation** — centralised `score_color()` helper and fix-level emoji/label dicts in `theme.py`, eliminating duplicated if/elif chains and local dicts in `report.py`, `welcome.py`, and `fixer/runner.py`
+- **Progress bar colors** — replaced hardcoded `"cyan"` and `"bright_green"` with theme constants (`PROGRESS_BAR_COLOR` / `PROGRESS_COMPLETE_COLOR`)
+- **Recommendations panel** — added leading total-count line (e.g. "12 fixable items — top issues:") so users see scope at a glance
+- **Category panel borders** — all-passing categories now use green borders instead of dim
+- **Fix card title** — changed `[1/5]` to `Fix 1 of 5` for readability
+- **Fix menu consistency** — unified both auto and guided menus to `["Skip", "Apply/Continue", "Quit"]` with Skip as the safe default
+- **Narrator underline** — dynamic width `min(44, console_width - 6)` prevents overflow on narrow terminals
+- **Result name column** — widened from 36 to 38 chars for better alignment with longer check names
+- **Pre-scan prompt** — removed hardcoded "~10–15 seconds" time estimate
+
+---
+
 ## [1.7.2] — 2026-02-25
 
 ### Added
