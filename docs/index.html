@@ -541,7 +541,7 @@
 <section class="hero" id="top">
   <div class="wrap">
     <h1>Mac Audit</h1>
-    <p class="tagline">Audits your Mac the way you'd want a paranoid sysadmin to — without the lecture.</p>
+    <p class="tagline">Read-only by default. Explains everything it finds. Fixes nothing without your say-so.</p>
     <div class="install-pill">
       <span class="prompt">$</span>
       <code>brew install gfreedman/macaudit/macaudit</code>
@@ -564,7 +564,7 @@
       <div class="step">
         <div class="step-num">Step 2</div>
         <div class="step-title">Scan</div>
-        <p>69 checks, ~30 seconds. You get a health score out of 100.</p>
+        <p>69 checks across 10 categories. Every finding explained, not just flagged.</p>
         <pre><code>macaudit</code></pre>
       </div>
       <div class="step">
@@ -681,7 +681,7 @@ brew untap gfreedman/macaudit</code></pre>
 <section id="fix">
   <div class="wrap">
     <h2>Fix mode</h2>
-    <p>Run <code>macaudit --fix</code> after a scan. For each issue, Mac Audit shows what it found, why it matters, and what the fix does. You approve or skip before anything runs.</p>
+    <p>Run <code>macaudit --fix</code> after a scan. Each fix shows what it found, why it matters, and exactly what will change. Skip is always the default — nothing runs unless you approve it.</p>
     <div class="grid-2 r4" style="margin-top:12px">
       <div class="card">
         <span class="card-icon">🤖</span>
@@ -773,7 +773,7 @@ brew untap gfreedman/macaudit</code></pre>
 <section id="score">
   <div class="wrap">
     <h2>The score</h2>
-    <p>Starts at 100. Points deducted per finding.</p>
+    <p>Starts at 100. Points deducted per finding. Critical issues are called out by name in the verdict.</p>
     <table>
       <thead><tr><th>Finding</th><th>Points off</th></tr></thead>
       <tbody>
@@ -801,11 +801,13 @@ brew untap gfreedman/macaudit</code></pre>
     <ul class="safety-list">
       <li>Read-only by default</li>
       <li>Runs entirely offline</li>
-      <li>One failing check never stops the scan</li>
+      <li>Skip is always the default</li>
+      <li>Every finding explained, not just flagged</li>
       <li>Every command shown before it runs</li>
       <li>Irreversible fixes always labelled</li>
       <li>No private APIs, no TCC.db access</li>
       <li>Detects managed Macs, flags MDM settings</li>
+      <li>One failing check never stops the scan</li>
       <li>Intel and Apple Silicon</li>
     </ul>
   </div>

@@ -34,6 +34,8 @@ from macaudit.ui.theme import (
     COLOR_PASS,
     COLOR_TEXT,
     FIX_LEVEL_LABELS,
+    ICON_MDM,
+    MDM_CHECK_IDS,
     STATUS_ICONS,
     STATUS_STYLES,
     score_color,
@@ -66,6 +68,7 @@ def print_report(
     explain: bool = False,
     scan_duration: float = 0.0,
     mode: str = "scan",
+    mdm_enrolled: bool = False,
 ) -> None:
     """
     Render the complete post-scan report to the console.
@@ -77,6 +80,7 @@ def print_report(
         explain:       If True, show extra context for info/pass checks too.
         scan_duration: Wall-clock seconds the scan took (0 = not tracked).
         mode:          Active mode — "scan", "fix", or "targeted".
+        mdm_enrolled:  If True, show inline MDM badges on relevant findings.
     """
     if not results:
         console.print("[dim]  No results to display.[/dim]")
@@ -85,7 +89,8 @@ def print_report(
     console.print()
     console.print(build_summary_panel(results, scan_duration=scan_duration))
 
-    for panel in build_category_panels(results, issues_only=issues_only, explain=explain):
+    for panel in build_category_panels(results, issues_only=issues_only, explain=explain,
+                                       mdm_enrolled=mdm_enrolled):
         console.print(panel)
 
     recs = build_recommendations_panel(results, mode=mode)
@@ -145,9 +150,10 @@ def build_summary_panel(results: list[CheckResult], scan_duration: float = 0.0) 
         _count_chip(STATUS_ICONS["error"], errors, "Errors", "bold bright_red")
 
     # ── Line 3: verdict ───────────────────────────────────────────────────────
+    crit_results = [r for r in results if r.status == "critical"]
     verdict_line = Text()
     verdict_line.append(
-        f"\n   {_score_verdict(score, critical, warnings)}",
+        f"\n   {_score_verdict(score, critical, warnings, critical_results=crit_results)}",
         style=COLOR_DIM,
     )
 
@@ -185,6 +191,7 @@ def build_category_panels(
     results: list[CheckResult],
     issues_only: bool = False,
     explain: bool = False,
+    mdm_enrolled: bool = False,
 ) -> list[Panel]:
     """Return one Panel per category that has results worth showing."""
     # Group by category, preserving original order
@@ -199,7 +206,8 @@ def build_category_panels(
     for cat in order:
         if cat not in by_cat:
             continue
-        panel = _build_category_panel(cat, by_cat[cat], issues_only, explain)
+        panel = _build_category_panel(cat, by_cat[cat], issues_only, explain,
+                                      mdm_enrolled=mdm_enrolled)
         if panel is not None:
             panels.append(panel)
 
@@ -310,6 +318,7 @@ def _build_category_panel(
     results: list[CheckResult],
     issues_only: bool,
     explain: bool,
+    mdm_enrolled: bool = False,
 ) -> Optional[Panel]:
     """Build one category panel; returns None if there is nothing to show."""
     issues  = [r for r in results if r.status in _ISSUE_STATUSES]
@@ -324,7 +333,7 @@ def _build_category_panel(
 
     # ── Issues (critical → warning → error) ───────────────────────────────────
     for r in sorted(issues, key=lambda r: {"critical": 0, "warning": 1, "error": 2}.get(r.status, 9)):
-        parts.extend(_render_issue(r))
+        parts.extend(_render_issue(r, mdm_enrolled=mdm_enrolled))
         parts.append(Text(""))  # blank line between issues
 
     # ── Info + Pass + Skip — rendered in one aligned table ───────────────────
@@ -333,7 +342,7 @@ def _build_category_panel(
         if compact:
             if issues:
                 pass  # already have a blank line from the issue loop
-            parts.append(_compact_table(compact, explain))
+            parts.append(_compact_table(compact, explain, mdm_enrolled=mdm_enrolled))
 
     if not parts:
         return None
@@ -360,9 +369,9 @@ def _build_category_panel(
 
 # ── Internal: individual check renderers ──────────────────────────────────────
 
-def _render_issue(result: CheckResult) -> list:
+def _render_issue(result: CheckResult, mdm_enrolled: bool = False) -> list:
     """
-    Critical / warning / error — up to 4 lines.
+    Critical / warning / error — up to 5 lines.
 
     Returns a list of renderables (Text + Padding objects).
     """
@@ -405,10 +414,16 @@ def _render_issue(result: CheckResult) -> list:
             fix_text.append("  [irreversible]", style="dim red")
         parts.append(Padding(fix_text, (0, 2, 0, _INDENT)))
 
+    # Line 5: MDM badge (muted)
+    if mdm_enrolled and result.id in MDM_CHECK_IDS:
+        mdm_line = Text()
+        mdm_line.append(f"{ICON_MDM} may be managed by your org", style=COLOR_DIM)
+        parts.append(Padding(mdm_line, (0, 2, 0, _INDENT)))
+
     return parts
 
 
-def _compact_table(results: list[CheckResult], explain: bool = False) -> Table:
+def _compact_table(results: list[CheckResult], explain: bool = False, mdm_enrolled: bool = False) -> Table:
     """
     Render info / pass / skip checks as a two-column aligned table.
 
@@ -452,6 +467,8 @@ def _compact_table(results: list[CheckResult], explain: bool = False) -> Table:
         name_cell.append(r.name, style=name_style)
 
         msg_cell = Text(f"  {r.message}", style=msg_style)
+        if mdm_enrolled and r.id in MDM_CHECK_IDS:
+            msg_cell.append(f"  {ICON_MDM} managed", style=COLOR_DIM)
 
         table.add_row(name_cell, msg_cell)
 
@@ -466,12 +483,21 @@ def _compact_table(results: list[CheckResult], explain: bool = False) -> Table:
 
 # ── Verdict copy ──────────────────────────────────────────────────────────────
 
-def _score_verdict(score: int, critical: int, warnings: int) -> str:
+def _score_verdict(
+    score: int,
+    critical: int,
+    warnings: int,
+    critical_results: list[CheckResult] = (),
+) -> str:
     """Return an emoji + one-line verdict string based on health score and critical/warning counts."""
+    if critical == 1 and critical_results:
+        r = critical_results[0]
+        return f"🚨  {r.name} — {r.message.lower().rstrip('.')}. Address this first."
+    if critical == 2 and critical_results:
+        names = " and ".join(r.name for r in critical_results[:2])
+        return f"🚨  {names} — 2 critical issues. Address these first."
     if critical >= 3:
         return f"🚨  {critical} critical issues detected — review the red items immediately."
-    if critical > 0:
-        return f"🚨  {critical} critical issue{'s' if critical > 1 else ''} detected — address these first."
     if score >= 95:
         return "✨  Excellent — your Mac is well configured and up to date."
     if score >= 85:

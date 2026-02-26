@@ -126,6 +126,7 @@ ICON_FIX = "🔧"
 ICON_LOCK = "🔐"
 ICON_GUIDED = "👆"
 ICON_STEPS = "📋"
+ICON_MDM = "🏢"
 
 STATUS_ICONS: dict[str, str] = {
     "pass": ICON_PASS,
@@ -163,6 +164,15 @@ CATEGORY_ICONS: dict[str, str] = {
 
 
 # ── Fix level labels ──────────────────────────────────────────────────────────
+
+# ── MDM-relevant check IDs ───────────────────────────────────────────────────
+
+MDM_CHECK_IDS: frozenset[str] = frozenset((
+    "filevault", "firewall", "firewall_stealth", "auto_update",
+    "screen_lock", "gatekeeper", "sharing_services", "mdm_profiles",
+    "activation_lock",
+))
+
 
 FIX_LEVEL_LABELS: dict[str, str] = {
     "auto": f"{ICON_FIX} Automatic",

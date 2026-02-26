@@ -152,8 +152,10 @@ def cli(
 
     # ── Header / first-run welcome ────────────────────────────────────────────
     _first_run = False
+    _mdm_enrolled = False
     if not quiet and not as_json:
         from macaudit.ui.welcome import is_first_run, show_welcome
+        _mdm_enrolled = _is_mdm_enrolled()
         if is_first_run():
             _first_run = True
             ok = show_welcome(console, first_run=True)
@@ -233,7 +235,8 @@ def cli(
 
     from macaudit.ui.report import print_report
     print_report(results, console, issues_only=issues_only, explain=explain,
-                 scan_duration=_scan_elapsed, mode=_resolve_mode(fix, only, skip))
+                 scan_duration=_scan_elapsed, mode=_resolve_mode(fix, only, skip),
+                 mdm_enrolled=_mdm_enrolled)
 
     # ── Fix mode ──────────────────────────────────────────────────────────────
     if fix:
@@ -300,15 +303,8 @@ def _print_completion_help(console: Console) -> None:
 
 # ── MDM enrollment advisory ───────────────────────────────────────────────────
 
-def _warn_if_mdm_enrolled(console: Console) -> None:
-    """
-    Detect MDM enrollment and print a brief advisory if the Mac is managed.
-
-    The warning is shown at most once (flagged by ~/.config/macaudit/.mdm_warned).
-    """
-    if _MDM_FLAG.exists():
-        return
-
+def _is_mdm_enrolled() -> bool:
+    """Return True if this Mac is MDM-enrolled (profiles enrollment check)."""
     import subprocess
     try:
         r = subprocess.run(
@@ -316,31 +312,43 @@ def _warn_if_mdm_enrolled(console: Console) -> None:
             capture_output=True, text=True, timeout=5, check=False,
         )
         output = (r.stdout + r.stderr).lower()
-        enrolled = "enrolled via dep" in output or "mdm enrollment: yes" in output
+        return "enrolled via dep" in output or "mdm enrollment: yes" in output
     except Exception:
+        return False
+
+
+def _warn_if_mdm_enrolled(console: Console) -> None:
+    """
+    Print a brief MDM advisory if the Mac is managed.
+
+    The warning is shown at most once (flagged by ~/.config/macaudit/.mdm_warned).
+    """
+    if _MDM_FLAG.exists():
         return
 
-    if enrolled:
-        from rich.panel import Panel
-        from rich.text import Text
-        note = Text()
-        note.append("  This Mac appears to be MDM-enrolled.\n", style="bold yellow")
-        note.append(
-            "  Some settings (FileVault, auto-updates, profiles, sharing) may be\n"
-            "  enforced by your organization. Warnings about these may reflect IT\n"
-            "  policy rather than security issues — check with your administrator.\n",
-            style=COLOR_DIM,
-        )
-        note.append("  This notice will not appear again.", style=COLOR_DIM)
-        console.print(
-            Panel(note, title="[yellow]Managed Device[/yellow]", border_style="yellow")
-        )
-        console.print()
-        try:
-            _MDM_FLAG.parent.mkdir(parents=True, exist_ok=True)
-            _MDM_FLAG.touch()
-        except OSError:
-            pass
+    if not _is_mdm_enrolled():
+        return
+
+    from rich.panel import Panel
+    from rich.text import Text
+    note = Text()
+    note.append("  This Mac appears to be MDM-enrolled.\n", style="bold yellow")
+    note.append(
+        "  Some settings (FileVault, auto-updates, profiles, sharing) may be\n"
+        "  enforced by your organization. Warnings about these may reflect IT\n"
+        "  policy rather than security issues — check with your administrator.\n",
+        style=COLOR_DIM,
+    )
+    note.append("  This notice will not appear again.", style=COLOR_DIM)
+    console.print(
+        Panel(note, title="[yellow]Managed Device[/yellow]", border_style="yellow")
+    )
+    console.print()
+    try:
+        _MDM_FLAG.parent.mkdir(parents=True, exist_ok=True)
+        _MDM_FLAG.touch()
+    except OSError:
+        pass
 
 
 # ── Profile resolution ────────────────────────────────────────────────────────
