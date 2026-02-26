@@ -23,7 +23,7 @@ from rich.text import Text
 
 from macaudit.checks.base import CheckResult
 from macaudit.ui.progress import render_progress
-from macaudit.ui.theme import COLOR_DIM, STATUS_ICONS, STATUS_STYLES
+from macaudit.ui.theme import CATEGORY_ICONS, COLOR_DIM, COLOR_TEXT, STATUS_ICONS, STATUS_STYLES
 
 
 class ScanNarrator:
@@ -38,6 +38,7 @@ class ScanNarrator:
         self.console = console
         self.total = total
         self.completed = 0
+        self._last_category: str | None = None
 
         self._live = Live(
             console=console,
@@ -66,7 +67,12 @@ class ScanNarrator:
         self._live.update(self._render_parallel())
 
     def print_result(self, result: CheckResult) -> None:
-        """Print a completed check result above the live area."""
+        """Print a completed check result above the live area, with category headers."""
+        if result.category != self._last_category:
+            if self._last_category is not None:
+                self._live.console.print()  # spacing between categories
+            self._live.console.print(_format_category_header(result.category))
+            self._last_category = result.category
         self._live.console.print(_format_result(result))
 
     def print_scan_header(self) -> None:
@@ -110,6 +116,17 @@ class ScanNarrator:
 def _idle_bar(completed: int, total: int) -> Padding:
     """Progress bar with blank line above (shown between checks)."""
     return Padding(render_progress(completed, total), pad=(1, 0, 0, 0))
+
+
+def _format_category_header(category: str) -> Group:
+    """Bold category header with thin underline: e.g. '  💻  System'"""
+    icon = CATEGORY_ICONS.get(category, "  ")
+    name = category.replace("_", " ").title()
+    header = Text()
+    header.append(f"  {icon}  ", style="bold")
+    header.append(name, style=f"bold {COLOR_TEXT}")
+    rule = Text("  " + "─" * 44, style=COLOR_DIM)
+    return Group(header, rule)
 
 
 def _format_result(result: CheckResult) -> Text:
