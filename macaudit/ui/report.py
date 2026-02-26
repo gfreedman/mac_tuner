@@ -34,7 +34,6 @@ from macaudit.ui.theme import (
     COLOR_PASS,
     COLOR_TEXT,
     FIX_LEVEL_LABELS,
-    MACTUNER_THEME,
     STATUS_ICONS,
     STATUS_STYLES,
     score_color,
