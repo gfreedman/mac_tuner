@@ -71,7 +71,7 @@ class ScanNarrator:
         if result.category != self._last_category:
             if self._last_category is not None:
                 self._live.console.print()  # spacing between categories
-            self._live.console.print(_format_category_header(result.category))
+            self._live.console.print(_format_category_header(result.category, self.console.width))
             self._last_category = result.category
         self._live.console.print(_format_result(result))
 
@@ -118,14 +118,15 @@ def _idle_bar(completed: int, total: int) -> Padding:
     return Padding(render_progress(completed, total), pad=(1, 0, 0, 0))
 
 
-def _format_category_header(category: str) -> Group:
+def _format_category_header(category: str, console_width: int = 80) -> Group:
     """Bold category header with thin underline: e.g. '  💻  System'"""
     icon = CATEGORY_ICONS.get(category, "  ")
     name = category.replace("_", " ").title()
     header = Text()
     header.append(f"  {icon}  ", style="bold")
     header.append(name, style=f"bold {COLOR_TEXT}")
-    rule = Text("  " + "─" * 44, style=COLOR_DIM)
+    rule_width = min(44, console_width - 6)
+    rule = Text("  " + "─" * rule_width, style=COLOR_DIM)
     return Group(header, rule)
 
 
@@ -140,7 +141,7 @@ def _format_result(result: CheckResult) -> Text:
 
     line = Text()
     line.append(f"  {icon}  ", style=str(style))
-    line.append(result.name.ljust(36), style=str(style))
+    line.append(result.name.ljust(38), style=str(style))
     line.append(f"  {result.message}", style=COLOR_DIM)
 
     return line

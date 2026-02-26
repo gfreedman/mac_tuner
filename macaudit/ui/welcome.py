@@ -33,7 +33,7 @@ from macaudit.ui.header import _append_beagle
 from macaudit.ui.theme import (
     APP_NAME, COLOR_BRAND, COLOR_DIM, COLOR_TEXT,
     COLOR_CRITICAL, COLOR_WARNING, COLOR_PASS,
-    COLOR_SCORE_HIGH, COLOR_SCORE_MID, COLOR_SCORE_LOW, COLOR_SCORE_POOR,
+    score_color,
 )
 
 # Box that renders only a │ column separator — no outer borders, no row rules.
@@ -238,14 +238,7 @@ def _append_last_scan(t: Text, data: dict) -> None:
     critical = data.get("critical", 0)
     warning  = data.get("warning",  0)
 
-    if score >= 90:
-        score_style = f"bold {COLOR_SCORE_HIGH}"
-    elif score >= 75:
-        score_style = f"bold {COLOR_SCORE_MID}"
-    elif score >= 55:
-        score_style = f"bold {COLOR_SCORE_LOW}"
-    else:
-        score_style = f"bold {COLOR_SCORE_POOR}"
+    score_style = f"bold {score_color(score)}"
 
     # Line 1: date · time
     t.append("  ", style=COLOR_DIM)

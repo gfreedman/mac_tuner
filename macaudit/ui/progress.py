@@ -9,7 +9,7 @@ Output:  [████████████░░░░░░░░] 62%  · 
 
 from rich.text import Text
 
-from macaudit.ui.theme import COLOR_DIM
+from macaudit.ui.theme import COLOR_DIM, PROGRESS_BAR_COLOR, PROGRESS_COMPLETE_COLOR
 
 
 BAR_WIDTH = 22
@@ -34,8 +34,8 @@ def render_progress(completed: int, total: int) -> Text:
     empty = BAR_WIDTH - filled
 
     done = completed == total
-    bar_color = "bright_green" if done else "cyan"
-    pct_color = "bright_green bold" if done else "bold cyan"
+    bar_color = PROGRESS_COMPLETE_COLOR if done else PROGRESS_BAR_COLOR
+    pct_color = f"{PROGRESS_COMPLETE_COLOR} bold" if done else f"bold {PROGRESS_BAR_COLOR}"
 
     t = Text()
     t.append("  [", style=COLOR_DIM)

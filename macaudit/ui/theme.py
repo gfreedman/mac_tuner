@@ -172,6 +172,33 @@ FIX_LEVEL_LABELS: dict[str, str] = {
     "none": "📊 Info only",
 }
 
+FIX_LEVEL_EMOJI: dict[str, str] = {
+    "auto":          "🤖",
+    "auto_sudo":     "🤖🔐",
+    "guided":        "👆",
+    "instructions":  "📋",
+}
+
+FIX_LEVEL_LABEL_SHORT: dict[str, str] = {
+    "auto":          "Automatic",
+    "auto_sudo":     "Password",
+    "guided":        "Settings",
+    "instructions":  "Steps",
+}
+
+
+# ── Score color helper ───────────────────────────────────────────────────────
+
+def score_color(score: int) -> str:
+    """Return the appropriate COLOR_SCORE_* constant for a given score."""
+    if score >= 90:
+        return COLOR_SCORE_HIGH
+    if score >= 75:
+        return COLOR_SCORE_MID
+    if score >= 55:
+        return COLOR_SCORE_LOW
+    return COLOR_SCORE_POOR
+
 
 # ── Rich Theme ────────────────────────────────────────────────────────────────
 

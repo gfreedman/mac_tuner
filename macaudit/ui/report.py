@@ -27,14 +27,17 @@ from rich.table import Table
 from rich.text import Text
 
 from macaudit.checks.base import CheckResult, calculate_health_score
+from macaudit.ui.progress import BAR_WIDTH
 from macaudit.ui.theme import (
     CATEGORY_ICONS,
     COLOR_DIM,
+    COLOR_PASS,
     COLOR_TEXT,
     FIX_LEVEL_LABELS,
     MACTUNER_THEME,
     STATUS_ICONS,
     STATUS_STYLES,
+    score_color,
 )
 
 
@@ -108,26 +111,19 @@ def build_summary_panel(results: list[CheckResult], scan_duration: float = 0.0) 
     errors   = counts["error"]
 
     # Score colour
-    if score >= 90:
-        score_color = "bright_green"
-    elif score >= 75:
-        score_color = "green"
-    elif score >= 55:
-        score_color = "yellow"
-    else:
-        score_color = "bright_red"
+    sc = score_color(score)
 
-    # Score bar (22 chars wide)
-    bar_width = 22
+    # Score bar
+    bar_width = BAR_WIDTH
     filled = round(bar_width * score / 100)
     empty  = bar_width - filled
 
     # ── Line 1: score ─────────────────────────────────────────────────────────
     score_line = Text()
     score_line.append("   Health Score  ", style=f"bold {COLOR_TEXT}")
-    score_line.append(f"{score:>3}", style=f"bold {score_color}")
+    score_line.append(f"{score:>3}", style=f"bold {sc}")
     score_line.append("  [", style=COLOR_DIM)
-    score_line.append("█" * filled, style=score_color)
+    score_line.append("█" * filled, style=sc)
     score_line.append("░" * empty,  style=COLOR_DIM)
     score_line.append("]", style=COLOR_DIM)
     score_line.append(f"  / 100", style=COLOR_DIM)
@@ -252,6 +248,13 @@ def build_recommendations_panel(
 
     parts: list = []
 
+    # Leading total-count line
+    lede = Text()
+    lede.append(f"  {total} fixable item{'s' if total != 1 else ''}", style=f"bold {COLOR_TEXT}")
+    lede.append(" — top issues:", style=COLOR_DIM)
+    parts.append(lede)
+    parts.append(Text(""))
+
     for r in shown:
         icon = STATUS_ICONS.get(r.status, "?")
         style = STATUS_STYLES.get(r.status)
@@ -346,7 +349,7 @@ def _build_category_panel(
     elif any(r.status in ("warning", "error") for r in results):
         border = "yellow"
     else:
-        border = "dim"
+        border = COLOR_PASS
 
     return Panel(
         Group(*parts),

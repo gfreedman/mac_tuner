@@ -193,7 +193,7 @@ def cli(
     # ── Pre-scan prompt ───────────────────────────────────────────────────────
     if not quiet and not as_json and not yes and not _first_run:
         n = len(all_checks)
-        console.print(f"  [dim]Ready to run [bold text]{n}[/bold text] checks — ~10–15 seconds.[/dim]")
+        console.print(f"  [dim]Ready to run [bold text]{n}[/bold text] checks.[/dim]")
         console.print()
         console.print(
             "  [dim]Press [bold text]↵ \\[ENTER][/bold text] to begin  "

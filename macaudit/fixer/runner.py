@@ -30,7 +30,16 @@ from macaudit.fixer.executor import (
     run_guided_fix,
     run_instructions_fix,
 )
-from macaudit.ui.theme import COLOR_BRAND, COLOR_DIM, COLOR_TEXT, STATUS_ICONS, STATUS_STYLES
+from macaudit.ui.theme import (
+    COLOR_BRAND,
+    COLOR_DIM,
+    COLOR_TEXT,
+    FIX_LEVEL_EMOJI,
+    FIX_LEVEL_LABELS,
+    FIX_LEVEL_LABEL_SHORT,
+    STATUS_ICONS,
+    STATUS_STYLES,
+)
 
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -40,26 +49,6 @@ _FIXABLE_LEVELS   = frozenset(("auto", "auto_sudo", "guided", "instructions"))
 
 _SEVERITY_ORDER = {"critical": 0, "warning": 1, "error": 2, "info": 3}
 
-_LEVEL_EMOJI = {
-    "auto":          "🤖",
-    "auto_sudo":     "🤖🔐",
-    "guided":        "👆",
-    "instructions":  "📋",
-}
-
-_LEVEL_LABEL = {
-    "auto":          "Automatic",
-    "auto_sudo":     "Requires password",
-    "guided":        "Opens Settings",
-    "instructions":  "Step-by-step",
-}
-
-_LEVEL_LABEL_SHORT = {
-    "auto":          "Automatic",
-    "auto_sudo":     "Password",
-    "guided":        "Settings",
-    "instructions":  "Steps",
-}
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -110,41 +99,27 @@ def _run_interactive_mode(
         _print_fix_card(console, result, idx, total)
 
         if result.fix_level in ("auto", "auto_sudo"):
-            console.print("  [bold]Apply this fix?[/bold]")
-            menu = TerminalMenu(
-                ["No, skip", "Yes, apply", "Quit"],
-                menu_cursor="› ",
-                menu_cursor_style=("fg_cyan", "bold"),
-                menu_highlight_style=("fg_cyan", "bold"),
-                cursor_index=0,
-            )
-            choice = menu.show()
-            if choice is None or choice == 2:
-                console.print("\n  [dim]Fix mode cancelled.[/dim]\n")
-                _print_session_summary(console, applied, skipped, total, dry_run=dry_run)
-                return
-            if choice == 0:  # No, skip
-                console.print("  [dim]Skipped.[/dim]\n")
-                skipped += 1
-                continue
-        else:  # guided / instructions
-            console.print("  [bold]Continue with this fix?[/bold]")
-            menu = TerminalMenu(
-                ["Continue", "Skip", "Quit"],
-                menu_cursor="› ",
-                menu_cursor_style=("fg_cyan", "bold"),
-                menu_highlight_style=("fg_cyan", "bold"),
-                cursor_index=0,
-            )
-            choice = menu.show()
-            if choice is None or choice == 2:
-                console.print("\n  [dim]Fix mode cancelled.[/dim]\n")
-                _print_session_summary(console, applied, skipped, total, dry_run=dry_run)
-                return
-            if choice == 1:  # Skip
-                console.print("  [dim]Skipped.[/dim]\n")
-                skipped += 1
-                continue
+            options = ["Skip", "Apply", "Quit"]
+        else:
+            options = ["Skip", "Continue", "Quit"]
+
+        console.print("  [bold]Apply this fix?[/bold]")
+        menu = TerminalMenu(
+            options,
+            menu_cursor="› ",
+            menu_cursor_style=("fg_cyan", "bold"),
+            menu_highlight_style=("fg_cyan", "bold"),
+            cursor_index=0,
+        )
+        choice = menu.show()
+        if choice is None or choice == 2:  # Quit
+            console.print("\n  [dim]Fix mode cancelled.[/dim]\n")
+            _print_session_summary(console, applied, skipped, total, dry_run=dry_run)
+            return
+        if choice == 0:  # Skip
+            console.print("  [dim]Skipped.[/dim]\n")
+            skipped += 1
+            continue
 
         if dry_run:
             console.print("  [dim]Skipped (dry run)[/dim]\n")
@@ -240,8 +215,8 @@ def _print_fix_card(
     """Print a rich Panel with full context for a single fix."""
     status_icon  = STATUS_ICONS.get(result.status, "?")
     status_style = STATUS_STYLES.get(result.status)
-    level_emoji  = _LEVEL_EMOJI.get(result.fix_level, "·")
-    level_label  = _LEVEL_LABEL.get(result.fix_level, result.fix_level)
+    level_emoji  = FIX_LEVEL_EMOJI.get(result.fix_level, "·")
+    level_label  = FIX_LEVEL_LABELS.get(result.fix_level, result.fix_level)
 
     parts: list = []
 
@@ -310,7 +285,7 @@ def _print_fix_card(
     console.print(
         Panel(
             Group(*parts),
-            title=f"[bold][{idx}/{total}]  {result.name}[/bold]",
+            title=f"[bold]Fix {idx} of {total}  —  {result.name}[/bold]",
             title_align="left",
             border_style=border,
             padding=(0, 1),
@@ -331,7 +306,7 @@ def _print_fix_mode_panel(
         n = counts.get(level, 0)
         if n:
             parts.append(
-                f"[bold]{n}[/bold] {_LEVEL_EMOJI[level]} {_LEVEL_LABEL_SHORT[level]}"
+                f"[bold]{n}[/bold] {FIX_LEVEL_EMOJI[level]} {FIX_LEVEL_LABEL_SHORT[level]}"
             )
 
     body = Text()
