@@ -2,6 +2,17 @@
 
 All notable changes to Mac Audit are documented here.
 
+## [1.8.0] — 2026-02-26
+
+### Added
+- **Inline MDM badges** — on MDM-enrolled Macs, findings for MDM-relevant checks (FileVault, Firewall, Gatekeeper, auto-updates, screen lock, sharing services, etc.) now show a persistent `🏢 may be managed by your org` badge alongside the result, not just a one-time advisory panel
+- **Contextual verdicts** — when 1–2 critical issues exist, the summary verdict names them specifically (e.g. "FileVault Disk Encryption — disk encryption is disabled") instead of a generic count
+
+### Improved
+- **GitHub Pages copy** — hero tagline, quick start, fix mode intro, safety list, and score section rewritten to emphasize read-only-by-default, explain-then-act fix flow, and safety-first positioning
+
+---
+
 ## [1.7.3] — 2026-02-25
 
 ### Improved
