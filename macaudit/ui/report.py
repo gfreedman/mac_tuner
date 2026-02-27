@@ -30,6 +30,7 @@ from macaudit.checks.base import CheckResult, calculate_health_score
 from macaudit.ui.progress import BAR_WIDTH
 from macaudit.ui.theme import (
     CATEGORY_ICONS,
+    COLOR_CRITICAL,
     COLOR_DIM,
     COLOR_PASS,
     COLOR_TEXT,
@@ -69,6 +70,7 @@ def print_report(
     scan_duration: float = 0.0,
     mode: str = "scan",
     mdm_enrolled: bool = False,
+    diff: Optional[dict] = None,
 ) -> None:
     """
     Render the complete post-scan report to the console.
@@ -81,6 +83,7 @@ def print_report(
         scan_duration: Wall-clock seconds the scan took (0 = not tracked).
         mode:          Active mode — "scan", "fix", or "targeted".
         mdm_enrolled:  If True, show inline MDM badges on relevant findings.
+        diff:          Structured diff dict from compute_diff(), or None.
     """
     if not results:
         console.print("[dim]  No results to display.[/dim]")
@@ -88,6 +91,9 @@ def print_report(
 
     console.print()
     console.print(build_summary_panel(results, scan_duration=scan_duration))
+
+    if diff is not None:
+        console.print(build_diff_panel(diff))
 
     for panel in build_category_panels(results, issues_only=issues_only, explain=explain,
                                        mdm_enrolled=mdm_enrolled):
@@ -182,6 +188,134 @@ def build_summary_panel(results: list[CheckResult], scan_duration: float = 0.0) 
     return Panel(
         content,
         title="[bold]Summary[/bold]",
+        border_style=border,
+        padding=(1, 2),
+    )
+
+
+def build_diff_panel(diff: dict) -> Panel:
+    """
+    Build the "Changes Since Last Scan" panel from a structured diff dict.
+
+    Shows score delta, previous scan time, and improved/regressed/new/removed
+    sections. Sections with no items are omitted entirely.
+    """
+    parts: list = []
+
+    # ── Score line ────────────────────────────────────────────────────────────
+    score_before = diff.get("score_before", 0)
+    score_after = diff.get("score_after", 0)
+    score_delta = diff.get("score_delta", 0)
+
+    score_line = Text()
+    score_line.append("   Score  ", style=f"bold {COLOR_TEXT}")
+    score_line.append(str(score_before), style=COLOR_DIM)
+    score_line.append(" → ", style=COLOR_DIM)
+    score_line.append(str(score_after), style=f"bold {score_color(score_after)}")
+    score_line.append("  ", style=COLOR_DIM)
+
+    if score_delta > 0:
+        score_line.append(f"(+{score_delta})", style=f"bold {COLOR_PASS}")
+    elif score_delta < 0:
+        score_line.append(f"({score_delta})", style=f"bold {COLOR_CRITICAL}")
+    else:
+        score_line.append("(±0)", style=COLOR_DIM)
+
+    parts.append(score_line)
+
+    # ── Previous scan time ────────────────────────────────────────────────────
+    prev_time = diff.get("previous_scan_time", "")
+    if prev_time:
+        from datetime import datetime
+        try:
+            dt = datetime.fromisoformat(prev_time)
+            time_str = f"{dt.day} {dt.strftime('%b %Y')}  ·  {dt.strftime('%H:%M')}"
+        except (ValueError, TypeError):
+            time_str = prev_time
+        time_line = Text()
+        time_line.append(f"   Previous scan: {time_str}", style=COLOR_DIM)
+        parts.append(time_line)
+
+    # ── Improved section ──────────────────────────────────────────────────────
+    improved = diff.get("improved", [])
+    if improved:
+        parts.append(Text(""))
+        header = Text()
+        header.append("   Improved", style=f"bold {COLOR_PASS}")
+        parts.append(header)
+        for item in improved:
+            line = Text()
+            line.append(f"   {STATUS_ICONS['pass']}  ", style=COLOR_PASS)
+            line.append(item.get("name", ""), style="bold")
+            before = item.get("before_status", "")
+            after = item.get("after_status", "")
+            line.append(f"   {before} → {after}", style=COLOR_DIM)
+            msg = item.get("message", "")
+            if msg:
+                line.append(f"   {msg}", style=COLOR_DIM)
+            parts.append(line)
+
+    # ── Regressed section ─────────────────────────────────────────────────────
+    regressed = diff.get("regressed", [])
+    if regressed:
+        parts.append(Text(""))
+        header = Text()
+        header.append("   Regressed", style=f"bold {COLOR_CRITICAL}")
+        parts.append(header)
+        for item in regressed:
+            line = Text()
+            line.append(f"   {STATUS_ICONS['critical']}  ", style=COLOR_CRITICAL)
+            line.append(item.get("name", ""), style="bold")
+            before = item.get("before_status", "")
+            after = item.get("after_status", "")
+            line.append(f"   {before} → {after}", style=COLOR_DIM)
+            msg = item.get("message", "")
+            if msg:
+                line.append(f"   {msg}", style=COLOR_DIM)
+            parts.append(line)
+
+    # ── New checks section ────────────────────────────────────────────────────
+    new_checks = diff.get("new_checks", [])
+    if new_checks:
+        parts.append(Text(""))
+        header = Text()
+        header.append("   New checks", style=f"bold {COLOR_TEXT}")
+        parts.append(header)
+        for item in new_checks:
+            icon = STATUS_ICONS.get(item.get("status", "info"), STATUS_ICONS["info"])
+            line = Text()
+            line.append(f"   {icon}  ", style=COLOR_DIM)
+            line.append(item.get("name", ""), style="bold")
+            msg = item.get("message", "")
+            if msg:
+                line.append(f"   {msg}", style=COLOR_DIM)
+            parts.append(line)
+
+    # ── Removed checks section ────────────────────────────────────────────────
+    removed_checks = diff.get("removed_checks", [])
+    if removed_checks:
+        parts.append(Text(""))
+        header = Text()
+        header.append("   Removed checks", style=f"bold {COLOR_DIM}")
+        parts.append(header)
+        for item in removed_checks:
+            line = Text()
+            line.append(f"   ─  ", style=COLOR_DIM)
+            line.append(item.get("name", ""), style=COLOR_DIM)
+            parts.append(line)
+
+    # ── Border color ──────────────────────────────────────────────────────────
+    has_regressions = bool(regressed)
+    if score_delta > 0 and not has_regressions:
+        border = COLOR_PASS
+    elif score_delta < 0:
+        border = COLOR_CRITICAL
+    else:
+        border = "bright_blue"
+
+    return Panel(
+        Group(*parts),
+        title="[bold]Changes Since Last Scan[/bold]",
         border_style=border,
         padding=(1, 2),
     )

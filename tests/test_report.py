@@ -15,7 +15,9 @@ from macaudit.ui.report import (
     _compact_table,
     _render_issue,
     _score_verdict,
+    build_diff_panel,
     build_summary_panel,
+    print_report,
 )
 
 
@@ -206,3 +208,108 @@ class TestSummaryPanelVerdict:
         output = buf.getvalue()
         assert "Firewall" in output
         assert "firewall is disabled" in output
+
+
+# ── Diff panel: build_diff_panel ─────────────────────────────────────────────
+
+class TestDiffPanel:
+    def _diff(self, **overrides) -> dict:
+        """Build a minimal diff dict; overrides replace defaults."""
+        base = {
+            "previous_scan_time": "2026-02-25T18:30:00+00:00",
+            "score_before": 72,
+            "score_after": 85,
+            "score_delta": 13,
+            "improved": [],
+            "regressed": [],
+            "new_checks": [],
+            "removed_checks": [],
+        }
+        base.update(overrides)
+        return base
+
+    def test_panel_renders_score_delta_positive(self):
+        """Panel shows score before, after, and positive delta in green."""
+        con, buf = _console()
+        panel = build_diff_panel(self._diff(score_before=72, score_after=85, score_delta=13))
+        con.print(panel)
+        output = buf.getvalue()
+        assert "72" in output
+        assert "85" in output
+        assert "(+13)" in output
+
+    def test_panel_renders_score_delta_negative(self):
+        """Panel shows negative delta."""
+        con, buf = _console()
+        panel = build_diff_panel(self._diff(score_before=90, score_after=75, score_delta=-15))
+        con.print(panel)
+        output = buf.getvalue()
+        assert "(-15)" in output
+
+    def test_panel_renders_score_delta_zero(self):
+        """Panel shows ±0 for no change."""
+        con, buf = _console()
+        panel = build_diff_panel(self._diff(score_delta=0, score_before=80, score_after=80))
+        con.print(panel)
+        assert "±0" in buf.getvalue()
+
+    def test_panel_shows_improved_items(self):
+        """Improved section lists items with before→after status."""
+        diff = self._diff(improved=[{
+            "id": "filevault", "name": "FileVault", "category": "security",
+            "before_status": "critical", "after_status": "pass",
+            "message": "Encryption enabled",
+        }])
+        con, buf = _console()
+        con.print(build_diff_panel(diff))
+        output = buf.getvalue()
+        assert "Improved" in output
+        assert "FileVault" in output
+        assert "critical" in output
+        assert "pass" in output
+
+    def test_panel_shows_regressed_items(self):
+        """Regressed section lists items."""
+        diff = self._diff(score_delta=-5, regressed=[{
+            "id": "screen_lock", "name": "Screen Lock", "category": "security",
+            "before_status": "pass", "after_status": "critical",
+            "message": "15 min delay",
+        }])
+        con, buf = _console()
+        con.print(build_diff_panel(diff))
+        output = buf.getvalue()
+        assert "Regressed" in output
+        assert "Screen Lock" in output
+
+    def test_panel_omits_empty_sections(self):
+        """Sections with no items don't appear."""
+        diff = self._diff(improved=[], regressed=[], new_checks=[], removed_checks=[])
+        con, buf = _console()
+        con.print(build_diff_panel(diff))
+        output = buf.getvalue()
+        assert "Improved" not in output
+        assert "Regressed" not in output
+        assert "New checks" not in output
+        assert "Removed checks" not in output
+
+    def test_panel_shows_previous_scan_time(self):
+        """Panel displays the previous scan timestamp."""
+        diff = self._diff(previous_scan_time="2026-02-25T18:30:00+00:00")
+        con, buf = _console()
+        con.print(build_diff_panel(diff))
+        assert "Previous scan:" in buf.getvalue()
+
+    def test_print_report_hides_diff_when_none(self):
+        """print_report with diff=None does not render diff panel."""
+        r = _result(status="pass", message="ok")
+        con, buf = _console()
+        print_report([r], con, diff=None)
+        assert "Changes Since Last Scan" not in buf.getvalue()
+
+    def test_print_report_shows_diff_when_present(self):
+        """print_report with diff renders the diff panel."""
+        r = _result(status="pass", message="ok")
+        diff = self._diff()
+        con, buf = _console()
+        print_report([r], con, diff=diff)
+        assert "Changes Since Last Scan" in buf.getvalue()

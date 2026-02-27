@@ -213,6 +213,19 @@ def cli(
     results = _run_checks(all_checks, quiet=quiet, as_json=as_json)
     _scan_elapsed = time.monotonic() - _scan_start
 
+    # ── Diff (load previous BEFORE saving current) ────────────────────────────
+    diff = None
+    if not quiet:
+        from macaudit.diff import compute_diff
+        from macaudit.history import _build_payload, load_previous_scan, save_scan
+
+        previous = load_previous_scan()
+        if previous is not None:
+            current_payload = _build_payload(results)
+            diff = compute_diff(current_payload, previous)
+
+        save_scan(results)
+
     # ── Persist last-scan summary for welcome screen ──────────────────────────
     if not as_json:
         from macaudit.ui.welcome import save_last_scan
@@ -223,7 +236,7 @@ def cli(
 
     # ── Output ────────────────────────────────────────────────────────────────
     if as_json:
-        _output_json(results)
+        _output_json(results, diff=diff)
         return
 
     score = calculate_health_score(results)
@@ -236,7 +249,7 @@ def cli(
     from macaudit.ui.report import print_report
     print_report(results, console, issues_only=issues_only, explain=explain,
                  scan_duration=_scan_elapsed, mode=_resolve_mode(fix, only, skip),
-                 mdm_enrolled=_mdm_enrolled)
+                 mdm_enrolled=_mdm_enrolled, diff=diff)
 
     # ── Fix mode ──────────────────────────────────────────────────────────────
     if fix:
@@ -466,7 +479,7 @@ def _run_checks(checks: list, quiet: bool, as_json: bool) -> list[CheckResult]:
 
 # ── JSON output ───────────────────────────────────────────────────────────────
 
-def _output_json(results: list[CheckResult]) -> None:
+def _output_json(results: list[CheckResult], diff: Optional[dict] = None) -> None:
     """Serialize all CheckResults plus system info and health score to JSON on stdout."""
     import dataclasses
     import json
@@ -499,6 +512,9 @@ def _output_json(results: list[CheckResult]) -> None:
         "summary": counts,
         "results": serialised,
     }
+
+    if diff is not None:
+        payload["diff"] = diff
 
     click.echo(json.dumps(payload, indent=2))
 
