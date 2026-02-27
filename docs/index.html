@@ -582,7 +582,7 @@
 <section id="install">
   <div class="wrap">
     <h2>Install</h2>
-    <div class="install-grid" style="grid-template-columns:1fr 1fr">
+    <div class="install-grid">
       <div class="install-opt">
         <div class="install-label">Homebrew <span class="badge">recommended</span></div>
         <pre><code>brew install gfreedman/macaudit/macaudit</code></pre>
@@ -592,6 +592,11 @@
         <pre><code>git clone https://github.com/gfreedman/mac_audit
 cd mac_audit &amp;&amp; bash install.sh</code></pre>
         <p class="opt-note">Requires Python 3.10+ and pipx or pip.</p>
+      </div>
+      <div class="install-opt">
+        <div class="install-label">One-click installer</div>
+        <p class="opt-note" style="margin-top:0;margin-bottom:8px">Download, double-click, done. Installs Homebrew too if needed.</p>
+        <a href="https://github.com/gfreedman/mac_audit/releases/latest/download/install-macaudit.command" style="display:inline-block;font-size:13px;font-weight:600;color:var(--accent);text-decoration:none;">Download .command file &darr;</a>
       </div>
     </div>
     <p class="note">Requires macOS 13 Ventura or later · Intel and Apple Silicon · No Homebrew? Run <code>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"</code> first.</p>

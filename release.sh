@@ -208,6 +208,10 @@ else
   ok "Created GitHub release $TAG"
 fi
 
+gh release upload "$TAG" install-macaudit.command \
+  --repo gfreedman/mac_audit --clobber
+ok "Uploaded install-macaudit.command to release $TAG"
+
 RELEASE_URL="https://github.com/gfreedman/mac_audit/releases/tag/$TAG"
 
 # ─────────────────────────────────────────────────────────────────────────────
