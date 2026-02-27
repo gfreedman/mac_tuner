@@ -9,7 +9,8 @@
 #   4. Git        — commit, tag, push (idempotent: skips if tag exists)
 #   5. GitHub     — create release with changelog body (skips if exists)
 #   6. Homebrew   — full formula regeneration from PyPI (not sed-patching)
-#   7. Summary    — print what happened
+#   7. Docs       — sync check count in docs/index.html
+#   8. Summary    — print what happened
 #
 # Usage:
 #   ./release.sh 1.7.0            # full release
@@ -441,9 +442,34 @@ fi
 cd "$REPO_ROOT"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Phase 7 — Summary
+# Phase 7 — Docs check count
+# Keep the "N checks" claim on the docs site in sync with reality.
 # ─────────────────────────────────────────────────────────────────────────────
-phase "7 — Summary"
+phase "7 — Docs check count"
+
+CHECK_COUNT=$($PYTHON -c "
+from macaudit.checks import system, security, privacy, homebrew, disk, hardware, memory, network, dev_env, apps, secrets
+modules = [system, security, privacy, homebrew, disk, hardware, memory, network, dev_env, apps, secrets]
+print(sum(len(m.ALL_CHECKS) for m in modules))
+")
+info "Total checks: $CHECK_COUNT"
+
+if grep -q "[0-9]\+ checks" docs/index.html; then
+  sed -i '' "s/[0-9]\{1,\} checks/$CHECK_COUNT checks/g" docs/index.html
+  if ! git diff --quiet docs/index.html; then
+    git add docs/index.html
+    git commit -m "docs: update check count to $CHECK_COUNT"
+    git push origin main
+    ok "Updated docs check count to $CHECK_COUNT"
+  else
+    ok "Docs check count already $CHECK_COUNT"
+  fi
+fi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase 8 — Summary
+# ─────────────────────────────────────────────────────────────────────────────
+phase "8 — Summary"
 
 printf "\n"
 printf "${GREEN}${BOLD}Release $VERSION complete!${RESET}\n"
