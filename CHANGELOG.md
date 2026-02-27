@@ -2,6 +2,14 @@
 
 All notable changes to Mac Audit are documented here.
 
+## [1.11.0] — 2026-02-26
+
+### Added
+- **One-click `.command` installer** — a double-clickable file that installs Homebrew (if needed) and macaudit in one step. Available as a release asset and linked from the docs site
+- **Release asset upload** — `release.sh` now uploads the `.command` installer to each GitHub release automatically
+
+---
+
 ## [1.10.0] — 2026-02-26
 
 ### Added
