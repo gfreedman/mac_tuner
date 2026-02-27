@@ -35,10 +35,6 @@
     /* ── Nav ──────────────────────────────────────────────────────────── */
     nav {
       height: 52px;
-      display: flex;
-      align-items: center;
-      padding: 0 clamp(16px, 4vw, 48px);
-      gap: 20px;
       position: sticky;
       top: 0;
       z-index: 40;
@@ -46,6 +42,16 @@
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       border-bottom: 1px solid var(--border);
+    }
+
+    .nav-inner {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 clamp(16px, 4vw, 48px);
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 20px;
     }
 
     .nav-brand {
@@ -58,7 +64,7 @@
     }
 
     nav a {
-      font-size: 13px;
+      font-size: 14px;
       color: var(--muted);
       text-decoration: none;
       transition: color 0.12s;
@@ -102,6 +108,52 @@
       margin-bottom: 28px;
     }
 
+    /* ── Trust chips ──────────────────────────────────────────────────── */
+    .trust-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .trust-chip {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--green);
+      background: #e6f2eb;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 0.1px;
+    }
+
+    /* ── Hero install cards ────────────────────────────────────────────── */
+    .hero-install {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      margin-bottom: 0;
+    }
+
+    .hero-install-card {
+      background: var(--bg-card);
+      padding: 16px 18px 14px;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .hero-install-card:first-child { border-radius: 8px 0 0 8px; }
+    .hero-install-card:last-child  { border-radius: 0 8px 8px 0; }
+
+    .hero-card-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
     .install-pill {
       display: inline-flex;
       align-items: center;
@@ -129,6 +181,26 @@
       border: none;
     }
 
+    .hero-download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--accent);
+      text-decoration: none;
+      margin-bottom: 6px;
+    }
+
+    .hero-download-link:hover { opacity: 0.8; }
+
+    .hero-card-desc {
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-top: 4px;
+    }
+
     /* ── Section headings ─────────────────────────────────────────────── */
     h2 {
       font-size: 22px;
@@ -144,7 +216,7 @@
       text-transform: uppercase;
       letter-spacing: 0.8px;
       color: var(--muted);
-      margin-top: 28px;
+      margin-top: 20px;
       margin-bottom: 8px;
     }
 
@@ -158,6 +230,7 @@
       padding: 14px 18px;
       overflow-x: auto;
       margin: 10px 0;
+      min-width: 0;
     }
 
     pre code {
@@ -184,7 +257,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 2px;
-      margin: 4px 0;
+      margin: 12px 0;
     }
 
     .step {
@@ -193,6 +266,7 @@
       border-radius: 0;
       display: flex;
       flex-direction: column;
+      min-width: 0;
     }
 
     .step .code-wrap {
@@ -234,9 +308,12 @@
       margin: 12px 0 0;
     }
 
+    .install-grid-2 { grid-template-columns: 1fr 1fr; }
+
     .install-opt {
       background: var(--bg-card);
       padding: 16px 18px 14px;
+      min-width: 0;
     }
 
     .install-opt:first-child  { border-radius: 8px 0 0 8px; }
@@ -427,6 +504,7 @@
     .card {
       background: var(--bg-card);
       padding: 16px 18px;
+      min-width: 0;
     }
 
     .card:nth-child(1) { border-radius: 8px 0 0 0; }
@@ -473,7 +551,7 @@
       list-style: none;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 6px 28px;
+      gap: 10px 24px;
       margin: 10px 0;
     }
 
@@ -495,19 +573,29 @@
     /* ── Footer ───────────────────────────────────────────────────────── */
     footer {
       border-top: 1px solid var(--border);
-      padding: 22px clamp(16px, 4vw, 48px);
-      text-align: center;
       font-size: 12.5px;
       color: var(--muted);
+    }
+
+    .footer-inner {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 22px clamp(16px, 4vw, 48px);
+      text-align: center;
     }
 
     footer a { color: var(--muted); text-decoration: none; }
     footer a:hover { color: var(--body); }
 
     /* ── Responsive ───────────────────────────────────────────────────── */
+    @media (max-width: 400px) {
+      .score-bar { height: auto; flex-direction: column; border-radius: 6px; overflow: hidden; }
+      .score-seg { padding: 6px 0; }
+    }
+
     @media (max-width: 560px) {
       nav .hn { display: none; }
-      .steps, .install-grid, .grid-2, .safety-list { grid-template-columns: 1fr; }
+      .steps, .install-grid, .install-grid-2, .grid-2, .safety-list, .hero-install { grid-template-columns: 1fr; }
       .steps .step:first-child,
       .steps .step:last-child        { border-radius: 0; }
       .steps .step:first-child       { border-radius: 8px 8px 0 0; }
@@ -515,6 +603,8 @@
       .install-opt:first-child  { border-radius: 8px 8px 0 0; }
       .install-opt:last-child   { border-radius: 0 0 8px 8px; }
       .install-opt:not(:first-child):not(:last-child) { border-radius: 0; }
+      .hero-install-card:first-child { border-radius: 8px 8px 0 0; }
+      .hero-install-card:last-child  { border-radius: 0 0 8px 8px; }
       .card:nth-child(odd)           { border-radius: 0; }
       .card:nth-child(even)          { border-radius: 0; }
       .grid-2 .card:first-child      { border-radius: 8px 8px 0 0; }
@@ -525,16 +615,18 @@
 <body>
 
 <nav>
-  <a class="nav-brand" href="#top">Mac Audit</a>
-  <a class="hn" href="#start">Quick start</a>
-  <a class="hn" href="#commands">Commands</a>
-  <a class="hn" href="#fix">Fix mode</a>
-  <a class="hn" href="#checks">Checks</a>
-  <a class="hn" href="#uninstall">Uninstall</a>
-  <a class="nav-right hn" href="https://github.com/gfreedman/mac_audit" style="display:inline-flex;align-items:center;gap:5px;">
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
-    GitHub
-  </a>
+  <div class="nav-inner">
+    <a class="nav-brand" href="#top">Mac Audit</a>
+    <a class="hn" href="#start">Quick start</a>
+    <a class="hn" href="#commands">Commands</a>
+    <a class="hn" href="#fix">Fix mode</a>
+    <a class="hn" href="#checks">Checks</a>
+    <a class="hn" href="#uninstall">Uninstall</a>
+    <a class="nav-right hn" href="https://github.com/gfreedman/mac_audit" style="display:inline-flex;align-items:center;gap:5px;">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+  </div>
 </nav>
 
 <!-- Hero -->
@@ -542,12 +634,30 @@
   <div class="wrap">
     <h1>Mac Audit</h1>
     <p class="tagline">For anyone who's ever wondered "is my Mac configured well?" but doesn't want to wade through System Settings panels one by one.</p>
-    <div class="install-pill">
-      <span class="prompt">$</span>
-      <code>brew install gfreedman/macaudit/macaudit</code>
-      <button class="pill-copy" aria-label="Copy install command"></button>
+    <div class="trust-chips">
+      <span class="trust-chip">Free &amp; open source</span>
+      <span class="trust-chip">Read-only by default</span>
+      <span class="trust-chip">Runs entirely offline</span>
+      <span class="trust-chip">No data collected</span>
     </div>
-    <p class="note" style="margin-top:16px">Free and open source. Read-only by default. Runs entirely offline.<br>Or <a href="https://github.com/gfreedman/mac_audit/releases/latest/download/install-macaudit.command" style="color:var(--accent)">download the one-click installer</a> — no Terminal needed.</p>
+    <div class="hero-install">
+      <div class="hero-install-card">
+        <div class="hero-card-label">Homebrew</div>
+        <div class="install-pill">
+          <span class="prompt">$</span>
+          <code>brew install gfreedman/macaudit/macaudit</code>
+          <button class="pill-copy" aria-label="Copy install command"></button>
+        </div>
+      </div>
+      <div class="hero-install-card">
+        <div class="hero-card-label">One-click installer</div>
+        <a class="hero-download-link" href="https://github.com/gfreedman/mac_audit/releases/latest/download/install-macaudit.command">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v9M4 8l4 5 4-5"/><path d="M2 14h12"/></svg>
+          Download .command file
+        </a>
+        <p class="hero-card-desc">Double-click to run — no Terminal needed.<br>Installs Homebrew too if it's not already there.</p>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -607,7 +717,7 @@ cd mac_audit &amp;&amp; bash install.sh</code></pre>
 <section id="uninstall">
   <div class="wrap">
     <h2>Uninstall</h2>
-    <div class="install-grid" style="grid-template-columns:1fr 1fr">
+    <div class="install-grid install-grid-2">
       <div class="install-opt">
         <div class="install-label">Homebrew</div>
         <pre><code>brew uninstall macaudit
@@ -821,8 +931,10 @@ brew untap gfreedman/macaudit</code></pre>
 </section>
 
 <footer>
-  Mac Audit &middot; macOS only &middot; MIT license &middot;
-  <a href="https://github.com/gfreedman/mac_audit">github.com/gfreedman/mac_audit</a>
+  <div class="footer-inner">
+    Mac Audit &middot; macOS only &middot; MIT license &middot;
+    <a href="https://github.com/gfreedman/mac_audit">github.com/gfreedman/mac_audit</a>
+  </div>
 </footer>
 
 <script>
