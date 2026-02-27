@@ -2,6 +2,13 @@
 
 All notable changes to Mac Audit are documented here.
 
+## [1.10.0] — 2026-02-26
+
+### Added
+- **Check suppression via config file** — users can permanently dismiss specific findings by listing check IDs in `~/.config/macaudit/config.toml` (e.g. `suppress = ["filevault"]`). Suppressed checks are skipped (not run), appear dimmed in the report as "Suppressed by config", and do not penalize the health score
+
+---
+
 ## [1.9.0] — 2026-02-26
 
 ### Added
