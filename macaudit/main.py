@@ -192,9 +192,23 @@ def cli(
         console.print()
         return
 
+    # ── Apply config-based suppression ────────────────────────────────────────
+    from macaudit.config import load_config
+
+    config = load_config()
+    suppressed_ids = config["suppress"]
+
+    suppressed_results = []
+    active_checks = []
+    for check in all_checks:
+        if check.id in suppressed_ids:
+            suppressed_results.append(check._skip("Suppressed by config"))
+        else:
+            active_checks.append(check)
+
     # ── Pre-scan prompt ───────────────────────────────────────────────────────
     if not quiet and not as_json and not yes and not _first_run:
-        n = len(all_checks)
+        n = len(active_checks)
         console.print(f"  [dim]Ready to run [bold text]{n}[/bold text] checks.[/dim]")
         console.print()
         console.print(
@@ -210,7 +224,7 @@ def cli(
 
     # ── Run checks (narrated) ─────────────────────────────────────────────────
     _scan_start = time.monotonic()
-    results = _run_checks(all_checks, quiet=quiet, as_json=as_json)
+    results = _run_checks(active_checks, quiet=quiet, as_json=as_json) + suppressed_results
     _scan_elapsed = time.monotonic() - _scan_start
 
     # ── Diff (load previous BEFORE saving current) ────────────────────────────
