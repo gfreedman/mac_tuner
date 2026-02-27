@@ -2,6 +2,16 @@
 
 All notable changes to Mac Audit are documented here.
 
+## [1.9.0] — 2026-02-26
+
+### Added
+- **Scan diffing** — after every scan, full results are persisted to `~/.config/macaudit/history/`. On subsequent runs a "Changes Since Last Scan" panel shows what improved, what regressed, new/removed checks, and the score delta
+- **JSON diff output** — `--json` mode includes a `"diff"` key when changes are detected against the previous scan
+- **History pruning** — oldest snapshots are automatically cleaned up, keeping the 10 most recent scans
+- **Filter mismatch suppression** — when >50% of checks are new/removed (likely a `--only`/`--skip` difference), those sections are suppressed to avoid noisy diffs
+
+---
+
 ## [1.8.0] — 2026-02-26
 
 ### Added
