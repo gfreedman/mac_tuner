@@ -415,6 +415,7 @@ def _collect_checks(
     from macaudit.checks.disk import ALL_CHECKS as DISK
     from macaudit.checks.hardware import ALL_CHECKS as HARDWARE
     from macaudit.checks.homebrew import ALL_CHECKS as HOMEBREW
+    from macaudit.checks.malware import ALL_CHECKS as MALWARE
     from macaudit.checks.memory import ALL_CHECKS as MEMORY
     from macaudit.checks.network import ALL_CHECKS as NETWORK
     from macaudit.checks.privacy import ALL_CHECKS as PRIVACY
@@ -423,7 +424,7 @@ def _collect_checks(
 
     # Ordered for logical report flow (matches category panel order in report.py)
     all_classes = (
-        SYSTEM + SECURITY + PRIVACY
+        SYSTEM + SECURITY + PRIVACY + MALWARE
         + HOMEBREW + DISK + HARDWARE
         + MEMORY + NETWORK + DEV_ENV + APPS
     )

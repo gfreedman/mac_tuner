@@ -153,6 +153,7 @@ CATEGORY_ICONS: dict[str, str] = {
     "system": "💻",
     "privacy": "🔏",
     "security": "🔒",
+    "malware": "🦠",
     "homebrew": "🍺",
     "disk": "💽",
     "hardware": "🔋",
