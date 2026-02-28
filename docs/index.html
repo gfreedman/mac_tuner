@@ -103,7 +103,6 @@
     .tagline {
       font-size: clamp(16px, 2.2vw, 19px);
       color: var(--muted);
-      max-width: 460px;
       line-height: 1.45;
       margin-bottom: 28px;
     }
@@ -255,7 +254,7 @@
     /* ── Quick start steps ────────────────────────────────────────────── */
     .steps {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 2px;
       margin: 12px 0;
     }
@@ -273,8 +272,8 @@
       margin-top: auto;
     }
 
-    .steps .step:first-child { border-radius: 8px 0 0 8px; }
-    .steps .step:last-child  { border-radius: 0 8px 8px 0; }
+    .steps .step:first-child { border-radius: 8px 8px 0 0; }
+    .steps .step:last-child  { border-radius: 0 0 8px 8px; }
 
     .step-num {
       font-size: 11px;
@@ -303,12 +302,10 @@
     /* ── Install grid ─────────────────────────────────────────────────── */
     .install-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 2px;
       margin: 12px 0 0;
     }
-
-    .install-grid-2 { grid-template-columns: 1fr 1fr; }
 
     .install-opt {
       background: var(--bg-card);
@@ -316,8 +313,8 @@
       min-width: 0;
     }
 
-    .install-opt:first-child  { border-radius: 8px 0 0 8px; }
-    .install-opt:last-child   { border-radius: 0 8px 8px 0; }
+    .install-opt:first-child  { border-radius: 8px 8px 0 0; }
+    .install-opt:last-child   { border-radius: 0 0 8px 8px; }
 
     .install-label {
       font-size: 12px;
@@ -496,7 +493,7 @@
     /* ── Cards — no outlines, bg tints only ───────────────────────────── */
     .grid-2 {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 2px;
       margin: 12px 0;
     }
@@ -507,17 +504,16 @@
       min-width: 0;
     }
 
-    .card:nth-child(1) { border-radius: 8px 0 0 0; }
-    .card:nth-child(2) { border-radius: 0 8px 0 0; }
-    .card:nth-child(3) { border-radius: 0; }
-    .card:nth-child(4) { border-radius: 0; }
+    .card { border-radius: 0; }
+    .grid-2 .card:first-child { border-radius: 8px 8px 0 0; }
+    .grid-2 .card:last-child  { border-radius: 0 0 8px 8px; }
 
-    /* dynamic last-row rounding for 2-col grids */
-    .grid-2.r4 .card:nth-child(3) { border-radius: 0 0 0 8px; }
-    .grid-2.r4 .card:nth-child(4) { border-radius: 0 0 8px 0; }
-
-    .grid-2.r10 .card:nth-child(9)  { border-radius: 0 0 0 8px; }
-    .grid-2.r10 .card:nth-child(10) { border-radius: 0 0 8px 0; }
+    /* 2-column variant — used for "What it checks" */
+    .grid-2col { grid-template-columns: 1fr 1fr; }
+    .grid-2col .card:first-child       { border-radius: 8px 0 0 0; }
+    .grid-2col .card:nth-child(2)      { border-radius: 0 8px 0 0; }
+    .grid-2col .card:nth-last-child(2) { border-radius: 0 0 0 8px; }
+    .grid-2col .card:last-child        { border-radius: 0 0 8px 0; }
 
     .card-icon  { font-size: 18px; margin-bottom: 6px; display: block; }
     .card-title { font-size: 13.5px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
@@ -550,8 +546,8 @@
     .safety-list {
       list-style: none;
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px 24px;
+      grid-template-columns: 1fr;
+      gap: 10px;
       margin: 10px 0;
     }
 
@@ -595,20 +591,13 @@
 
     @media (max-width: 560px) {
       nav .hn { display: none; }
-      .steps, .install-grid, .install-grid-2, .grid-2, .safety-list, .hero-install { grid-template-columns: 1fr; }
-      .steps .step:first-child,
-      .steps .step:last-child        { border-radius: 0; }
-      .steps .step:first-child       { border-radius: 8px 8px 0 0; }
-      .steps .step:last-child        { border-radius: 0 0 8px 8px; }
-      .install-opt:first-child  { border-radius: 8px 8px 0 0; }
-      .install-opt:last-child   { border-radius: 0 0 8px 8px; }
-      .install-opt:not(:first-child):not(:last-child) { border-radius: 0; }
+      .hero-install, .grid-2col { grid-template-columns: 1fr; }
       .hero-install-card:first-child { border-radius: 8px 8px 0 0; }
       .hero-install-card:last-child  { border-radius: 0 0 8px 8px; }
-      .card:nth-child(odd)           { border-radius: 0; }
-      .card:nth-child(even)          { border-radius: 0; }
-      .grid-2 .card:first-child      { border-radius: 8px 8px 0 0; }
-      .grid-2 .card:last-child       { border-radius: 0 0 8px 8px; }
+      .grid-2col .card:first-child       { border-radius: 8px 8px 0 0; }
+      .grid-2col .card:nth-child(2)      { border-radius: 0; }
+      .grid-2col .card:nth-last-child(2) { border-radius: 0; }
+      .grid-2col .card:last-child        { border-radius: 0 0 8px 8px; }
     }
   </style>
 </head>
@@ -798,7 +787,7 @@ brew untap gfreedman/macaudit</code></pre>
   <div class="wrap">
     <h2>Fix mode</h2>
     <p>Too many "system optimizer" tools assume they know better than you and start flipping switches. Mac Audit does the opposite: for each issue, it shows what it found, why it matters, and exactly what the fix would do — then waits. The safe default is always Skip.</p>
-    <div class="grid-2 r4" style="margin-top:12px">
+    <div class="grid-2" style="margin-top:12px">
       <div class="card">
         <span class="card-icon">🤖</span>
         <div class="card-title">Automatic</div>
@@ -829,7 +818,7 @@ brew untap gfreedman/macaudit</code></pre>
   <div class="wrap">
     <h2>What it checks</h2>
     <p>70 checks across 10 categories. Every finding is explained — not just flagged — so you understand what it means before deciding what to do about it.</p>
-    <div class="grid-2 r10" style="margin-top:12px">
+    <div class="grid-2 grid-2col" style="margin-top:12px">
       <div class="card">
         <span class="card-icon">🛡️</span>
         <div class="card-title">Security</div>
