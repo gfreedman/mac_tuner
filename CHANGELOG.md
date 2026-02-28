@@ -2,6 +2,16 @@
 
 All notable changes to Mac Audit are documented here.
 
+## [1.12.0] — 2026-02-27
+
+### Added
+- **Virus Protection audit section** — new `malware` category with three read-only checks:
+  - **ClamAV**: detects installation, checks signature freshness (warns if > 7 days old), and verifies freshclam is configured for automatic updates. Falls back to noting macOS XProtect as a baseline if ClamAV is absent
+  - **Objective-See Tools**: reports which of LuLu, BlockBlock, KnockKnock, and RansomWhere are installed with educational context on what each tool does
+  - **Persistence Directories**: enumerates `.plist` files across `~/Library/LaunchAgents`, `/Library/LaunchAgents`, and `/Library/LaunchDaemons` as a hygiene awareness check (informational only, no false positives)
+
+---
+
 ## [1.11.0] — 2026-02-26
 
 ### Added
