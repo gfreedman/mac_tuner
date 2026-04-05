@@ -157,7 +157,7 @@ def build_summary_panel(results: list[CheckResult], scan_duration: float = 0.0) 
     score_line.append("█" * filled, style=sc)
     score_line.append("░" * empty,  style=COLOR_DIM)
     score_line.append("]", style=COLOR_DIM)
-    score_line.append(f"  / 100", style=COLOR_DIM)
+    score_line.append("  / 100", style=COLOR_DIM)
 
     # ── Line 2: status counts ─────────────────────────────────────────────────
     counts_line = Text()
@@ -321,7 +321,7 @@ def build_diff_panel(diff: dict) -> Panel:
         parts.append(header)
         for item in removed_checks:
             line = Text()
-            line.append(f"   ─  ", style=COLOR_DIM)
+            line.append("   ─  ", style=COLOR_DIM)
             line.append(item.get("name", ""), style=COLOR_DIM)
             parts.append(line)
 

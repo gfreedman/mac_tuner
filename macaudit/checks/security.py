@@ -607,7 +607,7 @@ class LaunchAgentsCheck(BaseCheck):
 
         if suspicious:
             return self._critical(
-                f"Suspicious entries in ~/Library/LaunchDaemons/: "
+                "Suspicious entries in ~/Library/LaunchDaemons/: "
                 f"{', '.join(suspicious[:3])}",
                 data={"suspicious": suspicious, "non_apple": non_apple},
             )
@@ -1249,7 +1249,7 @@ class SystemRootCACheck(BaseCheck):
 
         if mitm_found:
             return self._warning(
-                f"Traffic inspection certificate detected: "
+                "Traffic inspection certificate detected: "
                 f"{', '.join(mitm_found[:2])} — HTTPS traffic may be monitored",
                 data={"cert_count": count, "mitm_certs": mitm_found},
             )

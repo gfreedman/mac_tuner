@@ -254,7 +254,7 @@ class ShellSecretsCheck(BaseCheck):
         if not findings:
             n = len(files_scanned)
             return self._pass(
-                f"No credential patterns found "
+                "No credential patterns found "
                 f"({n} file{'s' if n != 1 else ''} scanned: "
                 f"{', '.join(files_scanned) or 'none found'})"
             )

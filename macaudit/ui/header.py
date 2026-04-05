@@ -152,7 +152,7 @@ def _build_right(mode: str = "scan", only_cats: Optional[set] = None) -> Text:
         ]
 
     for flag, desc in tips:
-        t.append(f"  • ", style=COLOR_DIM)
+        t.append("  • ", style=COLOR_DIM)
         t.append(flag, style=f"bold {COLOR_TEXT}")
         t.append(f"  {desc}\n", style=COLOR_DIM)
 

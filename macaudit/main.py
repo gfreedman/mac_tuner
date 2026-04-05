@@ -615,7 +615,6 @@ def _run_checks(checks: list, quiet: bool, as_json: bool) -> list[CheckResult]:
 
 
 
-
 # ── JSON output ───────────────────────────────────────────────────────────────
 
 def _output_json(results: list[CheckResult], diff: dict | None = None) -> None:

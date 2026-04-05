@@ -162,7 +162,7 @@ def run_auto_sudo_fix(result: CheckResult, console: Console) -> bool:
                 console.print("\n  [dim]Cancelled by user.[/dim]\n")
             else:
                 console.print(
-                    f"\n  [yellow]⚠️   Finished with issues: "
+                    "\n  [yellow]⚠️   Finished with issues: "
                     f"{err or f'exit {proc.returncode}'}[/yellow]\n"
                 )
             return False

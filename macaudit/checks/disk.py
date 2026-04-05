@@ -1157,7 +1157,7 @@ class iOSBackupsCheck(BaseCheck):
         if n > 3 or size_gb >= 20:
             return self._warning(
                 f"{n} iOS backup{'s' if n != 1 else ''} ({size_str}) — "
-                f"consider removing old device backups",
+                "consider removing old device backups",
                 data={"backup_count": n, "size_bytes": size},
             )
 
