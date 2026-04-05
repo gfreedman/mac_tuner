@@ -12,6 +12,11 @@ from functools import lru_cache
 from pathlib import Path
 
 from macaudit.checks.base import BaseCheck, CheckResult
+from macaudit.constants import (
+    MIN_SUPPORTED_MACOS_MAJOR,
+    SCREEN_LOCK_PASS_SECONDS,
+    SCREEN_LOCK_WARNING_SECONDS,
+)
 from macaudit.system_info import IS_APPLE_SILICON, MACOS_VERSION
 
 _FIREWALL = "/usr/libexec/ApplicationFirewall/socketfilterfw"
@@ -106,7 +111,7 @@ class MacOSVersionCheck(BaseCheck):
             )
 
         # Sanity: flag very old major version even if softwareupdate thinks it's fine
-        if MACOS_VERSION[0] < 13:
+        if MACOS_VERSION[0] < MIN_SUPPORTED_MACOS_MAJOR:
             return self._warning(
                 f"macOS {MACOS_VERSION_STRING} is no longer supported by Apple",
                 data={"version": MACOS_VERSION_STRING},
@@ -647,12 +652,12 @@ class ScreenLockCheck(BaseCheck):
 
         if delay == 0:
             return self._pass("Password required immediately after sleep")
-        if delay <= 5:
+        if delay <= SCREEN_LOCK_PASS_SECONDS:
             return self._pass(
                 f"Password required after {delay}s (acceptable)",
                 data={"delay_seconds": delay},
             )
-        if delay <= 60:
+        if delay <= SCREEN_LOCK_WARNING_SECONDS:
             return self._warning(
                 f"Password delay is {delay}s — consider setting to immediate",
                 data={"delay_seconds": delay},

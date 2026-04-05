@@ -18,7 +18,6 @@ Skipped checks: 1 line (very dim)
 """
 
 from collections import defaultdict
-from typing import Optional
 
 from rich.console import Console, Group
 from rich.padding import Padding
@@ -27,8 +26,14 @@ from rich.table import Table
 from rich.text import Text
 
 from macaudit.checks.base import CheckResult, calculate_health_score
+from macaudit.enums import CheckStatus, FixLevel
 from macaudit.ui.progress import BAR_WIDTH
 from macaudit.ui.theme import (
+    BORDER_CRITICAL,
+    BORDER_DIM,
+    BORDER_NEUTRAL,
+    BORDER_PASS,
+    BORDER_WARNING,
     CATEGORY_ICONS,
     COLOR_CRITICAL,
     COLOR_DIM,
@@ -45,19 +50,35 @@ from macaudit.ui.theme import (
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
-# Render order for category panels
+# Render order for category panels (matches canonical section flow in the report)
 _CATEGORY_ORDER = [
     "system", "security", "privacy",
     "homebrew", "disk", "hardware",
     "memory", "network", "dev_env", "apps",
 ]
 
-_ISSUE_STATUSES = frozenset(("critical", "warning", "error"))
+_ISSUE_STATUSES: frozenset[CheckStatus] = frozenset((
+    CheckStatus.CRITICAL,
+    CheckStatus.WARNING,
+    CheckStatus.ERROR,
+))
 
 # Indentation for explanation / recommendation / fix lines
 _INDENT = 8
 
-_FIXABLE_LEVELS = frozenset(("auto", "auto_sudo", "guided", "instructions"))
+_FIXABLE_LEVELS: frozenset[FixLevel] = frozenset((
+    FixLevel.AUTO,
+    FixLevel.AUTO_SUDO,
+    FixLevel.GUIDED,
+    FixLevel.INSTRUCTIONS,
+))
+
+# Sort keys for severity-descending ordering of issue results
+_ISSUE_SEVERITY_ORDER: dict[CheckStatus, int] = {
+    CheckStatus.CRITICAL: 0,
+    CheckStatus.WARNING:  1,
+    CheckStatus.ERROR:    2,
+}
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -70,7 +91,7 @@ def print_report(
     scan_duration: float = 0.0,
     mode: str = "scan",
     mdm_enrolled: bool = False,
-    diff: Optional[dict] = None,
+    diff: dict | None = None,
 ) -> None:
     """
     Render the complete post-scan report to the console.
@@ -114,11 +135,11 @@ def build_summary_panel(results: list[CheckResult], scan_duration: float = 0.0) 
     for r in results:
         counts[r.status] += 1
 
-    critical = counts["critical"]
-    warnings = counts["warning"]
-    passed   = counts["pass"]
-    info     = counts["info"]
-    errors   = counts["error"]
+    critical = counts[CheckStatus.CRITICAL]
+    warnings = counts[CheckStatus.WARNING]
+    passed   = counts[CheckStatus.PASS]
+    info     = counts[CheckStatus.INFO]
+    errors   = counts[CheckStatus.ERROR]
 
     # Score colour
     sc = score_color(score)
@@ -156,7 +177,7 @@ def build_summary_panel(results: list[CheckResult], scan_duration: float = 0.0) 
         _count_chip(STATUS_ICONS["error"], errors, "Errors", "bold bright_red")
 
     # ── Line 3: verdict ───────────────────────────────────────────────────────
-    crit_results = [r for r in results if r.status == "critical"]
+    crit_results = [r for r in results if r.status == CheckStatus.CRITICAL]
     verdict_line = Text()
     verdict_line.append(
         f"\n   {_score_verdict(score, critical, warnings, critical_results=crit_results)}",
@@ -180,9 +201,9 @@ def build_summary_panel(results: list[CheckResult], scan_duration: float = 0.0) 
 
     # Panel border follows worst status
     border = (
-        "bright_red" if critical or errors
-        else "yellow"   if warnings
-        else "bright_green"
+        BORDER_CRITICAL if critical or errors
+        else BORDER_WARNING if warnings
+        else BORDER_PASS
     )
 
     return Panel(
@@ -311,7 +332,7 @@ def build_diff_panel(diff: dict) -> Panel:
     elif score_delta < 0:
         border = COLOR_CRITICAL
     else:
-        border = "bright_blue"
+        border = BORDER_NEUTRAL
 
     return Panel(
         Group(*parts),
@@ -351,7 +372,7 @@ def build_category_panels(
 def build_recommendations_panel(
     results: list[CheckResult],
     mode: str = "scan",
-) -> Optional[Panel]:
+) -> Panel | None:
     """
     Build a "What to do next" panel summarising fixable items.
 
@@ -368,7 +389,7 @@ def build_recommendations_panel(
     ]
     info_fixable = [
         r for r in results
-        if r.status == "info" and r.fix_level in _FIXABLE_LEVELS
+        if r.status == CheckStatus.INFO and r.fix_level in _FIXABLE_LEVELS
     ]
     all_fixable = actionable + info_fixable
     total = len(all_fixable)
@@ -379,9 +400,10 @@ def build_recommendations_panel(
         body.append("\n  ✨  Nothing actionable — your Mac looks healthy.\n", style="bold bright_green")
         return Panel(body, title="[bold]Recommendations[/bold]", border_style="bright_green", padding=(0, 1))
 
-    # Sort: critical=0, warning=1, error=2, info=3
-    _order = {"critical": 0, "warning": 1, "error": 2, "info": 3}
-    all_fixable_sorted = sorted(all_fixable, key=lambda r: _order.get(r.status, 9))
+    all_fixable_sorted = sorted(
+        all_fixable,
+        key=lambda r: _ISSUE_SEVERITY_ORDER.get(r.status, 9),
+    )
 
     # Show up to 6 items
     shown = all_fixable_sorted[:6]
@@ -433,9 +455,9 @@ def build_recommendations_panel(
     parts.append(cta)
 
     # Border: bright_red if any critical, yellow if any warning, cyan otherwise
-    has_critical = any(r.status == "critical" for r in all_fixable)
-    has_warning  = any(r.status == "warning"  for r in all_fixable)
-    border = "bright_red" if has_critical else "yellow" if has_warning else "cyan"
+    has_critical = any(r.status == CheckStatus.CRITICAL for r in all_fixable)
+    has_warning  = any(r.status == CheckStatus.WARNING  for r in all_fixable)
+    border = BORDER_CRITICAL if has_critical else BORDER_WARNING if has_warning else BORDER_DIM
 
     return Panel(
         Group(*parts),
@@ -453,7 +475,7 @@ def _build_category_panel(
     issues_only: bool,
     explain: bool,
     mdm_enrolled: bool = False,
-) -> Optional[Panel]:
+) -> Panel | None:
     """Build one category panel; returns None if there is nothing to show."""
     issues  = [r for r in results if r.status in _ISSUE_STATUSES]
     infos   = [r for r in results if r.status == "info"]
@@ -466,7 +488,7 @@ def _build_category_panel(
     parts: list = []
 
     # ── Issues (critical → warning → error) ───────────────────────────────────
-    for r in sorted(issues, key=lambda r: {"critical": 0, "warning": 1, "error": 2}.get(r.status, 9)):
+    for r in sorted(issues, key=lambda r: _ISSUE_SEVERITY_ORDER.get(r.status, 9)):
         parts.extend(_render_issue(r, mdm_enrolled=mdm_enrolled))
         parts.append(Text(""))  # blank line between issues
 
@@ -486,10 +508,10 @@ def _build_category_panel(
     title    = f"{icon} {cat_name}"
 
     # Border: worst status in the category
-    if any(r.status == "critical" for r in results):
-        border = "bright_red"
-    elif any(r.status in ("warning", "error") for r in results):
-        border = "yellow"
+    if any(r.status == CheckStatus.CRITICAL for r in results):
+        border = BORDER_CRITICAL
+    elif any(r.status in (CheckStatus.WARNING, CheckStatus.ERROR) for r in results):
+        border = BORDER_WARNING
     else:
         border = COLOR_PASS
 
@@ -538,7 +560,7 @@ def _render_issue(result: CheckResult, mdm_enrolled: bool = False) -> list:
         parts.append(Padding(rec, (0, 2, 0, _INDENT)))
 
     # Line 4: fix info (muted)
-    if result.fix_level != "none":
+    if result.fix_level != FixLevel.NONE:
         fix_label = FIX_LEVEL_LABELS.get(result.fix_level, result.fix_level)
         fix_text = Text()
         fix_text.append(f"· {fix_label}", style="dim cyan")
@@ -583,11 +605,11 @@ def _compact_table(results: list[CheckResult], explain: bool = False, mdm_enroll
         icon  = STATUS_ICONS.get(r.status, "?")
         style = STATUS_STYLES.get(r.status)
 
-        if r.status == "pass":
+        if r.status == CheckStatus.PASS:
             name_style = "dim"
             msg_style  = "dim"
             icon_style = "bright_green"
-        elif r.status == "skip":
+        elif r.status == CheckStatus.SKIP:
             name_style = "dim"
             msg_style  = "dim"
             icon_style = "dim"
@@ -607,7 +629,7 @@ def _compact_table(results: list[CheckResult], explain: bool = False, mdm_enroll
         table.add_row(name_cell, msg_cell)
 
         # Explain mode: add recommendation below in a second indented row
-        if explain and r.recommendation and r.status in ("info", "pass"):
+        if explain and r.recommendation and r.status in (CheckStatus.INFO, CheckStatus.PASS):
             blank   = Text("")
             rec     = Text(f"  → {r.recommendation}", style=COLOR_DIM)
             table.add_row(blank, rec)

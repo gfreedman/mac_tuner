@@ -66,6 +66,7 @@ from rich.theme import Theme
 
 # ── Brand ─────────────────────────────────────────────────────────────────────
 
+
 from macaudit import __version__
 
 APP_NAME = "macaudit"
@@ -247,15 +248,33 @@ FIX_LEVEL_LABEL_SHORT: dict[str, str] = {
 }
 
 
-# ── Score color helper ───────────────────────────────────────────────────────
+# ── Panel border colors (Rich color names used for severity-driven borders) ───
+# Centralising these prevents the same Rich color literal from being
+# repeated in report.py, runner.py, and other UI modules.
+
+BORDER_CRITICAL  = "bright_red"
+BORDER_WARNING   = "yellow"
+BORDER_INFO      = "cyan"
+BORDER_PASS      = "bright_green"
+BORDER_DIM       = "dim"
+BORDER_NEUTRAL   = "bright_blue"
+
+
+# ── Score color helper ────────────────────────────────────────────────────────
+# Thresholds mirror those used in the score verdict copy in report.py.
+
+_SCORE_HIGH_THRESHOLD = 90
+_SCORE_MID_THRESHOLD  = 75
+_SCORE_LOW_THRESHOLD  = 55
+
 
 def score_color(score: int) -> str:
     """Return the appropriate COLOR_SCORE_* constant for a given score."""
-    if score >= 90:
+    if score >= _SCORE_HIGH_THRESHOLD:
         return COLOR_SCORE_HIGH
-    if score >= 75:
+    if score >= _SCORE_MID_THRESHOLD:
         return COLOR_SCORE_MID
-    if score >= 55:
+    if score >= _SCORE_LOW_THRESHOLD:
         return COLOR_SCORE_LOW
     return COLOR_SCORE_POOR
 

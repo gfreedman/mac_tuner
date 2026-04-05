@@ -34,27 +34,29 @@ Note:
     They may be called freely from tests without any setup.
 """
 
-from typing import Optional
+from macaudit.enums import CheckStatus
 
 
 # ── Status severity ranking ──────────────────────────────────────────────────
 # Maps each check status to an integer rank.  A decrease in rank
 # (curr_sev < prev_sev) means the check improved; an increase means
 # it regressed.  ``pass`` is the best state (0); ``critical`` is worst (5).
+# Keys are CheckStatus members; because CheckStatus inherits from str, plain
+# string lookups (e.g. from JSON payloads) work without conversion.
 
-_STATUS_SEVERITY: dict[str, int] = {
-    "pass":     0,
-    "info":     1,
-    "skip":     2,
-    "warning":  3,
-    "error":    4,
-    "critical": 5,
+_STATUS_SEVERITY: dict[CheckStatus, int] = {
+    CheckStatus.PASS:     0,
+    CheckStatus.INFO:     1,
+    CheckStatus.SKIP:     2,
+    CheckStatus.WARNING:  3,
+    CheckStatus.ERROR:    4,
+    CheckStatus.CRITICAL: 5,
 }
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def compute_diff(current: dict, previous: dict) -> Optional[dict]:
+def compute_diff(current: dict, previous: dict) -> dict | None:
     """Compare two scan payloads and return a structured diff dict.
 
     The two payloads must share the same ``schema_version``; diffing

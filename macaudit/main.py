@@ -41,13 +41,13 @@ Attributes:
 import shutil
 import time
 from pathlib import Path
-from typing import Optional
 
 import click
 from rich.console import Console
 
 from macaudit import __version__
 from macaudit.checks.base import BaseCheck, CheckResult, calculate_health_score
+from macaudit.enums import CheckStatus
 from macaudit.ui.header import print_header
 from macaudit.ui.theme import COLOR_DIM, COLOR_TEXT, MACTUNER_THEME
 
@@ -137,9 +137,9 @@ _MDM_FLAG = Path.home() / ".config" / "macaudit" / ".mdm_warned"
     help="Show the welcome screen and exit.",
 )
 def cli(
-    profile: Optional[str],
-    only: Optional[str],
-    skip: Optional[str],
+    profile: str | None,
+    only: str | None,
+    skip: str | None,
     issues_only: bool,
     explain: bool,
     as_json: bool,
@@ -290,7 +290,7 @@ def cli(
     score = calculate_health_score(results)
 
     if quiet:
-        criticals = sum(1 for r in results if r.status == "critical")
+        criticals = sum(1 for r in results if r.status == CheckStatus.CRITICAL)
         console.print(f"Health score: {score}/100  |  Critical: {criticals}")
         return
 
@@ -306,14 +306,14 @@ def cli(
 
     # ── Exit code contract ────────────────────────────────────────────────────
     if fail_on_critical:
-        criticals = sum(1 for r in results if r.status == "critical")
+        criticals = sum(1 for r in results if r.status == CheckStatus.CRITICAL)
         if criticals:
             raise SystemExit(2)
 
 
 # ── Mode resolution ───────────────────────────────────────────────────────────
 
-def _resolve_mode(fix: bool, only: Optional[str], skip: Optional[str]) -> str:
+def _resolve_mode(fix: bool, only: str | None, skip: str | None) -> str:
     """Determine the display mode label based on which CLI flags are active.
 
     The mode label is shown in the report header and in the mode badge on
@@ -445,7 +445,7 @@ def _warn_if_mdm_enrolled(console: Console) -> None:
 
 # ── Profile resolution ────────────────────────────────────────────────────────
 
-def _resolve_profile(requested: Optional[str]) -> str:
+def _resolve_profile(requested: str | None) -> str:
     """Resolve the active check profile, auto-detecting when not explicitly specified.
 
     Profile semantics:
@@ -482,7 +482,7 @@ def _resolve_profile(requested: Optional[str]) -> str:
 
 def _collect_checks(
     profile: str,
-    only_cats: Optional[set],
+    only_cats: set | None,
     skip_cats: set,
     check_shell_secrets: bool,
 ) -> list[BaseCheck]:
@@ -618,7 +618,7 @@ def _run_checks(checks: list, quiet: bool, as_json: bool) -> list[CheckResult]:
 
 # ── JSON output ───────────────────────────────────────────────────────────────
 
-def _output_json(results: list[CheckResult], diff: Optional[dict] = None) -> None:
+def _output_json(results: list[CheckResult], diff: dict | None = None) -> None:
     """Serialise all check results, system metadata, and optional diff to JSON on stdout.
 
     Builds the canonical ``schema_version: 1`` JSON payload and writes it to

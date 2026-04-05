@@ -48,6 +48,13 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
+from macaudit.constants import (
+    CRITICAL_PENALTY,
+    SECURITY_CRITICAL_MULTIPLIER,
+    SECURITY_WARNING_MULTIPLIER,
+    WARNING_PENALTY,
+)
+from macaudit.enums import CheckStatus
 from macaudit.system_info import IS_APPLE_SILICON, MACOS_VERSION
 
 
@@ -590,7 +597,7 @@ class BaseCheck(ABC):
 # Categories that carry higher weight in the health score calculation.
 # Security, privacy, and system issues are more impactful than performance
 # or convenience issues in other categories.
-_SECURITY_CATEGORIES = {"system", "privacy", "security"}
+_SECURITY_CATEGORIES: frozenset[str] = frozenset({"system", "privacy", "security"})
 
 
 def calculate_health_score(checks: list[CheckResult]) -> int:
@@ -634,17 +641,17 @@ def calculate_health_score(checks: list[CheckResult]) -> int:
     score = 100
 
     for check in checks:
-        if check.status == "critical":
-            points = 10
-            # Security, privacy, and system criticals carry a 50% higher penalty
+        if check.status == CheckStatus.CRITICAL:
+            points = CRITICAL_PENALTY
+            # Security, privacy, and system criticals carry a higher penalty
             # because they directly expose the user to external threats.
             if check.category in _SECURITY_CATEGORIES:
-                points = int(points * 1.5)  # → 15 points deducted
-        elif check.status == "warning":
-            points = 3
-            # Security warnings carry a 20% higher penalty for the same reason.
+                points = int(points * SECURITY_CRITICAL_MULTIPLIER)
+        elif check.status == CheckStatus.WARNING:
+            points = WARNING_PENALTY
+            # Security warnings carry a higher penalty for the same reason.
             if check.category in _SECURITY_CATEGORIES:
-                points = int(points * 1.2)  # → 3 or 4 points deducted
+                points = int(points * SECURITY_WARNING_MULTIPLIER)
         else:
             # info / pass / skip / error — no health penalty.
             points = 0

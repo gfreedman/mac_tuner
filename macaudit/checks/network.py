@@ -62,6 +62,14 @@ import shutil
 from macaudit.checks.base import BaseCheck, CheckResult
 
 
+# ── AirDrop mode values ───────────────────────────────────────────────────────
+# These string values are returned verbatim by the macOS defaults system.
+# Naming them here avoids fragile bare-string comparisons in the check logic.
+_AIRDROP_EVERYONE      = "Everyone"
+_AIRDROP_CONTACTS_ONLY = "Contacts Only"
+_AIRDROP_OFF           = "Off"
+
+
 # ── AirDrop ───────────────────────────────────────────────────────────────────
 
 class AirDropCheck(BaseCheck):
@@ -116,14 +124,14 @@ class AirDropCheck(BaseCheck):
             return self._info("AirDrop discoverability setting not found (may be Contacts Only)")
 
         mode = out.strip()
-        if mode == "Everyone":
+        if mode == _AIRDROP_EVERYONE:
             return self._warning(
-                "AirDrop visible to Everyone — change to Contacts Only"
+                f"AirDrop visible to {_AIRDROP_EVERYONE} — change to {_AIRDROP_CONTACTS_ONLY}"
             )
-        if mode in ("Contacts Only",):
-            return self._pass("AirDrop: Contacts Only")
-        if mode == "Off":
-            return self._pass("AirDrop: Off")
+        if mode == _AIRDROP_CONTACTS_ONLY:
+            return self._pass(f"AirDrop: {_AIRDROP_CONTACTS_ONLY}")
+        if mode == _AIRDROP_OFF:
+            return self._pass(f"AirDrop: {_AIRDROP_OFF}")
         return self._info(f"AirDrop mode: {mode}")
 
 

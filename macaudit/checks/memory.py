@@ -45,6 +45,12 @@ from __future__ import annotations
 import re
 
 from macaudit.checks.base import BaseCheck, CheckResult
+from macaudit.constants import (
+    CPU_RUNAWAY_THRESHOLD,
+    SWAP_CRITICAL_GB,
+    SWAP_INFO_GB,
+    SWAP_WARNING_GB,
+)
 
 
 # ── Memory pressure ───────────────────────────────────────────────────────────
@@ -324,11 +330,11 @@ class SwapUsageCheck(BaseCheck):
         gb = value / 1024 if unit == "M" else value
         msg = f"{value:.1f} {unit}B used"
 
-        if gb >= 8:
+        if gb >= SWAP_CRITICAL_GB:
             return self._critical(msg)
-        if gb >= 4:
+        if gb >= SWAP_WARNING_GB:
             return self._warning(msg)
-        if gb >= 1:
+        if gb >= SWAP_INFO_GB:
             return self._info(msg)
         return self._pass(f"Minimal swap ({msg})")
 
@@ -466,7 +472,7 @@ class TopCPUCheck(BaseCheck):
             f"{_short_name(p['comm'])} {p['cpu']:.0f}%" for p in top[:3]
         )
 
-        if top_cpu >= 90:
+        if top_cpu >= CPU_RUNAWAY_THRESHOLD:
             return self._warning(
                 f"High CPU: {top_name} at {top_cpu:.0f}%  —  {summary}",
                 data={"top_processes": top},

@@ -60,6 +60,17 @@ import subprocess
 from pathlib import Path
 
 from macaudit.checks.base import BaseCheck, CheckResult
+from macaudit.constants import (
+    APP_CACHES_INFO_GB,
+    APP_CACHES_WARNING_GB,
+    DISK_CRITICAL_GB,
+    DISK_INFO_GB,
+    DISK_WARNING_GB,
+    DOCKER_WARNING_GB,
+    TRASH_WARNING_MB,
+    XCODE_CACHE_INFO_GB,
+    XCODE_CACHE_WARNING_GB,
+)
 
 HOME = Path.home()
 
@@ -292,17 +303,17 @@ class DiskSpaceCheck(BaseCheck):
         free_str = _fmt(free)
         free_gb = free / 1e9
 
-        if free_gb < 5:
+        if free_gb < DISK_CRITICAL_GB:
             return self._critical(
                 f"Only {free_str} free — macOS may become unstable",
                 data={"free_bytes": free},
             )
-        if free_gb < 10:
+        if free_gb < DISK_WARNING_GB:
             return self._warning(
-                f"{free_str} free — getting low; macOS needs ~10 GB headroom",
+                f"{free_str} free — getting low; macOS needs ~{DISK_WARNING_GB} GB headroom",
                 data={"free_bytes": free},
             )
-        if free_gb < 20:
+        if free_gb < DISK_INFO_GB:
             return self._info(
                 f"{free_str} free — adequate but worth monitoring",
                 data={"free_bytes": free},
@@ -534,12 +545,12 @@ class XcodeDerivedDataCheck(BaseCheck):
 
         size_gb = size / 1e9
 
-        if size_gb >= 10:
+        if size_gb >= XCODE_CACHE_WARNING_GB:
             return self._warning(
                 f"Xcode DerivedData is {size_str} — safe to delete",
                 data={"path": str(path), "size_bytes": size},
             )
-        if size_gb >= 2:
+        if size_gb >= XCODE_CACHE_INFO_GB:
             return self._info(
                 f"Xcode DerivedData is {size_str}",
                 data={"path": str(path), "size_bytes": size},
@@ -686,7 +697,7 @@ class DockerDiskCheck(BaseCheck):
 
         total_gb = total_bytes / 1e9
 
-        if total_gb >= 20:
+        if total_gb >= DOCKER_WARNING_GB:
             return self._warning(
                 f"Container runtime using {total_str}: {summary}",
                 data={"runtimes": {k: v for k, v in runtimes.items()}, "total": total_bytes},
@@ -790,7 +801,7 @@ class TrashCheck(BaseCheck):
         size_str = _fmt(size)
         size_mb = size / 1e6
 
-        if size_mb >= 500:
+        if size_mb >= TRASH_WARNING_MB:
             return self._warning(
                 f"Trash contains {size_str} — empty it to reclaim space",
                 data={"size_bytes": size},
@@ -895,12 +906,12 @@ class AppCachesCheck(BaseCheck):
         size_str = _fmt(size)
         size_gb = size / 1e9
 
-        if size_gb >= 10:
+        if size_gb >= APP_CACHES_WARNING_GB:
             return self._warning(
                 f"App caches are {size_str} — consider clearing",
                 data={"size_bytes": size},
             )
-        if size_gb >= 3:
+        if size_gb >= APP_CACHES_INFO_GB:
             return self._info(
                 f"App caches are {size_str}",
                 data={"size_bytes": size},

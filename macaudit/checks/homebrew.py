@@ -48,6 +48,7 @@ Attributes:
 """
 
 from macaudit.checks.base import BaseCheck, CheckResult
+from macaudit.constants import BREW_CACHE_WARNING_MB
 
 # Shared skip message used by the base runner when brew is absent.
 # All Homebrew checks inherit requires_tool = "brew", so they are automatically
@@ -568,12 +569,12 @@ class HomebrewCleanupCheck(_HomebrewBase):
         )
         if match:
             size = f"{match.group(1)} {match.group(2)}"
-            # Convert to MB to decide severity against the 500 MB threshold.
+            # Convert to MB to compare against the warning threshold.
             n = float(match.group(1))
             unit = match.group(2).upper()
             mb = {"B": n / 1e6, "KB": n / 1e3, "MB": n, "GB": n * 1e3, "TB": n * 1e6}.get(unit, 0)
 
-            if mb >= 500:
+            if mb >= BREW_CACHE_WARNING_MB:
                 return self._warning(
                     f"Homebrew cache can free {size} — run 'brew cleanup'",
                     data={"reclaimable": size},

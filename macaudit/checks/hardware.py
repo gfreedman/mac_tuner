@@ -48,6 +48,12 @@ from datetime import datetime, timedelta
 from functools import lru_cache
 
 from macaudit.checks.base import BaseCheck, CheckResult
+from macaudit.constants import (
+    BATTERY_HEALTH_THRESHOLD,
+    CPU_SPEED_LIMIT_FULL,
+    KERNEL_PANIC_CRITICAL,
+    KERNEL_PANIC_WARNING,
+)
 from macaudit.system_info import IS_APPLE_SILICON
 
 
@@ -256,9 +262,9 @@ class BatteryCheck(BaseCheck):
         # Apple's own condition labels that require user action.
         if condition.lower() in ("service recommended", "replace now", "replace soon"):
             return self._critical(msg)
-        # 80% is Apple's documented threshold for "battery health is degraded"
+        # Apple's documented threshold for "battery health is degraded"
         # in newer macOS Battery Health settings.
-        if max_capacity is not None and max_capacity < 80:
+        if max_capacity is not None and max_capacity < BATTERY_HEALTH_THRESHOLD:
             return self._warning(msg)
         return self._info(msg)
 
@@ -554,10 +560,11 @@ class KernelPanicCheck(BaseCheck):
             count = len(panic_files)
             if count == 0:
                 return self._pass("No kernel panics in the last 7 days")
-            if count == 1:
-                return self._warning(f"1 kernel panic in the last 7 days")
-            if count >= 3:
+            if count >= KERNEL_PANIC_CRITICAL:
                 return self._critical(f"{count} kernel panics in the last 7 days")
+            if count >= KERNEL_PANIC_WARNING:
+                return self._warning(f"{count} kernel panic in the last 7 days" if count == 1
+                                     else f"{count} kernel panics in the last 7 days")
             return self._warning(f"{count} kernel panics in the last 7 days")
 
         except PermissionError:
@@ -708,7 +715,7 @@ class ThermalCheck(BaseCheck):
                 m = re.search(r"=\s*(\d+)", line)
                 # A CPU speed limit below 100% means the OS is deliberately
                 # reducing clock frequency to manage thermal output.
-                if m and int(m.group(1)) < 100:
+                if m and int(m.group(1)) < CPU_SPEED_LIMIT_FULL:
                     throttled = True
                     break
             # "No Thermal Pressure" is the good state

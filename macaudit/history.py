@@ -40,7 +40,6 @@ import dataclasses
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 from macaudit import __version__
 from macaudit.checks.base import CheckResult, calculate_health_score
@@ -58,7 +57,7 @@ _MAX_SCANS = 10
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def save_scan(results: list[CheckResult]) -> Optional[Path]:
+def save_scan(results: list[CheckResult]) -> Path | None:
     """Persist a completed scan to the history directory as a JSON file.
 
     The file is named using a UTC timestamp (``YYYY-MM-DDTHH-MM-SS.json``)
@@ -106,7 +105,7 @@ def save_scan(results: list[CheckResult]) -> Optional[Path]:
     return path
 
 
-def load_previous_scan() -> Optional[dict]:
+def load_previous_scan() -> dict | None:
     """Return the most recent historical scan payload, or ``None``.
 
     Scans the ``_HISTORY_DIR`` for ``*.json`` files, sorts them

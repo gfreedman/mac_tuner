@@ -49,6 +49,7 @@ from rich.padding import Padding
 from rich.text import Text
 
 from macaudit.checks.base import CheckResult
+from macaudit.enums import CheckStatus, FixLevel
 from macaudit.fixer.executor import (
     run_auto_fix,
     run_auto_sudo_fix,
@@ -56,6 +57,10 @@ from macaudit.fixer.executor import (
     run_instructions_fix,
 )
 from macaudit.ui.theme import (
+    BORDER_CRITICAL,
+    BORDER_DIM,
+    BORDER_INFO,
+    BORDER_WARNING,
     COLOR_BRAND,
     COLOR_DIM,
     COLOR_TEXT,
@@ -69,10 +74,25 @@ from macaudit.ui.theme import (
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 
-_FIXABLE_STATUSES = frozenset(("warning", "critical", "error", "info"))
-_FIXABLE_LEVELS   = frozenset(("auto", "auto_sudo", "guided", "instructions"))
+_FIXABLE_STATUSES: frozenset[CheckStatus] = frozenset((
+    CheckStatus.WARNING,
+    CheckStatus.CRITICAL,
+    CheckStatus.ERROR,
+    CheckStatus.INFO,
+))
+_FIXABLE_LEVELS: frozenset[FixLevel] = frozenset((
+    FixLevel.AUTO,
+    FixLevel.AUTO_SUDO,
+    FixLevel.GUIDED,
+    FixLevel.INSTRUCTIONS,
+))
 
-_SEVERITY_ORDER = {"critical": 0, "warning": 1, "error": 2, "info": 3}
+_SEVERITY_ORDER: dict[CheckStatus, int] = {
+    CheckStatus.CRITICAL: 0,
+    CheckStatus.WARNING:  1,
+    CheckStatus.ERROR:    2,
+    CheckStatus.INFO:     3,
+}
 
 
 
@@ -123,7 +143,7 @@ def _run_interactive_mode(
     for idx, result in enumerate(fixable, 1):
         _print_fix_card(console, result, idx, total)
 
-        if result.fix_level in ("auto", "auto_sudo"):
+        if result.fix_level in (FixLevel.AUTO, FixLevel.AUTO_SUDO):
             options = ["Skip", "Apply", "Quit"]
         else:
             options = ["Skip", "Continue", "Quit"]
@@ -167,7 +187,7 @@ def _run_auto_mode(
     """Apply all safe AUTO fixes without interactive menu or per-fix prompts."""
     safe = [
         r for r in fixable
-        if r.fix_level == "auto"
+        if r.fix_level == FixLevel.AUTO
         and r.fix_reversible
         and not r.requires_sudo
     ]
@@ -323,11 +343,11 @@ def _print_fix_card(
     what.append(f"  {result.fix_description}", style=COLOR_DIM)
     parts.append(what)
 
-    if result.fix_level in ("auto", "auto_sudo") and result.fix_command:
+    if result.fix_level in (FixLevel.AUTO, FixLevel.AUTO_SUDO) and result.fix_command:
         cmd = Text()
         cmd.append(f"\n  $ {shlex.join(result.fix_command)}", style="dim cyan")
         parts.append(cmd)
-    elif result.fix_level == "instructions" and result.fix_steps:
+    elif result.fix_level == FixLevel.INSTRUCTIONS and result.fix_steps:
         steps = Text()
         for i, step in enumerate(result.fix_steps, 1):
             steps.append(f"\n  {i}. {step}", style=COLOR_DIM)
@@ -348,14 +368,14 @@ def _print_fix_card(
     parts.append(footer)
 
     # Border colour follows status
-    if result.status == "critical":
-        border = "bright_red"
-    elif result.status == "warning":
-        border = "yellow"
-    elif result.status == "info":
-        border = "cyan"
+    if result.status == CheckStatus.CRITICAL:
+        border = BORDER_CRITICAL
+    elif result.status == CheckStatus.WARNING:
+        border = BORDER_WARNING
+    elif result.status == CheckStatus.INFO:
+        border = BORDER_INFO
     else:
-        border = "dim"
+        border = BORDER_DIM
 
     console.print()
     console.print(
